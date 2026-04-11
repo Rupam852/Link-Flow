@@ -617,7 +617,7 @@ export default function App() {
                       whileHover={{ scale: 1.1, y: -2 }}
                       whileTap={{ scale: 0.9 }}
                       href={link.url}
-                      target="_blank"
+                      target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
                       className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-colors relative group overflow-hidden"
                       style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
@@ -644,7 +644,7 @@ export default function App() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.1, type: "spring", stiffness: 300, damping: 20 }}
                       href={link.url}
-                      target="_blank"
+                      target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
                       className="block w-full p-5 rounded-2xl transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
                       style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
@@ -1191,7 +1191,7 @@ export default function App() {
                           animate={{ opacity: 1, scale: 1 }}
                           whileHover={{ scale: 1.1 }}
                           href={link.url}
-                          target="_blank"
+                          target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                           rel="noopener noreferrer"
                           className="w-10 h-10 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden group"
                           style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
@@ -1219,7 +1219,7 @@ export default function App() {
                             exit={{ opacity: 0, scale: 0.95 }}
                             transition={{ delay: idx * 0.05, type: "spring", stiffness: 300, damping: 20 }}
                             href={link.url}
-                            target="_blank"
+                            target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                             rel="noopener noreferrer"
                             className="block w-full p-4 rounded-xl transition-all hover:scale-102 active:scale-98 flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden"
                             style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
