@@ -597,14 +597,40 @@ export default function App() {
           </div>
           <h1 className="text-3xl font-extrabold mb-1 tracking-tight">{profile.displayName}</h1>
           <p className="text-sm opacity-60 mb-8 font-medium tracking-wide">@{profile.username}</p>
-          <p className="text-lg opacity-80 mb-12 max-w-sm mx-auto leading-relaxed whitespace-pre-wrap">
+          <p className="text-lg opacity-80 mb-8 max-w-sm mx-auto leading-relaxed whitespace-pre-wrap">
             {profile.bio || "No bio yet."}
           </p>
 
-          <div className="space-y-4">
-            {profile.links.map((link, idx) => {
-              const Icon = ICON_MAP[link.icon] || Globe;
-              return (
+          {/* Optimized Link Layout */}
+          <div className="space-y-6">
+            {/* Social Icons Row (Icon categories) */}
+            {profile.links.filter(l => l.icon !== 'globe').length > 0 && (
+              <div className="flex flex-wrap justify-center gap-4 mb-8">
+                {profile.links.filter(l => l.icon !== 'globe').map((link, idx) => {
+                  const Icon = ICON_MAP[link.icon] || Globe;
+                  return (
+                    <motion.a
+                      key={idx}
+                      whileHover={{ scale: 1.1, y: -2 }}
+                      whileTap={{ scale: 0.9 }}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-colors relative group overflow-hidden"
+                      style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
+                      title={link.title}
+                    >
+                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <Icon size={24} className="relative z-10" />
+                    </motion.a>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Primary Links (Full-width buttons) */}
+            <div className="space-y-4">
+              {profile.links.filter(l => l.icon === 'globe').map((link, idx) => (
                 <motion.a
                   key={idx}
                   initial={{ opacity: 0, y: 20 }}
@@ -618,13 +644,13 @@ export default function App() {
                 >
                   <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                   <div className="flex items-center gap-4 relative z-10">
-                    <Icon size={24} className="drop-shadow-sm" />
+                    <Globe size={24} className="drop-shadow-sm" />
                     <span className="drop-shadow-sm">{link.title}</span>
                   </div>
                   <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10" />
                 </motion.a>
-              );
-            })}
+              ))}
+            </div>
           </div>
 
           <div className="mt-20 pt-12 border-t border-white/10">
@@ -1093,15 +1119,40 @@ export default function App() {
                 />
               </div>
               <h1 className="text-xl font-extrabold mb-1 tracking-tight">{profile.displayName}</h1>
-              <p className="text-sm opacity-80 mb-8 whitespace-pre-wrap leading-relaxed" style={{ color: profile.theme.textColor }}>
+              <p className="text-sm opacity-80 mb-6 whitespace-pre-wrap leading-relaxed" style={{ color: profile.theme.textColor }}>
                 {profile.bio || "Your bio will appear here..."}
               </p>
 
-              <div className="space-y-3 relative z-10">
-                <AnimatePresence mode="popLayout">
-                  {profile.links.map((link, idx) => {
-                    const Icon = ICON_MAP[link.icon] || Globe;
-                    return (
+              <div className="space-y-4 relative z-10">
+                {/* Social Icons Row (Icon categories) */}
+                {profile.links.filter(l => l.icon !== 'globe').length > 0 && (
+                  <div className="flex flex-wrap justify-center gap-3 mb-6">
+                    {profile.links.filter(l => l.icon !== 'globe').map((link, idx) => {
+                      const Icon = ICON_MAP[link.icon] || Globe;
+                      return (
+                        <motion.a
+                          key={idx}
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          whileHover={{ scale: 1.1 }}
+                          href={link.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-10 h-10 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden group"
+                          style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
+                        >
+                          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                          <Icon size={18} className="relative z-10" />
+                        </motion.a>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {/* Primary Links (Full-width buttons) */}
+                <div className="space-y-2.5">
+                  <AnimatePresence mode="popLayout">
+                    {profile.links.filter(l => l.icon === 'globe').map((link, idx) => (
                       <motion.a
                         key={idx}
                         initial={{ opacity: 0, x: -20 }}
@@ -1111,19 +1162,19 @@ export default function App() {
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full p-4 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-lg backdrop-blur-sm border border-white/10 relative overflow-hidden"
+                        className="block w-full p-3.5 rounded-xl font-bold text-sm transition-all hover:scale-102 active:scale-98 flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden"
                         style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                       >
                         <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div className="flex items-center gap-3 relative z-10">
-                          <Icon size={18} className="drop-shadow-sm" />
+                          <Globe size={18} className="drop-shadow-sm" />
                           <span className="drop-shadow-sm">{link.title}</span>
                         </div>
                         <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10" />
                       </motion.a>
-                    );
-                  })}
-                </AnimatePresence>
+                    ))}
+                  </AnimatePresence>
+                </div>
               </div>
 
               <div className="mt-12 pt-8 border-t border-white/10">
