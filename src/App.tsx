@@ -147,6 +147,7 @@ export default function App() {
   const [isSavedSuccessfully, setIsSavedSuccessfully] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(false);
+  const [isImageUploading, setIsImageUploading] = useState(false);
 
   // Responsive View Handler with History tracking for back gesture
   const handleSetView = (newView: 'preview' | 'edit') => {
@@ -237,40 +238,44 @@ export default function App() {
 
 
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = (event) => {
-        const img = new Image();
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          const MAX_SIZE = 400; // Resize to max 400px
-          let width = img.width;
-          let height = img.height;
+    if (!file) return;
 
-          if (width > height && width > MAX_SIZE) {
-            height *= MAX_SIZE / width;
-            width = MAX_SIZE;
-          } else if (height > MAX_SIZE) {
-            width *= MAX_SIZE / height;
-            height = MAX_SIZE;
-          }
+    const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
-          canvas.width = width;
-          canvas.height = height;
-          const ctx = canvas.getContext('2d');
-          
-          if (ctx) {
-            ctx.drawImage(img, 0, 0, width, height);
-            // Compress to JPEG with 0.8 quality to prevent massive base64 strings
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.8);
-            setProfile(prev => ({ ...prev, avatarUrl: compressedBase64 }));
-          }
-        };
-        img.src = event.target?.result as string;
-      };
-      reader.readAsDataURL(file);
+    if (!cloudName || !uploadPreset) {
+      setSaveError("Cloudinary configuration missing in environment variables.");
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 5000);
+      return;
+    }
+
+    setIsImageUploading(true);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", uploadPreset);
+
+    try {
+      const response = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
+        method: "POST",
+        body: formData
+      });
+      
+      const data = await response.json();
+      if (data.secure_url) {
+        setProfile(prev => ({ ...prev, avatarUrl: data.secure_url }));
+      } else {
+        throw new Error(data.error?.message || "Upload failed");
+      }
+    } catch (error: any) {
+      console.error("Cloudinary upload error:", error);
+      setSaveError(error.message || "Failed to upload image");
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 5000);
+    } finally {
+      setIsImageUploading(false);
     }
   };
 
@@ -745,7 +750,7 @@ export default function App() {
                       />
                       <label 
                         htmlFor="avatar-upload"
-                        className="block cursor-pointer relative"
+                        className={`block cursor-pointer relative ${isImageUploading ? 'pointer-events-none opacity-70' : ''}`}
                       >
                         <img 
                           src={profile.avatarUrl} 
@@ -753,8 +758,12 @@ export default function App() {
                           className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-100 hover:border-indigo-300 transition-all"
                           referrerPolicy="no-referrer"
                         />
-                        <div className="absolute inset-0 bg-black/20 rounded-2xl opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-[10px] text-white font-bold uppercase tracking-wider">Upload</span>
+                        <div className={`absolute inset-0 rounded-2xl flex items-center justify-center transition-all ${isImageUploading ? 'opacity-100 bg-black/40' : 'opacity-0 bg-black/20 hover:opacity-100'}`}>
+                          {isImageUploading ? (
+                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                          ) : (
+                            <span className="text-[10px] text-white font-bold uppercase tracking-wider">Upload</span>
+                          )}
                         </div>
                       </label>
                       <button 
