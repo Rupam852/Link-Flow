@@ -21,7 +21,8 @@ import {
   Sparkles,
   Check,
   Share2,
-  Copy
+  Copy,
+  AlertCircle
 } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
