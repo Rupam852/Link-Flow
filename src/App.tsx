@@ -286,9 +286,11 @@ export default function App() {
         }
       }
 
-      const updatedProfile = { ...profile, uid: targetUid, username: currentUsername };
+      // Sanitize profile: Remove MongoDB internal fields before sending
+      const { _id, __v, ...pureProfileData } = profile as any;
+      const updatedProfile = { ...pureProfileData, uid: targetUid, username: currentUsername };
       
-      // Use the final username for the request
+      // Use the final UID for the request
       const res = await fetch(`/api/profiles/uid/${targetUid}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -321,6 +323,10 @@ export default function App() {
       if (res.ok) {
         // Clear success state after 2 seconds
         setTimeout(() => setIsSavedSuccessfully(false), 2000);
+      } else if (res.status !== 409) {
+        // Only show generic error if it wasn't a handled 409 conflict
+        const errorData = await res.json().catch(() => ({}));
+        setSaveError(errorData.error || "Failed to save profile. Please try again.");
       }
     } catch (err) {
       console.error('Save failed:', err);

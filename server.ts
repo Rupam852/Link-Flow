@@ -106,9 +106,12 @@ async function startServer() {
 
   app.put("/api/profiles/uid/:uid", async (req, res) => {
     try {
+      // Remove internal MongoDB fields that should not be updated manually
+      const { _id, __v, ...updateData } = req.body;
+      
       const profile = await Profile.findOneAndUpdate(
         { uid: req.params.uid },
-        req.body,
+        updateData,
         { new: true, upsert: true, runValidators: true }
       );
       res.json(profile);
