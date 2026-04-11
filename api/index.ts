@@ -115,6 +115,31 @@ app.put("/api/profiles/uid/:uid", async (req, res) => {
   }
 });
 
+// ⚠️ TEMPORARY: One-time admin cleanup endpoint — REMOVE AFTER USE
+app.get("/api/admin/clean-avatars", async (req: any, res: any) => {
+  if (req.query.secret !== "linkflow-clean-2024") {
+    return res.status(403).json({ error: "Forbidden" });
+  }
+  try {
+    await connectToDatabase();
+    const DEFAULT_AVATAR = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23111827'/%3E%3Ccircle cx='100' cy='75' r='35' fill='%2338BDF8'/%3E%3Cpath d='M45 190 C45 110, 155 110, 155 190 Z' fill='%2338BDF8'/%3E%3C/svg%3E";
+    const bloated = await Profile.find({
+      $and: [
+        { avatarUrl: { $regex: /^data:image/ } },
+        { $expr: { $gt: [{ $strLenCP: "$avatarUrl" }, 1000] } }
+      ]
+    });
+    let cleaned = 0;
+    for (const p of bloated) {
+      await Profile.findByIdAndUpdate(p._id, { avatarUrl: DEFAULT_AVATAR });
+      cleaned++;
+    }
+    res.json({ success: true, cleaned, total: bloated.length });
+  } catch (err: any) {
+    res.status(500).json({ error: "Cleanup failed", details: err.message });
+  }
+});
+
 // Environment Logic
 if (process.env.NODE_ENV !== "production") {
   // Use dynamic import so 'vite' isn't required at runtime on Vercel
