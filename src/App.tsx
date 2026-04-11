@@ -925,6 +925,7 @@ export default function App() {
             <span className="text-[10px] text-slate-400">Your public link is live and updated.</span>
           </div>
         </motion.div>
+      )}
       {/* Error Toast */}
       {showErrorToast && (
         <motion.div 
