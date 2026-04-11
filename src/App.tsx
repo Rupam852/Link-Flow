@@ -1070,14 +1070,14 @@ export default function App() {
                             setProfile({...profile, links: newLinks});
                           }}
                           className={`w-full bg-transparent text-sm focus:outline-none transition-colors ${
-                            link.url && !/^https?:\/\//.test(link.url) 
+                            link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) 
                               ? 'text-red-500 placeholder:text-red-300' 
                               : 'text-slate-500'
                           }`}
                         />
-                        {link.url && !/^https?:\/\//.test(link.url) && (
+                        {link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) && (
                           <p className="text-[10px] text-red-500 mt-1 font-medium animate-pulse">
-                            URL must start with http:// or https://
+                            URL must start with http://, https://, or mailto:
                           </p>
                         )}
                       </div>
