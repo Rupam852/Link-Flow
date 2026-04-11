@@ -145,6 +145,7 @@ export default function App() {
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [isSavedSuccessfully, setIsSavedSuccessfully] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
 
   const fetchProfile = async (id: string, isUid: boolean = false) => {
     setIsFetching(true);
@@ -344,11 +345,17 @@ export default function App() {
       } else if (res.status !== 409) {
         // Only show generic error if it wasn't a handled 409 conflict
         const errorData = await res.json().catch(() => ({}));
-        setSaveError(errorData.error || "Failed to save profile. Please try again.");
+        const msg = errorData.error || errorData.details || "Failed to save profile. Please try again.";
+        setSaveError(msg);
+        setShowErrorToast(true);
+        setTimeout(() => setShowErrorToast(false), 5000);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Save failed:', err);
-      setSaveError("An unexpected error occurred while saving.");
+      const msg = err.message || "Failed to save profile. Please check your connection.";
+      setSaveError(msg);
+      setShowErrorToast(true);
+      setTimeout(() => setShowErrorToast(false), 5000);
     } finally {
       setIsSaving(false);
     }
@@ -916,6 +923,22 @@ export default function App() {
           <div className="flex flex-col">
             <span className="text-sm font-bold">Profile Saved!</span>
             <span className="text-[10px] text-slate-400">Your public link is live and updated.</span>
+          </div>
+        </motion.div>
+      {/* Error Toast */}
+      {showErrorToast && (
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-red-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-red-500/20"
+        >
+          <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center">
+            <AlertCircle size={14} className="text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold">Save Failed</span>
+            <span className="text-[10px] text-red-200">{saveError}</span>
           </div>
         </motion.div>
       )}
