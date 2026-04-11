@@ -144,6 +144,7 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [isSavedSuccessfully, setIsSavedSuccessfully] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(false);
 
@@ -352,11 +353,13 @@ export default function App() {
       }
       
       if (saveSuccess) {
+        setIsSavedSuccessfully(true);
         setShowSaveToast(true);
         // Silently refresh profile to ensure state is binary-perfect with DB
         fetchProfile(targetUid, true);
         // Clear success state after 3 seconds
         setTimeout(() => {
+          setIsSavedSuccessfully(false);
           setShowSaveToast(false);
         }, 3000);
       } else if (res.status !== 409) {
