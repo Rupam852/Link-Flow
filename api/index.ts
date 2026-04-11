@@ -41,6 +41,7 @@ const profileSchema = new mongoose.Schema({
   displayName: String,
   bio: String,
   avatarUrl: String,
+  socialLinksStyle: { type: String, default: 'grid' },
   theme: {
     backgroundColor: String,
     textColor: String,

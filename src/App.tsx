@@ -54,6 +54,7 @@ interface Profile {
     buttonColor: string;
     buttonTextColor: string;
   };
+  socialLinksStyle: 'grid' | 'list';
 }
 
 const DEFAULT_PROFILE: Profile = {
@@ -73,7 +74,8 @@ const DEFAULT_PROFILE: Profile = {
     textColor: '#f8fafc',
     buttonColor: '#334155',
     buttonTextColor: '#f8fafc',
-  }
+  },
+  socialLinksStyle: 'grid'
 };
 
 const ICON_MAP: Record<string, any> = {
@@ -604,8 +606,8 @@ export default function App() {
 
           {/* Optimized Link Layout */}
           <div className="space-y-6">
-            {/* Social Icons Row (Icon categories) */}
-            {profile.links.filter(l => l.icon !== 'globe').length > 0 && (
+            {/* Social Icons Row (Shown only in 'grid' mode) */}
+            {profile.socialLinksStyle === 'grid' && profile.links.filter(l => l.icon !== 'globe').length > 0 && (
               <div className="flex flex-wrap justify-center gap-4 mb-8">
                 {profile.links.filter(l => l.icon !== 'globe').map((link, idx) => {
                   const Icon = ICON_MAP[link.icon] || Globe;
@@ -629,33 +631,38 @@ export default function App() {
               </div>
             )}
 
-            {/* Primary Links (Full-width buttons) */}
+            {/* Primary Links & Bar Socials */}
             <div className="space-y-4">
-              {profile.links.filter(l => l.icon === 'globe').map((link, idx) => (
-                <motion.a
-                  key={idx}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1, type: "spring", stiffness: 300, damping: 20 }}
-                  href={link.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block w-full p-5 rounded-2xl transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
-                  style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
-                >
-                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="flex items-center gap-4 relative z-10 w-full">
-                    <Globe size={24} className="drop-shadow-sm shrink-0" />
-                    <div className="text-left">
-                      <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight">{link.title}</p>
-                      {link.description && (
-                        <p className="text-sm font-medium opacity-70 mt-0.5 line-clamp-1">{link.description}</p>
-                      )}
-                    </div>
-                  </div>
-                  <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
-                </motion.a>
-              ))}
+              {profile.links
+                .filter(l => profile.socialLinksStyle === 'list' || l.icon === 'globe')
+                .map((link, idx) => {
+                  const Icon = ICON_MAP[link.icon] || Globe;
+                  return (
+                    <motion.a
+                      key={idx}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.1, type: "spring", stiffness: 300, damping: 20 }}
+                      href={link.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="block w-full p-5 rounded-2xl transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
+                      style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
+                    >
+                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="flex items-center gap-4 relative z-10 w-full">
+                        <Icon size={24} className="drop-shadow-sm shrink-0" />
+                        <div className="text-left">
+                          <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight">{link.title}</p>
+                          {link.description && (
+                            <p className="text-sm font-medium opacity-70 mt-0.5 line-clamp-1">{link.description}</p>
+                          )}
+                        </div>
+                      </div>
+                      <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
+                    </motion.a>
+                  );
+                })}
             </div>
           </div>
 
@@ -954,13 +961,39 @@ export default function App() {
 
           <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-2">
-                <Layout className="text-indigo-600" size={20} />
-                <h2 className="text-lg font-semibold">Links</h2>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Layout className="text-indigo-600" size={20} />
+                  <h2 className="text-lg font-semibold">Links</h2>
+                </div>
+                {/* Social Style Toggle */}
+                <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                  <button 
+                    onClick={() => setProfile({...profile, socialLinksStyle: 'grid'})}
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                      profile.socialLinksStyle === 'grid' 
+                        ? 'bg-white text-indigo-600 shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    Grid
+                  </button>
+                  <button 
+                    onClick={() => setProfile({...profile, socialLinksStyle: 'list'})}
+                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
+                      profile.socialLinksStyle === 'list' 
+                        ? 'bg-white text-indigo-600 shadow-sm' 
+                        : 'text-slate-500 hover:text-slate-700'
+                    }`}
+                  >
+                    List
+                  </button>
+                </div>
               </div>
               <button 
                 onClick={() => setProfile({...profile, links: [...profile.links, { title: 'New Link', url: '', icon: 'globe' }]})}
                 className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
+                title="Add New Link"
               >
                 <Plus size={20} />
               </button>
@@ -1141,8 +1174,8 @@ export default function App() {
               </p>
 
               <div className="space-y-4 relative z-10">
-                {/* Social Icons Row (Icon categories) */}
-                {profile.links.filter(l => l.icon !== 'globe').length > 0 && (
+                {/* Social Icons Row (Shown only in 'grid' mode) */}
+                {profile.socialLinksStyle === 'grid' && profile.links.filter(l => l.icon !== 'globe').length > 0 && (
                   <div className="flex flex-wrap justify-center gap-3 mb-6">
                     {profile.links.filter(l => l.icon !== 'globe').map((link, idx) => {
                       const Icon = ICON_MAP[link.icon] || Globe;
@@ -1166,35 +1199,40 @@ export default function App() {
                   </div>
                 )}
 
-                {/* Primary Links (Full-width buttons) */}
+                {/* Primary Links & Bar Socials */}
                 <div className="space-y-2.5">
                   <AnimatePresence mode="popLayout">
-                    {profile.links.filter(l => l.icon === 'globe').map((link, idx) => (
-                      <motion.a
-                        key={idx}
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ delay: idx * 0.05, type: "spring", stiffness: 300, damping: 20 }}
-                        href={link.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block w-full p-4 rounded-xl transition-all hover:scale-102 active:scale-98 flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden"
-                        style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
-                      >
-                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="flex items-center gap-3 relative z-10 w-full">
-                          <Globe size={18} className="drop-shadow-sm shrink-0" />
-                          <div className="text-left overflow-hidden">
-                            <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
-                            {link.description && (
-                              <p className="text-[10px] opacity-70 mt-0.5 truncate">{link.description}</p>
-                            )}
-                          </div>
-                        </div>
-                        <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
-                      </motion.a>
-                    ))}
+                    {profile.links
+                      .filter(l => profile.socialLinksStyle === 'list' || l.icon === 'globe')
+                      .map((link, idx) => {
+                        const Icon = ICON_MAP[link.icon] || Globe;
+                        return (
+                          <motion.a
+                            key={idx}
+                            initial={{ opacity: 0, x: -20 }}
+                            animate={{ opacity: 1, x: 0 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            transition={{ delay: idx * 0.05, type: "spring", stiffness: 300, damping: 20 }}
+                            href={link.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block w-full p-4 rounded-xl transition-all hover:scale-102 active:scale-98 flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden"
+                            style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
+                          >
+                            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="flex items-center gap-3 relative z-10 w-full">
+                              <Icon size={18} className="drop-shadow-sm shrink-0" />
+                              <div className="text-left overflow-hidden">
+                                <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
+                                {link.description && (
+                                  <p className="text-[10px] opacity-70 mt-0.5 truncate">{link.description}</p>
+                                )}
+                              </div>
+                            </div>
+                            <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
+                          </motion.a>
+                        );
+                      })}
                   </AnimatePresence>
                 </div>
               </div>
