@@ -421,18 +421,23 @@ export default function App() {
         className="min-h-screen w-full overflow-y-auto p-6 flex items-center justify-center"
         style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
       >
-        <div className="w-full max-w-md text-center py-12">
-          <motion.img 
-            initial={{ scale: 0.8, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            src={profile.avatarUrl} 
-            alt="Avatar" 
-            className="w-32 h-32 rounded-full mx-auto mb-6 border-4 border-white/10 object-cover shadow-xl"
-            referrerPolicy="no-referrer"
-          />
-          <h1 className="text-3xl font-bold mb-1">{profile.displayName}</h1>
-          <p className="text-sm opacity-60 mb-6 tracking-wide font-medium">@{profile.username}</p>
-          <p className="text-lg opacity-80 mb-12 max-w-sm mx-auto whitespace-pre-wrap">
+        <div className="w-full max-w-md text-center py-12 relative z-10">
+          <div className="relative w-32 h-32 mx-auto mb-6">
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-xl"></div>
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
+            <motion.img 
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              src={profile.avatarUrl} 
+              alt="Avatar" 
+              className="absolute inset-[3px] w-[calc(100%-6px)] h-[calc(100%-6px)] rounded-full object-cover shadow-2xl"
+              style={{ border: `4px solid ${profile.theme.backgroundColor}` }}
+              referrerPolicy="no-referrer"
+            />
+          </div>
+          <h1 className="text-3xl font-extrabold mb-1 tracking-tight">{profile.displayName}</h1>
+          <p className="text-sm opacity-60 mb-8 font-medium tracking-wide">@{profile.username}</p>
+          <p className="text-lg opacity-80 mb-12 max-w-sm mx-auto leading-relaxed whitespace-pre-wrap">
             {profile.bio || "No bio yet."}
           </p>
 
@@ -444,18 +449,19 @@ export default function App() {
                   key={idx}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.1 }}
+                  transition={{ delay: idx * 0.1, type: "spring", stiffness: 300, damping: 20 }}
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full p-5 rounded-2xl font-semibold text-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-between group shadow-lg"
+                  className="block w-full p-5 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
                   style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                 >
-                  <div className="flex items-center gap-4">
-                    <Icon size={24} />
-                    {link.title}
+                  <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                  <div className="flex items-center gap-4 relative z-10">
+                    <Icon size={24} className="drop-shadow-sm" />
+                    <span className="drop-shadow-sm">{link.title}</span>
                   </div>
-                  <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10" />
                 </motion.a>
               );
             })}
@@ -468,7 +474,7 @@ export default function App() {
                 return <Icon key={idx} size={24} />;
               })}
             </div>
-            <p className="text-xs uppercase tracking-[0.2em] opacity-40 font-bold">Powered by LinkFlow</p>
+            <p className="text-xs uppercase tracking-[0.2em] opacity-40 font-extrabold relative z-10">Powered by LinkFlow</p>
           </div>
         </div>
       </div>
@@ -886,28 +892,37 @@ export default function App() {
 
         {/* Right Column: Live Preview */}
         <div className={`md:sticky md:top-24 h-[calc(100vh-8rem)] flex items-center justify-center ${view === 'edit' ? 'hidden md:flex' : 'flex'}`}>
-          <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[9/19] bg-white rounded-[2.5rem] sm:rounded-[3rem] border-[6px] sm:border-[8px] border-slate-900 shadow-2xl overflow-hidden">
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-900 rounded-b-2xl z-10"></div>
+          <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[9/19] bg-white rounded-[3rem] border-[8px] sm:border-[12px] border-slate-900 shadow-2xl overflow-hidden ring-4 ring-slate-800">
+            {/* Dynamic Island / Notch Mockup */}
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 flex items-center justify-between px-2 shadow-inner">
+              <div className="w-2 h-2 rounded-full bg-slate-800/80"></div>
+              <div className="w-3 h-3 rounded-full bg-indigo-900/40 border border-slate-700/50"></div>
+            </div>
             
             <div 
-              className="w-full h-full overflow-y-auto p-6 pt-12 text-center"
+              className="w-full h-full overflow-y-auto p-6 pt-16 text-center scrollbar-hide relative"
               style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
             >
-              <motion.img 
-                key={profile.avatarUrl}
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                src={profile.avatarUrl} 
-                alt="Avatar" 
-                className="w-24 h-24 rounded-full mx-auto mb-4 border-4 border-white/10 object-cover"
-                referrerPolicy="no-referrer"
-              />
-              <h1 className="text-xl font-bold mb-1">{profile.displayName}</h1>
-              <p className="text-sm opacity-80 mb-8 whitespace-pre-wrap" style={{ color: profile.theme.textColor }}>
+              <div className="relative w-24 h-24 mx-auto mb-4">
+                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-md"></div>
+                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
+                <motion.img 
+                  key={profile.avatarUrl}
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  src={profile.avatarUrl} 
+                  alt="Avatar" 
+                  className="absolute inset-[3px] w-[calc(100%-6px)] h-[calc(100%-6px)] rounded-full object-cover shadow-xl"
+                  style={{ border: `3px solid ${profile.theme.backgroundColor}` }}
+                  referrerPolicy="no-referrer"
+                />
+              </div>
+              <h1 className="text-xl font-extrabold mb-1 tracking-tight">{profile.displayName}</h1>
+              <p className="text-sm opacity-80 mb-8 whitespace-pre-wrap leading-relaxed" style={{ color: profile.theme.textColor }}>
                 {profile.bio || "Your bio will appear here..."}
               </p>
 
-              <div className="space-y-3">
+              <div className="space-y-3 relative z-10">
                 <AnimatePresence mode="popLayout">
                   {profile.links.map((link, idx) => {
                     const Icon = ICON_MAP[link.icon] || Globe;
@@ -917,18 +932,19 @@ export default function App() {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, scale: 0.95 }}
-                        transition={{ delay: idx * 0.05 }}
+                        transition={{ delay: idx * 0.05, type: "spring", stiffness: 300, damping: 20 }}
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full p-4 rounded-xl font-medium text-sm transition-transform active:scale-95 flex items-center justify-between group"
+                        className="block w-full p-4 rounded-xl font-bold text-sm transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-lg backdrop-blur-sm border border-white/10 relative overflow-hidden"
                         style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                       >
-                        <div className="flex items-center gap-3">
-                          <Icon size={18} />
-                          {link.title}
+                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <div className="flex items-center gap-3 relative z-10">
+                          <Icon size={18} className="drop-shadow-sm" />
+                          <span className="drop-shadow-sm">{link.title}</span>
                         </div>
-                        <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                        <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10" />
                       </motion.a>
                     );
                   })}
