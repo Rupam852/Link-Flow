@@ -141,10 +141,12 @@ export default function App() {
   const [isCopying, setIsCopying] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isFetching, setIsFetching] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [isSavedSuccessfully, setIsSavedSuccessfully] = useState(false);
 
   const fetchProfile = async (id: string, isUid: boolean = false) => {
+    setIsFetching(true);
     try {
       const endpoint = isUid ? `/api/profiles/uid/${id}` : `/api/profiles/${id}`;
       const res = await fetch(endpoint);
@@ -154,6 +156,8 @@ export default function App() {
       }
     } catch (err) {
       console.error('Fetch profile failed:', err);
+    } finally {
+      setIsFetching(false);
     }
   };
 
@@ -204,9 +208,13 @@ export default function App() {
       if (currentUser) {
         if (!window.location.pathname.startsWith('/linkflow/')) {
           fetchProfile(currentUser.uid, true);
+        } else {
+          setIsFetching(false);
         }
         // Immediately ensure UID is in state for new users
         setProfile(prev => ({ ...prev, uid: currentUser.uid }));
+      } else {
+        setIsFetching(false);
       }
     });
     return () => unsubscribe();
@@ -321,6 +329,8 @@ export default function App() {
       }
       
       if (res.ok) {
+        // Silently refresh profile to ensure state is binary-perfect with DB
+        fetchProfile(targetUid, true);
         // Clear success state after 2 seconds
         setTimeout(() => setIsSavedSuccessfully(false), 2000);
       } else if (res.status !== 409) {
@@ -429,6 +439,19 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-2 sm:gap-4">
+          <div className="hidden lg:flex flex-col items-end gap-0.5 mr-2">
+            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Public Link</span>
+            <a 
+              href={`/linkflow/${profile.username}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group"
+            >
+              linkflow.me/{profile.username || '...'}
+              <ExternalLink size={10} className="group-hover:scale-110 transition-transform" />
+            </a>
+          </div>
+
           <div className="hidden md:flex items-center gap-2">
             {user && (
               <button 
@@ -523,8 +546,19 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <>
-              <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="relative">
+              {isFetching && (
+                <div className="absolute inset-x-0 -inset-y-2 bg-white/60 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-indigo-100 shadow-2xl shadow-indigo-500/10">
+                  <div className="w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin mb-4"></div>
+                  <p className="text-base font-bold text-indigo-900 tracking-tight animate-pulse text-center px-4">
+                    Syncing your latest changes...
+                  </p>
+                  <p className="text-xs text-indigo-500 mt-1 font-medium italic">Just a moment while we fetch your profile</p>
+                </div>
+              )}
+              
+              <div className={`space-y-8 transition-all duration-300 ${isFetching ? 'opacity-20 pointer-events-none scale-[0.98] blur-[2px]' : 'opacity-100'}`}>
+                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-6">
                     <Palette className="text-indigo-600" size={20} />
                     <h2 className="text-lg font-semibold">Templates</h2>
@@ -770,9 +804,10 @@ export default function App() {
               </div>
             </div>
           </section>
-        </>
-      )}
-    </div>
+        </div>
+      </div>
+    )}
+  </div>
 
         {/* Right Column: Live Preview */}
         <div className={`md:sticky md:top-24 h-[calc(100vh-8rem)] flex items-center justify-center ${view === 'edit' ? 'hidden md:flex' : 'flex'}`}>
