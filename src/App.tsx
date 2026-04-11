@@ -655,7 +655,7 @@ export default function App() {
                         <div className="text-left">
                           <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight">{link.title}</p>
                           {link.description && (
-                            <p className="text-sm font-medium opacity-70 mt-0.5 line-clamp-1">{link.description}</p>
+                            <p className="text-sm font-medium opacity-70 mt-1 whitespace-pre-wrap leading-snug">{link.description}</p>
                           )}
                         </div>
                       </div>
@@ -1040,8 +1040,7 @@ export default function App() {
                         }}
                         className="w-full bg-transparent font-bold focus:outline-none placeholder:font-medium"
                       />
-                      <input 
-                        type="text" 
+                      <textarea 
                         value={link.description || ''}
                         placeholder="Short description (optional)"
                         onChange={(e) => {
@@ -1049,7 +1048,13 @@ export default function App() {
                           newLinks[idx].description = e.target.value;
                           setProfile({...profile, links: newLinks});
                         }}
-                        className="w-full bg-transparent text-xs text-slate-500 focus:outline-none"
+                        rows={1}
+                        className="w-full bg-transparent text-xs text-slate-500 focus:outline-none resize-none min-h-[1.5rem]"
+                        style={{ height: 'auto' }}
+                        onInput={(e: any) => {
+                          e.target.style.height = 'auto';
+                          e.target.style.height = e.target.scrollHeight + 'px';
+                        }}
                       />
                       <div className="relative">
                         <input 
@@ -1225,7 +1230,7 @@ export default function App() {
                               <div className="text-left overflow-hidden">
                                 <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
                                 {link.description && (
-                                  <p className="text-[10px] opacity-70 mt-0.5 truncate">{link.description}</p>
+                                  <p className="text-[10px] opacity-70 mt-0.5 whitespace-pre-wrap leading-tight">{link.description}</p>
                                 )}
                               </div>
                             </div>
