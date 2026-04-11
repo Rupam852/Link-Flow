@@ -223,20 +223,31 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // Helper for generating URL slugs
+  const generateSlug = (name?: string | null) => {
+    if (!name) return '';
+    return name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+  };
+
   // Auto-populate profile with Google data if empty
   useEffect(() => {
     if (user && (!profile.uid || !profile.displayName)) {
-      setProfile(prev => ({
-        ...prev,
-        uid: user.uid,
-        username: prev.username || user.uid,
-        email: prev.email || user.email || '',
-        displayName: prev.displayName || user.displayName || '',
-        avatarUrl: (prev.avatarUrl === DEFAULT_PROFILE.avatarUrl || !prev.avatarUrl) 
-          ? user.photoURL || prev.avatarUrl 
-          : prev.avatarUrl,
-        bio: prev.bio || ''
-      }));
+      setProfile(prev => {
+        const isUid = prev.username && /^[A-Za-z0-9]{20,}$/.test(prev.username);
+        const suggestedName = user.displayName ? generateSlug(user.displayName) : user.uid;
+        
+        return {
+          ...prev,
+          uid: user.uid,
+          username: (!prev.username || isUid) ? suggestedName : prev.username,
+          email: prev.email || user.email || '',
+          displayName: prev.displayName || user.displayName || '',
+          avatarUrl: (prev.avatarUrl === DEFAULT_PROFILE.avatarUrl || !prev.avatarUrl) 
+            ? user.photoURL || prev.avatarUrl 
+            : prev.avatarUrl,
+          bio: prev.bio || ''
+        };
+      });
     }
   }, [user, profile.displayName]);
 
@@ -244,15 +255,20 @@ export default function App() {
     try {
       const result = await signInWithPopup(auth, googleProvider);
       if (result.user) {
-        setProfile(prev => ({ 
-          ...prev, 
-          uid: result.user.uid,
-          username: prev.username || result.user.uid,
-          email: result.user.email || '',
-          displayName: result.user.displayName || '',
-          avatarUrl: result.user.photoURL || prev.avatarUrl,
-          bio: '' // Ensure bio is empty as requested
-        }));
+        setProfile(prev => {
+          const isUid = prev.username && /^[A-Za-z0-9]{20,}$/.test(prev.username);
+          const suggestedName = result.user.displayName ? generateSlug(result.user.displayName) : result.user.uid;
+
+          return { 
+            ...prev, 
+            uid: result.user.uid,
+            username: (!prev.username || isUid) ? suggestedName : prev.username,
+            email: result.user.email || '',
+            displayName: result.user.displayName || '',
+            avatarUrl: result.user.photoURL || prev.avatarUrl,
+            bio: '' // Ensure bio is empty as requested
+          };
+        });
       }
     } catch (err) {
       console.error('Login failed:', err);
@@ -311,23 +327,11 @@ export default function App() {
       let saveSuccess = false;
 
       if (res.status === 409) {
-        // Handle case where NEW generated username is taken
-        const uniqueUsername = `${currentUsername}-${Math.random().toString(36).substring(2, 5)}`;
-        const finalProfile = { ...updatedProfile, username: uniqueUsername };
-        
-        const retryRes = await fetch(`/api/profiles/uid/${targetUid}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(finalProfile),
-        });
-        
-        if (retryRes.ok) {
-          setProfile(finalProfile);
-          saveSuccess = true;
-        } else {
-          setSaveError("An error occurred while creating your unique link.");
-          return;
-        }
+        setSaveError("This Link Name is already taken. Please enter another name.");
+        setShowErrorToast(true);
+        setTimeout(() => setShowErrorToast(false), 5000);
+        setIsSaving(false);
+        return; // Stop the save process
       } else if (res.ok) {
         setProfile(updatedProfile);
         saveSuccess = true;
