@@ -62,7 +62,7 @@ const profileSchema = new mongoose.Schema({
 });
 
 // Avoid re-compiling models in serverless environment
-const Profile = mongoose.models.Profile || mongoose.model("Profile", profileSchema);
+const Profile = (mongoose.models.Profile || mongoose.model("Profile", profileSchema)) as any;
 
 // API Routes
 app.get("/api/profiles/uid/:uid", async (req, res) => {
