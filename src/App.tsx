@@ -22,7 +22,13 @@ import {
   Check,
   Share2,
   Copy,
-  AlertCircle
+  AlertCircle,
+  Youtube,
+  Facebook,
+  MessageCircle,
+  Send,
+  Mail,
+  Play
 } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -74,7 +80,30 @@ const ICON_MAP: Record<string, any> = {
   twitter: Twitter,
   instagram: Instagram,
   linkedin: Linkedin,
+  youtube: Youtube,
+  facebook: Facebook,
+  whatsapp: MessageCircle,
+  telegram: Send,
+  mail: Mail,
+  discord: MessageCircle,
+  tiktok: Play,
   globe: Globe,
+};
+
+const detectIcon = (url: string): string => {
+  const lowercaseUrl = url.toLowerCase();
+  if (lowercaseUrl.includes('github.com')) return 'github';
+  if (lowercaseUrl.includes('twitter.com') || lowercaseUrl.includes('x.com')) return 'twitter';
+  if (lowercaseUrl.includes('instagram.com')) return 'instagram';
+  if (lowercaseUrl.includes('linkedin.com')) return 'linkedin';
+  if (lowercaseUrl.includes('youtube.com') || lowercaseUrl.includes('youtu.be')) return 'youtube';
+  if (lowercaseUrl.includes('facebook.com') || lowercaseUrl.includes('fb.com')) return 'facebook';
+  if (lowercaseUrl.includes('wa.me') || lowercaseUrl.includes('whatsapp.com')) return 'whatsapp';
+  if (lowercaseUrl.includes('t.me') || lowercaseUrl.includes('telegram.org')) return 'telegram';
+  if (lowercaseUrl.includes('discord.gg') || lowercaseUrl.includes('discord.com')) return 'discord';
+  if (lowercaseUrl.includes('tiktok.com')) return 'tiktok';
+  if (lowercaseUrl.includes('mailto:')) return 'mail';
+  return 'globe';
 };
 
 const TEMPLATES = [
@@ -872,8 +901,11 @@ export default function App() {
                           value={link.url}
                           placeholder="URL (https://...)"
                           onChange={(e) => {
+                            const newUrl = e.target.value;
                             const newLinks = [...profile.links];
-                            newLinks[idx].url = e.target.value;
+                            newLinks[idx].url = newUrl;
+                            // Auto-detect icon
+                            newLinks[idx].icon = detectIcon(newUrl);
                             setProfile({...profile, links: newLinks});
                           }}
                           className={`w-full bg-transparent text-sm focus:outline-none transition-colors ${
