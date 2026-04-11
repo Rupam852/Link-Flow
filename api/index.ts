@@ -52,6 +52,7 @@ const profileSchema = new mongoose.Schema({
       title: String,
       url: String,
       icon: String,
+      description: String,
     },
   ],
 });
