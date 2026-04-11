@@ -803,9 +803,17 @@ export default function App() {
 
                   {/* Preset Templates */}
                   <div>
-                    <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Preset Templates</label>
+                    <div className="flex items-center justify-between mb-3">
+                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Top Templates</label>
+                      <button 
+                        onClick={() => setShowTemplateModal(true)}
+                        className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+                      >
+                        More Templates <Sparkles size={12} />
+                      </button>
+                    </div>
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {TEMPLATES.map((tpl) => (
+                      {TEMPLATES.slice(0, 3).map((tpl) => (
                         <button
                           key={tpl.name}
                           onClick={() => setProfile({...profile, theme: tpl.theme})}
@@ -1131,6 +1139,79 @@ export default function App() {
           </div>
         </div>
       </main>
+
+      {/* Template Selection Modal */}
+      <AnimatePresence>
+        {showTemplateModal && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowTemplateModal(false)}
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900">Choose a Template</h2>
+                  <p className="text-sm text-slate-500">Select a pre-designed theme for your profile</p>
+                </div>
+                <button 
+                  onClick={() => setShowTemplateModal(false)}
+                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                >
+                  <Plus size={24} className="rotate-45 text-slate-400" />
+                </button>
+              </div>
+              <div className="p-6 max-h-[70vh] overflow-y-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                  {TEMPLATES.map((tpl) => (
+                    <button
+                      key={tpl.name}
+                      onClick={() => {
+                        setProfile({...profile, theme: tpl.theme});
+                        setShowTemplateModal(false);
+                      }}
+                      className="group relative flex flex-col items-center gap-3 p-3 rounded-2xl border-2 border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all text-left"
+                    >
+                      <div 
+                        className="w-full aspect-[4/3] rounded-xl shadow-sm flex flex-col gap-2 p-3"
+                        style={{ backgroundColor: tpl.theme.backgroundColor }}
+                      >
+                        <div className="w-1/2 h-2 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
+                        <div className="w-full h-2 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
+                        <div className="w-3/4 h-2 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
+                      </div>
+                      <div className="w-full flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{tpl.name}</span>
+                        {JSON.stringify(profile.theme) === JSON.stringify(tpl.theme) && (
+                          <div className="w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white">
+                            <Check size={12} />
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+                <button 
+                  onClick={() => setShowTemplateModal(false)}
+                  className="px-6 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all"
+                >
+                  Close
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* Save Success Toast */}
       {showSaveToast && (
