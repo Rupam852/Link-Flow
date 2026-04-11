@@ -1,15 +1,10 @@
 import express from "express";
-import { createServer as createViteServer } from "vite";
 import mongoose from "mongoose";
 import cors from "cors";
-import path from "path";
-import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+import path from "path";
 
 dotenv.config();
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,7 +12,7 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Global connection state for Vercel
+// Global connection state for Vercel Serverless
 let isConnected = false;
 
 async function connectToDatabase() {
@@ -122,7 +117,8 @@ app.put("/api/profiles/uid/:uid", async (req, res) => {
 
 // Environment Logic
 if (process.env.NODE_ENV !== "production") {
-  const startServer = async () => {
+  // Use dynamic import so 'vite' isn't required at runtime on Vercel
+  import("vite").then(async ({ createServer: createViteServer }) => {
     const vite = await createViteServer({
       server: { middlewareMode: true },
       appType: "spa",
@@ -132,15 +128,19 @@ if (process.env.NODE_ENV !== "production") {
     app.listen(PORT, () => {
       console.log(`Development server running at http://localhost:${PORT}`);
     });
-  };
-  startServer();
+  }).catch(err => {
+    console.error("Failed to start Vite dev server:", err);
+  });
 } else {
-  // Production (Vercel) static serving
-  const distPath = path.join(process.cwd(), "dist");
-  app.use(express.static(distPath));
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(distPath, "index.html"));
+  // In Vercel, we do NOT serve static files from Express. 
+  // Vercel Edge Network handles serving 'index.html' from the 'dist' folder automatically.
+  // We only provide a 404 fallback for unhandled API routes to prevent hanging.
+  app.use((req, res) => {
+    if (req.path.startsWith('/api/')) {
+      res.status(404).json({ error: "API Route Not Found" });
+    }
   });
 }
 
+// Export the app for Vercel Serverless
 export default app;
