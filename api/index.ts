@@ -115,21 +115,6 @@ app.put("/api/profiles/uid/:uid", async (req, res) => {
   }
 });
 
-app.delete("/api/profiles/uid/:uid", async (req, res) => {
-  try {
-    await connectToDatabase();
-    const profile = await Profile.findOneAndDelete({ uid: req.params.uid });
-    if (profile) {
-      res.json({ message: "Profile successfully deleted." });
-    } else {
-      res.status(404).json({ error: "Profile not found." });
-    }
-  } catch (err: any) {
-    console.error("API DELETE Error:", err);
-    res.status(500).json({ error: "Error deleting profile", details: err.message });
-  }
-});
-
 // Environment Logic
 if (process.env.NODE_ENV !== "production") {
   // Use dynamic import so 'vite' isn't required at runtime on Vercel
