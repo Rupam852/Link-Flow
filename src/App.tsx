@@ -144,6 +144,7 @@ export default function App() {
   const [isFetching, setIsFetching] = useState(false);
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [isSavedSuccessfully, setIsSavedSuccessfully] = useState(false);
+  const [showSaveToast, setShowSaveToast] = useState(false);
 
   const fetchProfile = async (id: string, isUid: boolean = false) => {
     setIsFetching(true);
@@ -305,6 +306,8 @@ export default function App() {
         body: JSON.stringify(updatedProfile),
       });
 
+      let saveSuccess = false;
+
       if (res.status === 409) {
         // Handle case where NEW generated username is taken
         const uniqueUsername = `${currentUsername}-${Math.random().toString(36).substring(2, 5)}`;
@@ -318,21 +321,26 @@ export default function App() {
         
         if (retryRes.ok) {
           setProfile(finalProfile);
-          setIsSavedSuccessfully(true);
+          saveSuccess = true;
         } else {
           setSaveError("An error occurred while creating your unique link.");
           return;
         }
       } else if (res.ok) {
         setProfile(updatedProfile);
-        setIsSavedSuccessfully(true);
+        saveSuccess = true;
       }
       
-      if (res.ok) {
+      if (saveSuccess) {
+        setIsSavedSuccessfully(true);
+        setShowSaveToast(true);
         // Silently refresh profile to ensure state is binary-perfect with DB
         fetchProfile(targetUid, true);
-        // Clear success state after 2 seconds
-        setTimeout(() => setIsSavedSuccessfully(false), 2000);
+        // Clear success state after 3 seconds
+        setTimeout(() => {
+          setIsSavedSuccessfully(false);
+          setShowSaveToast(false);
+        }, 3000);
       } else if (res.status !== 409) {
         // Only show generic error if it wasn't a handled 409 conflict
         const errorData = await res.json().catch(() => ({}));
@@ -894,6 +902,23 @@ export default function App() {
         </div>
       </main>
 
+      {/* Save Success Toast */}
+      {showSaveToast && (
+        <motion.div 
+          initial={{ opacity: 0, y: 50 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 50 }}
+          className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 border border-white/10"
+        >
+          <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+            <Check size={14} className="text-white" />
+          </div>
+          <div className="flex flex-col">
+            <span className="text-sm font-bold">Profile Saved!</span>
+            <span className="text-[10px] text-slate-400">Your public link is live and updated.</span>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }
