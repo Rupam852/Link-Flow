@@ -55,7 +55,7 @@ const DEFAULT_PROFILE: Profile = {
   email: '',
   displayName: '',
   bio: '',
-  avatarUrl: 'https://picsum.photos/seed/avatar/200/200',
+  avatarUrl: "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23111827'/%3E%3Ccircle cx='100' cy='75' r='35' fill='%2338BDF8'/%3E%3Cpath d='M45 190 C45 110, 155 110, 155 190 Z' fill='%2338BDF8'/%3E%3C/svg%3E",
   links: [
     { title: 'My Portfolio', url: 'https://example.com', icon: 'globe' },
     { title: 'GitHub', url: 'https://github.com', icon: 'github' },
