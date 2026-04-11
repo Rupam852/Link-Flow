@@ -148,6 +148,34 @@ export default function App() {
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(false);
 
+  // Responsive View Handler with History tracking for back gesture
+  const handleSetView = (newView: 'preview' | 'edit') => {
+    if (newView === 'preview') {
+      window.history.pushState({ view: 'preview' }, '', '?view=preview');
+      setView('preview');
+    } else {
+      window.history.pushState({ view: 'edit' }, '', window.location.pathname);
+      setView('edit');
+    }
+  };
+
+  useEffect(() => {
+    const handlePopState = (event: PopStateEvent) => {
+      if (window.location.pathname.startsWith('/linkflow/') || window.location.pathname.startsWith('/u/')) {
+        return;
+      }
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('view') === 'preview') {
+        setView('preview');
+      } else {
+        setView('edit');
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    handlePopState(new PopStateEvent('popstate'));
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   // Helper for generating URL slugs
   const generateSlug = (name?: string | null) => {
     if (!name) return '';
@@ -490,9 +518,9 @@ export default function App() {
           <span className="font-bold text-lg sm:text-xl tracking-tight hidden sm:block">LinkFlow</span>
         </div>
         
-        <div className="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-full">
+        <div className="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-full lg:hidden">
           <button 
-            onClick={() => setView('edit')}
+            onClick={() => handleSetView('edit')}
             className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
               view === 'edit' 
                 ? 'bg-white shadow-md text-indigo-600 scale-100' 
@@ -502,7 +530,7 @@ export default function App() {
             <Edit3 size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Editor</span>
           </button>
           <button 
-            onClick={() => setView('preview')}
+            onClick={() => handleSetView('preview')}
             className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
               view === 'preview' 
                 ? 'bg-white shadow-md text-indigo-600 scale-100' 
@@ -603,9 +631,9 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="pt-24 pb-12 px-4 max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8">
+      <main className="pt-24 pb-12 px-4 lg:px-8 max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-24">
         {/* Left Column: Editor */}
-        <div className={`space-y-8 ${view === 'preview' ? 'hidden md:block' : 'block'}`}>
+        <div className={`space-y-8 ${view === 'preview' ? 'hidden lg:block' : 'block'}`}>
           {!user ? (
             <div className="bg-white p-12 rounded-2xl border border-slate-200 shadow-sm text-center">
               <div className="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -891,8 +919,8 @@ export default function App() {
   </div>
 
         {/* Right Column: Live Preview */}
-        <div className={`md:sticky md:top-24 h-[calc(100vh-8rem)] flex items-center justify-center ${view === 'edit' ? 'hidden md:flex' : 'flex'}`}>
-          <div className="relative w-full max-w-[280px] sm:max-w-[320px] aspect-[9/19] bg-white rounded-[3rem] border-[8px] sm:border-[12px] border-slate-900 shadow-2xl overflow-hidden ring-4 ring-slate-800">
+        <div className={`lg:sticky lg:top-24 h-[calc(100vh-8rem)] flex items-center justify-center ${view === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
+          <div className="relative w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] xl:max-w-[400px] aspect-[9/19] bg-white rounded-[3rem] border-[8px] sm:border-[12px] border-slate-900 shadow-2xl overflow-hidden ring-4 ring-slate-800">
             {/* Dynamic Island / Notch Mockup */}
             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 flex items-center justify-between px-2 shadow-inner">
               <div className="w-2 h-2 rounded-full bg-slate-800/80"></div>
