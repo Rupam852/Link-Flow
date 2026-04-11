@@ -148,7 +148,13 @@ export default function App() {
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(false);
 
-  const fetchProfile = async (id: string, isUid: boolean = false) => {
+  // Helper for generating URL slugs
+  const generateSlug = (name?: string | null) => {
+    if (!name) return '';
+    return name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
+  };
+
+  const fetchProfile = async (id: string, isUid: boolean = false, autoSaveUserData?: any) => {
     setIsFetching(true);
     try {
       const endpoint = isUid ? `/api/profiles/uid/${id}` : `/api/profiles/${id}`;
@@ -156,6 +162,36 @@ export default function App() {
       if (res.ok) {
         const data = await res.json();
         setProfile(data);
+      } else if (res.status === 404 && isUid && autoSaveUserData) {
+        // AUTOSAVE: The profile wasn't found in DB (new user or DB deleted), auto-create it now
+        const suggestedName = autoSaveUserData.displayName ? generateSlug(autoSaveUserData.displayName) : autoSaveUserData.uid;
+        
+        const newProfile = {
+          ...DEFAULT_PROFILE,
+          uid: autoSaveUserData.uid,
+          username: suggestedName,
+          email: autoSaveUserData.email || '',
+          displayName: autoSaveUserData.displayName || '',
+          avatarUrl: autoSaveUserData.photoURL || DEFAULT_PROFILE.avatarUrl,
+        };
+
+        const createRes = await fetch(`/api/profiles/uid/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newProfile),
+        });
+
+        if (createRes.status === 409) {
+           const finalProfile = { ...newProfile, username: `${suggestedName}-${Math.random().toString(36).substring(2, 5)}` };
+           const retryRes = await fetch(`/api/profiles/uid/${id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(finalProfile),
+           });
+           if (retryRes.ok) setProfile(finalProfile);
+        } else if (createRes.ok) {
+           setProfile(newProfile);
+        }
       }
     } catch (err) {
       console.error('Fetch profile failed:', err);
@@ -210,7 +246,7 @@ export default function App() {
       setLoading(false);
       if (currentUser) {
         if (!window.location.pathname.startsWith('/linkflow/')) {
-          fetchProfile(currentUser.uid, true);
+          fetchProfile(currentUser.uid, true, currentUser);
         } else {
           setIsFetching(false);
         }
@@ -223,11 +259,7 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
-  // Helper for generating URL slugs
-  const generateSlug = (name?: string | null) => {
-    if (!name) return '';
-    return name.toLowerCase().trim().replace(/[^\w\s-]/g, '').replace(/[\s_-]+/g, '-').replace(/^-+|-+$/g, '');
-  };
+
 
   // Auto-populate profile with Google data if empty
   useEffect(() => {
