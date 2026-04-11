@@ -37,6 +37,7 @@ interface Link {
   title: string;
   url: string;
   icon: string;
+  description?: string;
 }
 
 interface Profile {
@@ -63,7 +64,7 @@ const DEFAULT_PROFILE: Profile = {
   bio: '',
   avatarUrl: "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23111827'/%3E%3Ccircle cx='100' cy='75' r='35' fill='%2338BDF8'/%3E%3Cpath d='M45 190 C45 110, 155 110, 155 190 Z' fill='%2338BDF8'/%3E%3C/svg%3E",
   links: [
-    { title: 'My Portfolio', url: 'https://example.com', icon: 'globe' },
+    { title: 'My Portfolio', url: 'https://example.com', icon: 'globe', description: 'Check out my latest projects and work experience.' },
     { title: 'GitHub', url: 'https://github.com', icon: 'github' },
     { title: 'Twitter', url: 'https://twitter.com', icon: 'twitter' },
   ],
@@ -639,15 +640,20 @@ export default function App() {
                   href={link.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block w-full p-5 rounded-2xl font-bold text-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
+                  className="block w-full p-5 rounded-2xl transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
                   style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                 >
                   <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                  <div className="flex items-center gap-4 relative z-10">
-                    <Globe size={24} className="drop-shadow-sm" />
-                    <span className="drop-shadow-sm">{link.title}</span>
+                  <div className="flex items-center gap-4 relative z-10 w-full">
+                    <Globe size={24} className="drop-shadow-sm shrink-0" />
+                    <div className="text-left">
+                      <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight">{link.title}</p>
+                      {link.description && (
+                        <p className="text-sm font-medium opacity-70 mt-0.5 line-clamp-1">{link.description}</p>
+                      )}
+                    </div>
                   </div>
-                  <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10" />
+                  <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
                 </motion.a>
               ))}
             </div>
@@ -993,13 +999,24 @@ export default function App() {
                       <input 
                         type="text" 
                         value={link.title}
-                        placeholder="Link Title"
+                        placeholder="Link Title (e.g. My Website)"
                         onChange={(e) => {
                           const newLinks = [...profile.links];
                           newLinks[idx].title = e.target.value;
                           setProfile({...profile, links: newLinks});
                         }}
-                        className="w-full bg-transparent font-medium focus:outline-none"
+                        className="w-full bg-transparent font-bold focus:outline-none placeholder:font-medium"
+                      />
+                      <input 
+                        type="text" 
+                        value={link.description || ''}
+                        placeholder="Short description (optional)"
+                        onChange={(e) => {
+                          const newLinks = [...profile.links];
+                          newLinks[idx].description = e.target.value;
+                          setProfile({...profile, links: newLinks});
+                        }}
+                        className="w-full bg-transparent text-xs text-slate-500 focus:outline-none"
                       />
                       <div className="relative">
                         <input 
@@ -1162,15 +1179,20 @@ export default function App() {
                         href={link.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="block w-full p-3.5 rounded-xl font-bold text-sm transition-all hover:scale-102 active:scale-98 flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden"
+                        className="block w-full p-4 rounded-xl transition-all hover:scale-102 active:scale-98 flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden"
                         style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                       >
                         <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="flex items-center gap-3 relative z-10">
-                          <Globe size={18} className="drop-shadow-sm" />
-                          <span className="drop-shadow-sm">{link.title}</span>
+                        <div className="flex items-center gap-3 relative z-10 w-full">
+                          <Globe size={18} className="drop-shadow-sm shrink-0" />
+                          <div className="text-left overflow-hidden">
+                            <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
+                            {link.description && (
+                              <p className="text-[10px] opacity-70 mt-0.5 truncate">{link.description}</p>
+                            )}
+                          </div>
                         </div>
-                        <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10" />
+                        <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
                       </motion.a>
                     ))}
                   </AnimatePresence>
