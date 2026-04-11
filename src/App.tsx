@@ -160,6 +160,78 @@ const TEMPLATES = [
       buttonColor: '#a855f7',
       buttonTextColor: '#ffffff',
     }
+  },
+  {
+    name: 'Ocean',
+    theme: {
+      backgroundColor: '#075985',
+      textColor: '#f0f9ff',
+      buttonColor: '#0ea5e9',
+      buttonTextColor: '#ffffff',
+    }
+  },
+  {
+    name: 'Solarized',
+    theme: {
+      backgroundColor: '#002b36',
+      textColor: '#839496',
+      buttonColor: '#268bd2',
+      buttonTextColor: '#ffffff',
+    }
+  },
+  {
+    name: 'Rose Gold',
+    theme: {
+      backgroundColor: '#fff1f2',
+      textColor: '#881337',
+      buttonColor: '#fb7185',
+      buttonTextColor: '#ffffff',
+    }
+  },
+  {
+    name: 'Nord',
+    theme: {
+      backgroundColor: '#2e3440',
+      textColor: '#eceff4',
+      buttonColor: '#5e81ac',
+      buttonTextColor: '#eceff4',
+    }
+  },
+  {
+    name: 'Emerald',
+    theme: {
+      backgroundColor: '#064e3b',
+      textColor: '#ecfdf5',
+      buttonColor: '#10b981',
+      buttonTextColor: '#ffffff',
+    }
+  },
+  {
+    name: 'Dracula',
+    theme: {
+      backgroundColor: '#282a36',
+      textColor: '#f8f8f2',
+      buttonColor: '#bd93f9',
+      buttonTextColor: '#282a36',
+    }
+  },
+  {
+    name: 'Royal',
+    theme: {
+      backgroundColor: '#2e1065',
+      textColor: '#f5f3ff',
+      buttonColor: '#fbbf24',
+      buttonTextColor: '#2e1065',
+    }
+  },
+  {
+    name: 'Coffee',
+    theme: {
+      backgroundColor: '#27272a',
+      textColor: '#fdfcfb',
+      buttonColor: '#8a5e3c',
+      buttonTextColor: '#ffffff',
+    }
   }
 ];
 
