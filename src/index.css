@@ -1,0 +1,19 @@
+@import "tailwindcss";
+
+@layer base {
+  button, 
+  a, 
+  [role="button"],
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"] {
+    cursor: pointer;
+  }
+
+  /* Specific handling for disabled elements */
+  button:disabled,
+  a[disabled],
+  [disabled] {
+    cursor: not-allowed;
+  }
+}
