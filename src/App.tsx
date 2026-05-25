@@ -375,7 +375,7 @@ export default function App() {
   const fetchProfile = async (id: string, isUid: boolean = false, autoSaveUserData?: any) => {
     setIsFetching(true);
     const cacheKey = `linkflow_profile_cache_${isUid ? 'uid_' : ''}${id}`;
-    
+
     // 1. Try loading instantly from localStorage cache (SWR Strategy)
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
@@ -412,48 +412,48 @@ export default function App() {
       } else if (res.status === 404) {
         // Clear stale local storage cache
         localStorage.removeItem(cacheKey);
-        
+
         if (!isUid) {
           setProfileNotFound(true);
         } else if (autoSaveUserData) {
           // AUTOSAVE: The profile wasn't found in DB (new user or DB deleted), auto-create it now
-        const claimedName = sessionStorage.getItem('claimedUsername');
-        const suggestedName = claimedName || autoSaveUserData.uid;
-        if (claimedName) {
-          sessionStorage.removeItem('claimedUsername');
-        }
+          const claimedName = sessionStorage.getItem('claimedUsername');
+          const suggestedName = claimedName || autoSaveUserData.uid;
+          if (claimedName) {
+            sessionStorage.removeItem('claimedUsername');
+          }
 
-        const newProfile = {
-          ...DEFAULT_PROFILE,
-          uid: autoSaveUserData.uid,
-          username: suggestedName,
-          email: autoSaveUserData.email || '',
-          displayName: autoSaveUserData.displayName || '',
-          avatarUrl: autoSaveUserData.photoURL || DEFAULT_PROFILE.avatarUrl,
-        };
+          const newProfile = {
+            ...DEFAULT_PROFILE,
+            uid: autoSaveUserData.uid,
+            username: suggestedName,
+            email: autoSaveUserData.email || '',
+            displayName: autoSaveUserData.displayName || '',
+            avatarUrl: autoSaveUserData.photoURL || DEFAULT_PROFILE.avatarUrl,
+          };
 
-        const createRes = await fetch(`/api/profiles/uid/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newProfile),
-        });
-
-        if (createRes.status === 409) {
-          const conflictUsername = suggestedName;
-          const finalProfile = { ...newProfile, username: `${suggestedName}-${Math.random().toString(36).substring(2, 5)}` };
-          const retryRes = await fetch(`/api/profiles/uid/${id}`, {
+          const createRes = await fetch(`/api/profiles/uid/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(finalProfile),
+            body: JSON.stringify(newProfile),
           });
-          if (retryRes.ok) {
-            setProfile(finalProfile);
-            sessionStorage.setItem('claimedUsernameTaken', conflictUsername);
+
+          if (createRes.status === 409) {
+            const conflictUsername = suggestedName;
+            const finalProfile = { ...newProfile, username: `${suggestedName}-${Math.random().toString(36).substring(2, 5)}` };
+            const retryRes = await fetch(`/api/profiles/uid/${id}`, {
+              method: 'PUT',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(finalProfile),
+            });
+            if (retryRes.ok) {
+              setProfile(finalProfile);
+              sessionStorage.setItem('claimedUsernameTaken', conflictUsername);
+            }
+          } else if (createRes.ok) {
+            setProfile(newProfile);
           }
-        } else if (createRes.ok) {
-          setProfile(newProfile);
         }
-      }
       }
     } catch (err) {
       console.error('Fetch profile failed:', err);
@@ -568,9 +568,9 @@ export default function App() {
     if (!clickedLink) return;
 
     // Dynamically find index using stable identity (id, _id, or url)
-    const linkIndex = profile.links.findIndex(l => 
-      (l.id && l.id === clickedLink.id) || 
-      (l._id && l._id === clickedLink._id) || 
+    const linkIndex = profile.links.findIndex(l =>
+      (l.id && l.id === clickedLink.id) ||
+      (l._id && l._id === clickedLink._id) ||
       l.url === clickedLink.url
     );
 
@@ -580,7 +580,7 @@ export default function App() {
     const newLinks = [...profile.links];
     newLinks[linkIndex].clicks = (newLinks[linkIndex].clicks || 0) + 1;
     setProfile(prev => ({ ...prev, links: newLinks }));
-    
+
     if (profile.username) {
       try {
         await fetch(`/api/profiles/${profile.username}/links/click`, {
@@ -609,12 +609,12 @@ export default function App() {
     }
     if (animation === 'glow' && btnColor) {
       return {
-        animate: { 
+        animate: {
           boxShadow: [
-            `0 0 0px ${btnColor}00`, 
-            `0 0 15px ${btnColor}80`, 
+            `0 0 0px ${btnColor}00`,
+            `0 0 15px ${btnColor}80`,
             `0 0 0px ${btnColor}00`
-          ] 
+          ]
         },
         transition: { repeat: Infinity, duration: 2.2, ease: "easeInOut" }
       };
@@ -669,11 +669,11 @@ export default function App() {
           const freshData = await res.json();
           // Check if anything has actually changed to avoid unnecessary state triggers
           if (JSON.stringify(freshData.links) !== JSON.stringify(profile.links) ||
-              freshData.bio !== profile.bio ||
-              freshData.displayName !== profile.displayName ||
-              freshData.avatarUrl !== profile.avatarUrl ||
-              JSON.stringify(freshData.theme) !== JSON.stringify(profile.theme)) {
-            
+            freshData.bio !== profile.bio ||
+            freshData.displayName !== profile.displayName ||
+            freshData.avatarUrl !== profile.avatarUrl ||
+            JSON.stringify(freshData.theme) !== JSON.stringify(profile.theme)) {
+
             // Assign stable ids to fetched links
             if (freshData.links) {
               freshData.links = freshData.links.map((l: any, i: number) => ({
@@ -819,7 +819,7 @@ export default function App() {
       const res = await fetch(`/api/profiles/uid/${user.uid}`, {
         method: 'DELETE',
       });
-      
+
       if (res.ok) {
         // Clear local storage cache
         const uidCacheKey = `linkflow_profile_cache_uid_${user.uid}`;
@@ -830,7 +830,7 @@ export default function App() {
         // 2. Clear local session & set deletion success indicator
         sessionStorage.clear();
         sessionStorage.setItem('deleteSuccess', 'true');
-        
+
         // 3. Try to delete the Firebase Auth user account
         try {
           const currentUser = auth.currentUser;
@@ -840,10 +840,10 @@ export default function App() {
         } catch (fbErr: any) {
           console.warn("Firebase user deletion requires recent login, logging out instead:", fbErr);
         }
-        
+
         // 4. Force Sign Out
         await signOut(auth);
-        
+
         // 5. Reset App States
         setProfile(DEFAULT_PROFILE);
         setView('edit');
@@ -934,7 +934,7 @@ export default function App() {
         const freshProfile = res.ok ? updatedProfile : { ...updatedProfile, username: profile.username };
         localStorage.setItem(`linkflow_profile_cache_uid_${targetUid}`, JSON.stringify(freshProfile));
         localStorage.setItem(`linkflow_profile_cache_${freshProfile.username}`, JSON.stringify(freshProfile));
-        
+
         // Silently refresh profile to ensure state is binary-perfect with DB
         fetchProfile(targetUid, true);
         // Clear success state after 3 seconds
@@ -972,7 +972,7 @@ export default function App() {
           {/* Radial Mesh Glows */}
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-red-900/10 blur-[120px]" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/10 blur-[120px]" />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -981,14 +981,14 @@ export default function App() {
             <div className="w-16 h-16 mx-auto mb-6 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 shadow-md">
               <EyeOff size={28} />
             </div>
-            
+
             <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">404 - Profile Not Found</h2>
             <p className="text-sm text-slate-400 leading-relaxed mb-6">
               This link is not active or has been deleted. Make sure you typed the correct address.
             </p>
-            
+
             <div className="h-[1px] bg-white/5 w-full mb-6" />
-            
+
             <a
               href="/"
               className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
@@ -1008,7 +1008,7 @@ export default function App() {
           {/* Radial Mesh Glows */}
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/40 blur-[120px]" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/40 blur-[120px]" />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -1017,14 +1017,14 @@ export default function App() {
             <div className="w-16 h-16 mx-auto mb-6 bg-slate-800/80 rounded-2xl flex items-center justify-center text-slate-500 shadow-md">
               <EyeOff size={28} />
             </div>
-            
+
             <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">Profile Currently Offline</h2>
             <p className="text-sm text-slate-400 leading-relaxed mb-6">
               The owner of this link has temporarily disabled public access to their page. Please check back later.
             </p>
-            
+
             <div className="h-[1px] bg-white/5 w-full mb-6" />
-            
+
             <a
               href="/"
               className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
@@ -1048,6 +1048,7 @@ export default function App() {
             <motion.img
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.1, duration: 0.5 }}
               src={profile.avatarUrl}
               alt="Avatar"
               className="absolute inset-[3px] w-[calc(100%-6px)] h-[calc(100%-6px)] rounded-full object-cover shadow-2xl"
@@ -1055,11 +1056,30 @@ export default function App() {
               referrerPolicy="no-referrer"
             />
           </div>
-          <h1 className="text-3xl font-extrabold mb-1 tracking-tight">{profile.displayName}</h1>
-          <p className="text-sm opacity-60 mb-6 font-medium tracking-wide">@{profile.username}</p>
-          <p className="text-lg opacity-80 mb-6 max-w-sm mx-auto leading-relaxed whitespace-pre-wrap">
+          <motion.h1
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2, duration: 0.4 }}
+            className="text-3xl font-extrabold mb-1 tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient"
+          >
+            {profile.displayName}
+          </motion.h1>
+          <motion.p
+            initial={{ y: 10, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.25, duration: 0.4 }}
+            className="text-sm opacity-60 mb-6 font-medium tracking-wide"
+          >
+            @{profile.username}
+          </motion.p>
+          <motion.p
+            initial={{ y: 15, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3, duration: 0.4 }}
+            className="text-lg opacity-80 mb-6 max-w-sm mx-auto leading-relaxed whitespace-pre-wrap"
+          >
             {profile.bio || "No bio yet."}
-          </p>
+          </motion.p>
           {/* Optimized Link Layout */}
           <div className="space-y-6">
             {/* Social Icons Row (Shown only in 'grid' mode) */}
@@ -1071,14 +1091,14 @@ export default function App() {
                   return (
                     <motion.a
                       key={idx}
-                      whileHover={{ scale: 1.1, y: -2 }}
+                      whileHover={{ scale: 1.15, y: -3, boxShadow: "0 10px 15px -3px rgba(99, 102, 241, 0.3)" }}
                       whileTap={{ scale: 0.9 }}
                       {...animProps}
                       href={link.url}
                       onClick={() => handleLinkClick(link)}
                       target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
-                      className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-colors relative group overflow-hidden"
+                      className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-all relative group overflow-hidden"
                       style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                       title={link.title}
                     >
@@ -1106,16 +1126,23 @@ export default function App() {
                       key={idx}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: idx * 0.1, type: "spring", stiffness: 300, damping: 20 }}
+                      whileHover={{ 
+                        scale: 1.03, 
+                        y: -3,
+                        boxShadow: "0 15px 30px -5px rgba(99, 102, 241, 0.25), 0 10px 15px -6px rgba(99, 102, 241, 0.25)",
+                        borderColor: "rgba(99, 102, 241, 0.4)"
+                      }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ delay: 0.35 + idx * 0.08, type: "spring", stiffness: 260, damping: 20 }}
                       {...animProps}
                       href={link.url}
                       onClick={() => handleLinkClick(link)}
                       target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
-                      className="block w-full p-5 rounded-2xl transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
+                      className="block w-full p-5 rounded-2xl transition-all flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
                       style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                     >
-                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                       <div className="flex items-center gap-4 relative z-10 w-full">
                         {link.thumbnailUrl ? (
                           <img src={link.thumbnailUrl} alt={link.title} className="w-10 h-10 rounded-xl object-cover shadow-sm shrink-0" />
@@ -1125,7 +1152,18 @@ export default function App() {
                         <div className="text-left">
                           <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight">{link.title}</p>
                           {link.description && (
-                            <p className="text-sm font-semibold text-white mt-1 whitespace-pre-wrap leading-snug">{link.description}</p>
+                            <div className="text-sm font-semibold text-white/80 mt-1.5 space-y-1">
+                              {link.description.includes('\n') ? (
+                                link.description.split('\n').filter(Boolean).map((line, lIdx) => (
+                                  <div key={lIdx} className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"></span>
+                                    <span>{line}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="leading-snug">{link.description}</p>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1187,8 +1225,8 @@ export default function App() {
           <button
             onClick={() => handleSetView('edit')}
             className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${view === 'edit'
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md text-white scale-100'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md text-white scale-100'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <Edit3 size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Editor</span>
@@ -1196,8 +1234,8 @@ export default function App() {
           <button
             onClick={() => handleSetView('preview')}
             className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${view === 'preview'
-                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md text-white scale-100'
-                : 'text-slate-400 hover:text-white hover:bg-white/5'
+              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md text-white scale-100'
+              : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <Eye size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Preview</span>
@@ -1456,8 +1494,8 @@ export default function App() {
                         <button
                           onClick={() => setProfile({ ...profile, socialLinksStyle: 'grid' })}
                           className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${profile.socialLinksStyle === 'grid'
-                              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
-                              : 'text-slate-400 hover:text-white'
+                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-white'
                             }`}
                         >
                           Grid
@@ -1465,8 +1503,8 @@ export default function App() {
                         <button
                           onClick={() => setProfile({ ...profile, socialLinksStyle: 'list' })}
                           className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${profile.socialLinksStyle === 'list'
-                              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
-                              : 'text-slate-400 hover:text-white'
+                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
+                            : 'text-slate-400 hover:text-white'
                             }`}
                         >
                           List
@@ -1513,194 +1551,189 @@ export default function App() {
                           transition={{ type: "spring", stiffness: 300, damping: 30 }}
                           className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative select-none"
                         >
-                        <div className="flex items-start gap-4">
-                          {/* Up & Down Reorder Buttons */}
-                          <div className="flex flex-col items-center gap-1 shrink-0 self-center">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                if (idx > 0) {
-                                  const newLinks = [...profile.links];
-                                  const temp = newLinks[idx];
-                                  newLinks[idx] = newLinks[idx - 1];
-                                  newLinks[idx - 1] = temp;
-                                  setProfile({ ...profile, links: newLinks });
-                                }
-                              }}
-                              disabled={idx === 0}
-                              className={`p-1 rounded-md transition-colors ${
-                                idx === 0 
-                                  ? 'text-slate-800 cursor-not-allowed opacity-20' 
-                                  : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
-                              }`}
-                              title="Move Up"
-                            >
-                              <ChevronUp size={16} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                if (idx < profile.links.length - 1) {
-                                  const newLinks = [...profile.links];
-                                  const temp = newLinks[idx];
-                                  newLinks[idx] = newLinks[idx + 1];
-                                  newLinks[idx + 1] = temp;
-                                  setProfile({ ...profile, links: newLinks });
-                                }
-                              }}
-                              disabled={idx === profile.links.length - 1}
-                              className={`p-1 rounded-md transition-colors ${
-                                idx === profile.links.length - 1 
-                                  ? 'text-slate-800 cursor-not-allowed opacity-20' 
-                                  : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
-                              }`}
-                              title="Move Down"
-                            >
-                              <ChevronDown size={16} />
-                            </button>
-                          </div>
-
-                          {/* Icon Selector Button & Dropdown Container */}
-                          <div className="relative shrink-0 mt-1">
-                            <button
-                              onClick={() => {
-                                const currentOpen = activeIconPickerIdx === idx ? null : idx;
-                                setActiveIconPickerIdx(currentOpen);
-                              }}
-                              className="w-12 h-12 rounded-xl bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md group/iconbtn active:scale-95"
-                              title="Choose Custom Icon"
-                            >
-                              {(() => {
-                                const IconComp = ICON_MAP[link.icon] || Globe;
-                                return <IconComp size={20} className="group-hover/iconbtn:scale-110 transition-transform" />;
-                              })()}
-                            </button>
-
-                            {/* Floating icon selector picker */}
-                            {activeIconPickerIdx === idx && (
-                              <>
-                                <div 
-                                  className="fixed inset-0 z-10" 
-                                  onClick={() => setActiveIconPickerIdx(null)} 
-                                />
-                                <div className="absolute left-0 mt-2 p-2 bg-slate-950 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl z-20 w-48 grid grid-cols-4 gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
-                                  {Object.keys(ICON_MAP).map((iconName) => {
-                                    const PickerIcon = ICON_MAP[iconName];
-                                    return (
-                                      <button
-                                        key={iconName}
-                                        onClick={() => {
-                                          const newLinks = [...profile.links];
-                                          newLinks[idx].icon = iconName;
-                                          setProfile({ ...profile, links: newLinks });
-                                          setActiveIconPickerIdx(null);
-                                        }}
-                                        className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
-                                          link.icon === iconName 
-                                            ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-md' 
-                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                        }`}
-                                        title={iconName}
-                                      >
-                                        <PickerIcon size={16} />
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              </>
-                            )}
-                          </div>
-
-                          <div className="flex-1 space-y-3">
-                            <input
-                              type="text"
-                              value={link.title}
-                              placeholder="Link Title (e.g. My Website)"
-                              onChange={(e) => {
-                                const newLinks = [...profile.links];
-                                newLinks[idx].title = e.target.value;
-                                setProfile({ ...profile, links: newLinks });
-                              }}
-                              className="w-full bg-transparent font-bold text-white focus:outline-none placeholder:text-slate-700 text-base"
-                            />
-                            <textarea
-                              value={link.description || ''}
-                              placeholder="Short description (optional)"
-                              onChange={(e) => {
-                                const newLinks = [...profile.links];
-                                newLinks[idx].description = e.target.value;
-                                setProfile({ ...profile, links: newLinks });
-                              }}
-                              rows={2}
-                              className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all shadow-inner mt-1 block resize-none min-h-[3rem]"
-                            />
-                            <div className="relative">
-                              <input
-                                type="text"
-                                value={link.url}
-                                placeholder="URL (https://...)"
-                                onChange={(e) => {
-                                  const newUrl = e.target.value;
-                                  const newLinks = [...profile.links];
-                                  newLinks[idx].url = newUrl;
-                                  // Auto-detect icon
-                                  newLinks[idx].icon = detectIcon(newUrl);
-                                  setProfile({ ...profile, links: newLinks });
+                          <div className="flex items-start gap-4">
+                            {/* Up & Down Reorder Buttons */}
+                            <div className="flex flex-col items-center gap-1 shrink-0 self-center">
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (idx > 0) {
+                                    const newLinks = [...profile.links];
+                                    const temp = newLinks[idx];
+                                    newLinks[idx] = newLinks[idx - 1];
+                                    newLinks[idx - 1] = temp;
+                                    setProfile({ ...profile, links: newLinks });
+                                  }
                                 }}
-                                className={`w-full bg-transparent text-sm focus:outline-none transition-colors placeholder:text-slate-700 font-semibold ${link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url)
-                                    ? 'text-red-400 placeholder:text-red-300'
-                                    : 'text-indigo-400/90'
+                                disabled={idx === 0}
+                                className={`p-1 rounded-md transition-colors ${idx === 0
+                                    ? 'text-slate-800 cursor-not-allowed opacity-20'
+                                    : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
                                   }`}
-                              />
-                              {link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) && (
-                                <p className="text-[10px] text-red-400 mt-1 font-medium animate-pulse">
-                                  URL must start with http://, https://, or mailto:
-                                </p>
+                                title="Move Up"
+                              >
+                                <ChevronUp size={16} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  if (idx < profile.links.length - 1) {
+                                    const newLinks = [...profile.links];
+                                    const temp = newLinks[idx];
+                                    newLinks[idx] = newLinks[idx + 1];
+                                    newLinks[idx + 1] = temp;
+                                    setProfile({ ...profile, links: newLinks });
+                                  }
+                                }}
+                                disabled={idx === profile.links.length - 1}
+                                className={`p-1 rounded-md transition-colors ${idx === profile.links.length - 1
+                                    ? 'text-slate-800 cursor-not-allowed opacity-20'
+                                    : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
+                                  }`}
+                                title="Move Down"
+                              >
+                                <ChevronDown size={16} />
+                              </button>
+                            </div>
+
+                            {/* Icon Selector Button & Dropdown Container */}
+                            <div className="relative shrink-0 mt-1">
+                              <button
+                                onClick={() => {
+                                  const currentOpen = activeIconPickerIdx === idx ? null : idx;
+                                  setActiveIconPickerIdx(currentOpen);
+                                }}
+                                className="w-12 h-12 rounded-xl bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md group/iconbtn active:scale-95"
+                                title="Choose Custom Icon"
+                              >
+                                {(() => {
+                                  const IconComp = ICON_MAP[link.icon] || Globe;
+                                  return <IconComp size={20} className="group-hover/iconbtn:scale-110 transition-transform" />;
+                                })()}
+                              </button>
+
+                              {/* Floating icon selector picker */}
+                              {activeIconPickerIdx === idx && (
+                                <>
+                                  <div
+                                    className="fixed inset-0 z-10"
+                                    onClick={() => setActiveIconPickerIdx(null)}
+                                  />
+                                  <div className="absolute left-0 mt-2 p-2 bg-slate-950 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl z-20 w-48 grid grid-cols-4 gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {Object.keys(ICON_MAP).map((iconName) => {
+                                      const PickerIcon = ICON_MAP[iconName];
+                                      return (
+                                        <button
+                                          key={iconName}
+                                          onClick={() => {
+                                            const newLinks = [...profile.links];
+                                            newLinks[idx].icon = iconName;
+                                            setProfile({ ...profile, links: newLinks });
+                                            setActiveIconPickerIdx(null);
+                                          }}
+                                          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${link.icon === iconName
+                                              ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-md'
+                                              : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                            }`}
+                                          title={iconName}
+                                        >
+                                          <PickerIcon size={16} />
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                </>
                               )}
                             </div>
-                            {/* Secondary Features Control Row */}
-                            <div className="flex flex-wrap items-center gap-2.5 pt-2.5 border-t border-white/5 text-[10px]">
-                              {/* 1. Toggle Switch (Visibility) */}
-                              <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
-                                <span className="font-bold text-slate-500 uppercase tracking-wider">Show Link</span>
-                                <button
-                                  type="button"
-                                  onClick={(e) => {
-                                    e.preventDefault();
+
+                            <div className="flex-1 space-y-3">
+                              <input
+                                type="text"
+                                value={link.title}
+                                placeholder="Link Title (e.g. My Website)"
+                                onChange={(e) => {
+                                  const newLinks = [...profile.links];
+                                  newLinks[idx].title = e.target.value;
+                                  setProfile({ ...profile, links: newLinks });
+                                }}
+                                className="w-full bg-transparent font-bold text-white focus:outline-none placeholder:text-slate-700 text-base"
+                              />
+                              <textarea
+                                value={link.description || ''}
+                                placeholder="Short description (optional)"
+                                onChange={(e) => {
+                                  const newLinks = [...profile.links];
+                                  newLinks[idx].description = e.target.value;
+                                  setProfile({ ...profile, links: newLinks });
+                                }}
+                                rows={2}
+                                className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all shadow-inner mt-1 block resize-none min-h-[3rem]"
+                              />
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  value={link.url}
+                                  placeholder="URL (https://...)"
+                                  onChange={(e) => {
+                                    const newUrl = e.target.value;
                                     const newLinks = [...profile.links];
-                                    newLinks[idx].isActive = newLinks[idx].isActive !== false ? false : true;
+                                    newLinks[idx].url = newUrl;
+                                    // Auto-detect icon
+                                    newLinks[idx].icon = detectIcon(newUrl);
                                     setProfile({ ...profile, links: newLinks });
                                   }}
-                                  className={`relative w-8 h-4 rounded-full transition-colors duration-150 focus:outline-none ${
-                                    link.isActive !== false ? 'bg-green-500' : 'bg-slate-800'
-                                  }`}
-                                >
-                                  <span
-                                    className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transition-transform duration-150 ${
-                                      link.isActive !== false ? 'translate-x-4' : 'translate-x-0'
+                                  className={`w-full bg-transparent text-sm focus:outline-none transition-colors placeholder:text-slate-700 font-semibold ${link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url)
+                                    ? 'text-red-400 placeholder:text-red-300'
+                                    : 'text-indigo-400/90'
                                     }`}
-                                  />
-                                </button>
+                                />
+                                {link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) && (
+                                  <p className="text-[10px] text-red-400 mt-1 font-medium animate-pulse">
+                                    URL must start with http://, https://, or mailto:
+                                  </p>
+                                )}
+                              </div>
+                              {/* Secondary Features Control Row */}
+                              <div className="flex flex-wrap items-center gap-2.5 pt-2.5 border-t border-white/5 text-[10px]">
+                                {/* 1. Toggle Switch (Visibility) */}
+                                <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
+                                  <span className="font-bold text-slate-500 uppercase tracking-wider">Show Link</span>
+                                  <button
+                                    type="button"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      const newLinks = [...profile.links];
+                                      newLinks[idx].isActive = newLinks[idx].isActive !== false ? false : true;
+                                      setProfile({ ...profile, links: newLinks });
+                                    }}
+                                    className={`relative w-8 h-4 rounded-full transition-colors duration-150 focus:outline-none ${link.isActive !== false ? 'bg-green-500' : 'bg-slate-800'
+                                      }`}
+                                  >
+                                    <span
+                                      className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transition-transform duration-150 ${link.isActive !== false ? 'translate-x-4' : 'translate-x-0'
+                                        }`}
+                                    />
+                                  </button>
+                                </div>
                               </div>
                             </div>
+                            <div className="flex flex-col items-center justify-center shrink-0 mt-1">
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  const newLinks = profile.links.filter((_, i) => i !== idx);
+                                  setProfile({ ...profile, links: newLinks });
+                                }}
+                                className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2.5 rounded-xl border border-white/5 transition-all active:scale-90"
+                                title="Delete Link"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
-                          <div className="flex flex-col items-center justify-center shrink-0 mt-1">
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                const newLinks = profile.links.filter((_, i) => i !== idx);
-                                setProfile({ ...profile, links: newLinks });
-                              }}
-                              className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2.5 rounded-xl border border-white/5 transition-all active:scale-90"
-                              title="Delete Link"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
+                        </motion.div>
                       ))}
                     </AnimatePresence>
                   </div>
@@ -1767,7 +1800,7 @@ export default function App() {
                 <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
                   {/* Neon Glow Effects */}
                   <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-indigo-500/10 blur-[80px] group-hover:bg-indigo-500/15 transition-all duration-300 pointer-events-none" />
-                  
+
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
@@ -1857,8 +1890,8 @@ export default function App() {
                       <div>
                         <h3 className="text-sm font-bold text-slate-200">Public Link Status</h3>
                         <p className="text-xs text-slate-400 mt-0.5">
-                          {profile.isActive !== false 
-                            ? 'Your profile is online and searchable.' 
+                          {profile.isActive !== false
+                            ? 'Your profile is online and searchable.'
                             : 'Your profile is offline and hidden.'}
                         </p>
                       </div>
@@ -1867,14 +1900,12 @@ export default function App() {
                           const updated = { ...profile, isActive: profile.isActive === false ? true : false };
                           setProfile(updated);
                         }}
-                        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
-                          profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
-                        }`}
+                        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
+                          }`}
                       >
                         <span
-                          className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full shadow-sm transition-transform duration-200 ${
-                            profile.isActive !== false ? 'translate-x-6' : 'translate-x-0'
-                          }`}
+                          className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full shadow-sm transition-transform duration-200 ${profile.isActive !== false ? 'translate-x-6' : 'translate-x-0'
+                            }`}
                         />
                       </button>
                     </div>
@@ -1901,7 +1932,7 @@ export default function App() {
         </div>
 
         {/* Right Column: Live Preview */}
-        <div className={`lg:sticky lg:top-24 lg:self-start flex items-start justify-center pt-4 ${view === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
+        <div className={`lg:sticky lg:top-24 h-[calc(100vh-8rem)] flex items-center justify-center ${view === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
           <div className="relative w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] xl:max-w-[400px] aspect-[9/19] bg-slate-950 rounded-[3rem] border-[8px] sm:border-[12px] border-slate-950 shadow-2xl shadow-indigo-500/5 overflow-hidden ring-4 ring-indigo-500/10">
             {/* Dynamic Island / Notch Mockup */}
             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 flex items-center justify-between px-2 shadow-inner">
@@ -1920,6 +1951,7 @@ export default function App() {
                   key={profile.avatarUrl}
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
+                  transition={{ delay: 0.1, duration: 0.5 }}
                   src={profile.avatarUrl}
                   alt="Avatar"
                   className="absolute inset-[3px] w-[calc(100%-6px)] h-[calc(100%-6px)] rounded-full object-cover shadow-xl"
@@ -1927,11 +1959,31 @@ export default function App() {
                   referrerPolicy="no-referrer"
                 />
               </div>
-              <h1 className="text-xl font-extrabold mb-1 tracking-tight">{profile.displayName}</h1>
-              <p className="text-xs opacity-75 mb-4 font-semibold">@{profile.username}</p>
-              <p className="text-sm opacity-80 mb-4 whitespace-pre-wrap leading-relaxed" style={{ color: profile.theme.textColor }}>
+              <motion.h1
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.15, duration: 0.4 }}
+                className="text-xl font-extrabold mb-1 tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient"
+              >
+                {profile.displayName}
+              </motion.h1>
+              <motion.p
+                initial={{ y: 8, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.4 }}
+                className="text-xs opacity-75 mb-4 font-semibold"
+              >
+                @{profile.username}
+              </motion.p>
+              <motion.p
+                initial={{ y: 10, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.25, duration: 0.4 }}
+                className="text-sm opacity-80 mb-4 whitespace-pre-wrap leading-relaxed"
+                style={{ color: profile.theme.textColor }}
+              >
                 {profile.bio || "Your bio will appear here..."}
-              </p>
+              </motion.p>
               <div className="space-y-4 relative z-10">
                 {/* Social Icons Row (Shown only in 'grid' mode) */}
                 {profile.socialLinksStyle === 'grid' && profile.links.filter(l => l.isActive !== false && l.icon !== 'globe').length > 0 && (
@@ -1944,7 +1996,7 @@ export default function App() {
                           key={idx}
                           initial={{ opacity: 0, scale: 0.8 }}
                           animate={{ opacity: 1, scale: 1 }}
-                          whileHover={{ scale: 1.1 }}
+                          whileHover={{ scale: 1.15, y: -2, boxShadow: "0 8px 12px -3px rgba(99, 102, 241, 0.25)" }}
                           {...animProps}
                           href={link.url}
                           target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
@@ -1978,15 +2030,22 @@ export default function App() {
                             initial={{ opacity: 0, x: -20 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            transition={{ delay: idx * 0.05, type: "spring", stiffness: 300, damping: 20 }}
+                            whileHover={{ 
+                              scale: 1.02, 
+                              y: -2,
+                              boxShadow: "0 10px 20px -5px rgba(99, 102, 241, 0.2), 0 8px 10px -6px rgba(99, 102, 241, 0.2)",
+                              borderColor: "rgba(99, 102, 241, 0.35)"
+                            }}
+                            whileTap={{ scale: 0.98 }}
+                            transition={{ delay: 0.3 + idx * 0.05, type: "spring", stiffness: 300, damping: 20 }}
                             {...animProps}
                             href={link.url}
                             target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                             rel="noopener noreferrer"
-                            className="block w-full p-4 rounded-xl transition-all hover:scale-102 active:scale-98 flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden"
+                            className="block w-full p-4 rounded-xl transition-all flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative"
                             style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                           >
-                            <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
                             <div className="flex items-center gap-3 relative z-10 w-full">
                               {link.thumbnailUrl ? (
                                 <img src={link.thumbnailUrl} alt={link.title} className="w-7 h-7 rounded-lg object-cover shadow-sm shrink-0" />
@@ -1996,7 +2055,18 @@ export default function App() {
                               <div className="text-left overflow-hidden">
                                 <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
                                 {link.description && (
-                                  <p className="text-[10px] text-white mt-0.5 whitespace-pre-wrap leading-tight">{link.description}</p>
+                                  <div className="text-[10px] text-white/80 mt-1 space-y-0.5 text-left">
+                                    {link.description.includes('\n') ? (
+                                      link.description.split('\n').filter(Boolean).map((line, lIdx) => (
+                                        <div key={lIdx} className="flex items-center gap-1.5">
+                                          <span className="w-1 h-1 rounded-full bg-indigo-400 shrink-0"></span>
+                                          <span className="truncate">{line}</span>
+                                        </div>
+                                      ))
+                                    ) : (
+                                      <p className="leading-tight">{link.description}</p>
+                                    )}
+                                  </div>
                                 )}
                               </div>
                             </div>
@@ -2101,7 +2171,7 @@ export default function App() {
           {/* Radial Mesh Glows */}
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/30 blur-[120px]" />
           <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/30 blur-[120px]" />
-          
+
           <motion.div
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -2110,12 +2180,12 @@ export default function App() {
             <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
               <User size={32} />
             </div>
-            
+
             <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">Choose your Handle</h2>
             <p className="text-sm text-slate-400 mb-6 leading-relaxed">
               Create your unique custom link to share your social profiles and projects with the world.
             </p>
-            
+
             <div className="space-y-4 text-left">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Desired Username</label>
@@ -2133,7 +2203,7 @@ export default function App() {
                   />
                 </div>
               </div>
-              
+
               {/* Availability Status Indicators */}
               <div className="min-h-[24px] px-1 text-xs">
                 {usernameStatus === 'checking' && (
@@ -2161,7 +2231,7 @@ export default function App() {
                   </span>
                 )}
               </div>
-              
+
               <button
                 onClick={handleSaveUsername}
                 disabled={usernameStatus !== 'available' || isSaving}
