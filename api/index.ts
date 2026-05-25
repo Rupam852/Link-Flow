@@ -148,7 +148,7 @@ async function fetchGooglePublicKeys(): Promise<Record<string, string>> {
   }
 
   try {
-    const res = await fetch("https://www.googleapis.com/robot/v1/metadata/x509/securetoken-for-firebase%40system.gserviceaccount.com");
+    const res = await fetch("https://www.googleapis.com/robot/v1/metadata/x509/securetoken@system.gserviceaccount.com");
     if (!res.ok) return {};
     
     const data = await res.json();
