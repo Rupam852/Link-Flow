@@ -114,6 +114,19 @@ const DEFAULT_PROFILE: Profile = {
   isActive: true
 };
 
+const GoogleDriveIcon = ({ size = 20, className = '' }: { size?: number, className?: string }) => (
+  <svg
+    viewBox="0 0 87.3 78"
+    width={size}
+    height={size}
+    className={className}
+  >
+    <path d="M6.6 66.8L22.2 40h42.9L49.5 66.8z" fill="currentColor" opacity="0.95" />
+    <path d="M22.2 40L43.7 3.2h28.5L56.5 40z" fill="currentColor" opacity="0.75" />
+    <path d="M56.5 40L71.7 66.8H42.9L56.5 40z" fill="currentColor" opacity="0.5" />
+  </svg>
+);
+
 const ICON_MAP: Record<string, any> = {
   github: Github,
   twitter: Twitter,
@@ -127,7 +140,7 @@ const ICON_MAP: Record<string, any> = {
   discord: MessageCircle,
   tiktok: Play,
   globe: Globe,
-  drive: HardDrive,
+  drive: GoogleDriveIcon,
   link: Link,
   phone: Phone,
   shop: ShoppingBag,
