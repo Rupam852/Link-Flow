@@ -39,6 +39,7 @@ import type { User as FirebaseUser } from 'firebase/auth';
 import LandingPage from './components/LandingPage';
 
 interface Link {
+  id?: string; // Stable ID for Reorder tracking key
   title: string;
   url: string;
   icon: string;
@@ -83,9 +84,9 @@ const DEFAULT_PROFILE: Profile = {
   bio: '',
   avatarUrl: "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23111827'/%3E%3Ccircle cx='100' cy='75' r='35' fill='%2338BDF8'/%3E%3Cpath d='M45 190 C45 110, 155 110, 155 190 Z' fill='%2338BDF8'/%3E%3C/svg%3E",
   links: [
-    { title: 'My Portfolio', url: 'https://example.com', icon: 'globe', description: 'Check out my latest projects and work experience.', isActive: true, animation: 'none', clicks: 0 },
-    { title: 'GitHub', url: 'https://github.com', icon: 'github', isActive: true, animation: 'none', clicks: 0 },
-    { title: 'Twitter', url: 'https://twitter.com', icon: 'twitter', isActive: true, animation: 'none', clicks: 0 },
+    { id: 'default-portfolio', title: 'My Portfolio', url: 'https://example.com', icon: 'globe', description: 'Check out my latest projects and work experience.', isActive: true, animation: 'none', clicks: 0 },
+    { id: 'default-github', title: 'GitHub', url: 'https://github.com', icon: 'github', isActive: true, animation: 'none', clicks: 0 },
+    { id: 'default-twitter', title: 'Twitter', url: 'https://twitter.com', icon: 'twitter', isActive: true, animation: 'none', clicks: 0 },
   ],
   quickSocials: [
     { platform: 'instagram', url: '', icon: 'instagram', isActive: false },
@@ -363,6 +364,12 @@ export default function App() {
     if (cached) {
       try {
         const parsed = JSON.parse(cached);
+        if (parsed && parsed.links) {
+          parsed.links = parsed.links.map((l: any, i: number) => ({
+            ...l,
+            id: l.id || l._id || `link-${i}-${Math.random().toString(36).substring(2, 5)}`
+          }));
+        }
         setProfile(parsed);
         setLoading(false);
       } catch (e) {
@@ -375,6 +382,12 @@ export default function App() {
       const res = await fetch(endpoint);
       if (res.ok) {
         const data = await res.json();
+        if (data && data.links) {
+          data.links = data.links.map((l: any, i: number) => ({
+            ...l,
+            id: l.id || l._id || `link-${i}-${Math.random().toString(36).substring(2, 5)}`
+          }));
+        }
         setProfile(data);
         // 2. Save fresh version to cache
         localStorage.setItem(cacheKey, JSON.stringify(data));
@@ -1397,7 +1410,7 @@ export default function App() {
                       </div>
                     </div>
                     <button
-                      onClick={() => setProfile({ ...profile, links: [...profile.links, { title: 'New Link', url: '', icon: 'globe' }] })}
+                      onClick={() => setProfile({ ...profile, links: [...profile.links, { id: `link-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`, title: 'New Link', url: '', icon: 'globe', isActive: true }] })}
                       className="text-indigo-400 hover:bg-indigo-500/10 p-2.5 rounded-xl border border-white/5 transition-all"
                       title="Add New Link"
                     >
@@ -1433,7 +1446,7 @@ export default function App() {
                     {profile.links.map((link, idx) => (
                       <Reorder.Item
                         value={link}
-                        key={link.title + link.url + idx}
+                        key={link.id || `link-${idx}`}
                         className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative select-none"
                       >
                         <div className="flex items-start gap-4">
