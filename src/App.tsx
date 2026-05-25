@@ -261,6 +261,7 @@ export default function App() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showDeleteToast, setShowDeleteToast] = useState(false);
+  const [claimedTakenAlert, setClaimedTakenAlert] = useState<string | null>(null);
 
   // Responsive View Handler with History tracking for back gesture
   const handleSetView = (newView: 'preview' | 'edit') => {
@@ -301,6 +302,17 @@ export default function App() {
     }
   }, [user]);
 
+  // Check if claimed username was already taken and assigned a fallback slug
+  useEffect(() => {
+    const takenName = sessionStorage.getItem('claimedUsernameTaken');
+    if (takenName && profile.username && profile.username !== takenName) {
+      sessionStorage.removeItem('claimedUsernameTaken');
+      setClaimedTakenAlert(`The handle @${takenName} was already registered by another creator, so we assigned a unique variation: @${profile.username}. You can customize it at any time below!`);
+      const timer = setTimeout(() => setClaimedTakenAlert(null), 9000);
+      return () => clearTimeout(timer);
+    }
+  }, [profile.username]);
+
   // Helper for generating URL slugs
   const generateSlug = (name?: string | null) => {
     if (!name) return '';
@@ -339,13 +351,17 @@ export default function App() {
         });
 
         if (createRes.status === 409) {
+          const conflictUsername = suggestedName;
           const finalProfile = { ...newProfile, username: `${suggestedName}-${Math.random().toString(36).substring(2, 5)}` };
           const retryRes = await fetch(`/api/profiles/uid/${id}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(finalProfile),
           });
-          if (retryRes.ok) setProfile(finalProfile);
+          if (retryRes.ok) {
+            setProfile(finalProfile);
+            sessionStorage.setItem('claimedUsernameTaken', conflictUsername);
+          }
         } else if (createRes.ok) {
           setProfile(newProfile);
         }
@@ -1736,6 +1752,26 @@ export default function App() {
             <div className="flex flex-col text-left">
               <span className="text-sm font-bold text-white">Account Permanently Deleted</span>
               <span className="text-[11px] text-slate-400 mt-0.5 font-medium leading-normal">All your profile configurations have been securely wiped. You can register as a new user.</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Claimed Taken Warning Toast */}
+      <AnimatePresence>
+        {claimedTakenAlert && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-amber-500/20 max-w-md w-[calc(100%-2rem)]"
+          >
+            <div className="w-10 h-10 bg-amber-500/10 border border-amber-500/20 rounded-full flex items-center justify-center shrink-0">
+              <AlertCircle size={18} className="text-amber-500 animate-pulse" />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-sm font-bold text-white">Handle Already Claimed</span>
+              <span className="text-[11px] text-slate-400 mt-0.5 font-medium leading-normal">{claimedTakenAlert}</span>
             </div>
           </motion.div>
         )}
