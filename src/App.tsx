@@ -288,6 +288,7 @@ export default function App() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showDeleteToast, setShowDeleteToast] = useState(false);
   const [claimedTakenAlert, setClaimedTakenAlert] = useState<string | null>(null);
+  const [profileNotFound, setProfileNotFound] = useState(false);
   const [isRefreshingAnalytics, setIsRefreshingAnalytics] = useState(false);
 
   const handleRefreshAnalytics = async () => {
@@ -404,10 +405,17 @@ export default function App() {
           }));
         }
         setProfile(data);
+        setProfileNotFound(false);
         // 2. Save fresh version to cache
         localStorage.setItem(cacheKey, JSON.stringify(data));
-      } else if (res.status === 404 && isUid && autoSaveUserData) {
-        // AUTOSAVE: The profile wasn't found in DB (new user or DB deleted), auto-create it now
+      } else if (res.status === 404) {
+        // Clear stale local storage cache
+        localStorage.removeItem(cacheKey);
+        
+        if (!isUid) {
+          setProfileNotFound(true);
+        } else if (autoSaveUserData) {
+          // AUTOSAVE: The profile wasn't found in DB (new user or DB deleted), auto-create it now
         const claimedName = sessionStorage.getItem('claimedUsername');
         const suggestedName = claimedName || autoSaveUserData.uid;
         if (claimedName) {
@@ -444,6 +452,7 @@ export default function App() {
         } else if (createRes.ok) {
           setProfile(newProfile);
         }
+      }
       }
     } catch (err) {
       console.error('Fetch profile failed:', err);
@@ -811,6 +820,12 @@ export default function App() {
       });
       
       if (res.ok) {
+        // Clear local storage cache
+        const uidCacheKey = `linkflow_profile_cache_uid_${user.uid}`;
+        const usernameCacheKey = `linkflow_profile_cache_${profile.username}`;
+        localStorage.removeItem(uidCacheKey);
+        localStorage.removeItem(usernameCacheKey);
+
         // 2. Clear local session & set deletion success indicator
         sessionStorage.clear();
         sessionStorage.setItem('deleteSuccess', 'true');
@@ -948,6 +963,42 @@ export default function App() {
 
 
   if (view === 'public') {
+    if (profileNotFound) {
+      return (
+        <div
+          className="min-h-screen w-full overflow-hidden flex items-center justify-center p-6 bg-[#090d16]"
+        >
+          {/* Radial Mesh Glows */}
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-red-900/10 blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/10 blur-[120px]" />
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md text-center p-8 bg-slate-900/30 border border-white/5 rounded-3xl backdrop-blur-xl shadow-2xl relative z-10"
+          >
+            <div className="w-16 h-16 mx-auto mb-6 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 shadow-md">
+              <EyeOff size={28} />
+            </div>
+            
+            <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">404 - Profile Not Found</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+              This link is not active or has been deleted. Make sure you typed the correct address.
+            </p>
+            
+            <div className="h-[1px] bg-white/5 w-full mb-6" />
+            
+            <a
+              href="/"
+              className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
+            >
+              Create Your Own LinkFlow Page →
+            </a>
+          </motion.div>
+        </div>
+      );
+    }
+
     if (profile.isActive === false) {
       return (
         <div
