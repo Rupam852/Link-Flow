@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Plus, 
-  Trash2, 
-  ExternalLink, 
-  Settings, 
-  Eye, 
-  Edit3, 
-  Github, 
-  Twitter, 
-  Instagram, 
-  Linkedin, 
-  Globe, 
+import {
+  Plus,
+  Trash2,
+  ExternalLink,
+  Settings,
+  Eye,
+  Edit3,
+  Github,
+  Twitter,
+  Instagram,
+  Linkedin,
+  Globe,
   Save,
   User,
   Layout,
@@ -303,7 +303,7 @@ export default function App() {
         if (claimedName) {
           sessionStorage.removeItem('claimedUsername');
         }
-        
+
         const newProfile = {
           ...DEFAULT_PROFILE,
           uid: autoSaveUserData.uid,
@@ -320,15 +320,15 @@ export default function App() {
         });
 
         if (createRes.status === 409) {
-           const finalProfile = { ...newProfile, username: `${suggestedName}-${Math.random().toString(36).substring(2, 5)}` };
-           const retryRes = await fetch(`/api/profiles/uid/${id}`, {
-              method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(finalProfile),
-           });
-           if (retryRes.ok) setProfile(finalProfile);
+          const finalProfile = { ...newProfile, username: `${suggestedName}-${Math.random().toString(36).substring(2, 5)}` };
+          const retryRes = await fetch(`/api/profiles/uid/${id}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(finalProfile),
+          });
+          if (retryRes.ok) setProfile(finalProfile);
         } else if (createRes.ok) {
-           setProfile(newProfile);
+          setProfile(newProfile);
         }
       }
     } catch (err) {
@@ -371,7 +371,7 @@ export default function App() {
         method: "POST",
         body: formData
       });
-      
+
       const data = await response.json();
       if (data.secure_url) {
         setProfile(prev => ({ ...prev, avatarUrl: data.secure_url }));
@@ -396,23 +396,10 @@ export default function App() {
     // Handle public profile routing
     const path = window.location.pathname;
     const parts = path.split('/').filter(Boolean);
-    
-    // 1. Check for old prefix links (e.g., /linkflow/username or /u/username)
-    const isOldLink = parts.length === 2 && (parts[0] === 'linkflow' || parts[0] === 'u');
-    
-    // 2. Check for new direct short link (e.g., /username)
-    const isNewLink = parts.length === 1 && !['api', 'admin', 'assets', 'static', 'edit', 'preview', 'index.html'].includes(parts[0]);
-    
-    const isPublicProfile = isOldLink || isNewLink;
-    
+    const isPublicProfile = parts.length === 1 && !['api', 'admin', 'assets', 'static', 'edit', 'preview', 'index.html'].includes(parts[0]);
+
     if (isPublicProfile) {
-      const username = isOldLink ? parts[1] : parts[0];
-      
-      // If it is an old link, seamlessly upgrade browser URL to direct short link
-      if (isOldLink) {
-        window.history.replaceState(null, '', `/${username}`);
-      }
-      
+      const username = parts[0];
       setView('public');
       fetchProfile(username);
     }
@@ -443,15 +430,15 @@ export default function App() {
       setProfile(prev => {
         const isUid = prev.username && /^[A-Za-z0-9]{20,}$/.test(prev.username);
         const suggestedName = user.displayName ? generateSlug(user.displayName) : user.uid;
-        
+
         return {
           ...prev,
           uid: user.uid,
           username: (!prev.username || isUid) ? suggestedName : prev.username,
           email: prev.email || user.email || '',
           displayName: prev.displayName || user.displayName || '',
-          avatarUrl: (prev.avatarUrl === DEFAULT_PROFILE.avatarUrl || !prev.avatarUrl) 
-            ? user.photoURL || prev.avatarUrl 
+          avatarUrl: (prev.avatarUrl === DEFAULT_PROFILE.avatarUrl || !prev.avatarUrl)
+            ? user.photoURL || prev.avatarUrl
             : prev.avatarUrl,
           bio: prev.bio || ''
         };
@@ -467,8 +454,8 @@ export default function App() {
           const isUid = prev.username && /^[A-Za-z0-9]{20,}$/.test(prev.username);
           const suggestedName = result.user.displayName ? generateSlug(result.user.displayName) : result.user.uid;
 
-          return { 
-            ...prev, 
+          return {
+            ...prev,
             uid: result.user.uid,
             username: (!prev.username || isUid) ? suggestedName : prev.username,
             email: result.user.email || '',
@@ -498,7 +485,7 @@ export default function App() {
     try {
       // Ensure we have a UID from state or active user
       const targetUid = profile.uid || user?.uid;
-      
+
       if (!targetUid) {
         setSaveError("User session not found. Please log in again.");
         return;
@@ -507,7 +494,7 @@ export default function App() {
       // Automatically generate a username if it's currently a UID or empty
       let currentUsername = profile.username;
       const isUid = currentUsername && /^[A-Za-z0-9]{20,}$/.test(currentUsername); // Simple heuristic for Firebase UID
-      
+
       if (!currentUsername || isUid) {
         const slug = profile.displayName
           .toLowerCase()
@@ -515,7 +502,7 @@ export default function App() {
           .replace(/[^\w\s-]/g, '')
           .replace(/[\s_-]+/g, '-')
           .replace(/^-+|-+$/g, '');
-          
+
         if (slug) {
           currentUsername = slug;
         }
@@ -524,7 +511,7 @@ export default function App() {
       // Sanitize profile: Remove MongoDB internal fields before sending
       const { _id, __v, ...pureProfileData } = profile as any;
       const updatedProfile = { ...pureProfileData, uid: targetUid, username: currentUsername };
-      
+
       // Use the final UID for the request
       const res = await fetch(`/api/profiles/uid/${targetUid}`, {
         method: 'PUT',
@@ -538,13 +525,13 @@ export default function App() {
         // Handle case where generated username is taken
         const uniqueUsername = `${currentUsername}-${Math.random().toString(36).substring(2, 5)}`;
         const finalProfile = { ...updatedProfile, username: uniqueUsername };
-        
+
         const retryRes = await fetch(`/api/profiles/uid/${targetUid}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(finalProfile),
         });
-        
+
         if (retryRes.ok) {
           setProfile(finalProfile);
           saveSuccess = true;
@@ -559,7 +546,7 @@ export default function App() {
         setProfile(updatedProfile);
         saveSuccess = true;
       }
-      
+
       if (saveSuccess) {
         setIsSavedSuccessfully(true);
         setShowSaveToast(true);
@@ -593,7 +580,7 @@ export default function App() {
 
   if (view === 'public') {
     return (
-      <div 
+      <div
         className="min-h-screen w-full overflow-y-auto p-6 flex items-center justify-center"
         style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
       >
@@ -601,11 +588,11 @@ export default function App() {
           <div className="relative w-32 h-32 mx-auto mb-6">
             <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-xl"></div>
             <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
-            <motion.img 
+            <motion.img
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              src={profile.avatarUrl} 
-              alt="Avatar" 
+              src={profile.avatarUrl}
+              alt="Avatar"
               className="absolute inset-[3px] w-[calc(100%-6px)] h-[calc(100%-6px)] rounded-full object-cover shadow-2xl"
               style={{ border: `4px solid ${profile.theme.backgroundColor}` }}
               referrerPolicy="no-referrer"
@@ -717,25 +704,23 @@ export default function App() {
           <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shrink-0">L</div>
           <span className="font-bold text-lg sm:text-xl tracking-tight hidden sm:block">LinkFlow</span>
         </div>
-        
+
         <div className="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-full lg:hidden">
-          <button 
+          <button
             onClick={() => handleSetView('edit')}
-            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-              view === 'edit' 
-                ? 'bg-white shadow-md text-indigo-600 scale-100' 
+            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-2 ${view === 'edit'
+                ? 'bg-white shadow-md text-indigo-600 scale-100'
                 : 'text-slate-500 hover:text-indigo-600 hover:bg-white/50 hover:scale-105'
-            }`}
+              }`}
           >
             <Edit3 size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Editor</span>
           </button>
-          <button 
+          <button
             onClick={() => handleSetView('preview')}
-            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-2 ${
-              view === 'preview' 
-                ? 'bg-white shadow-md text-indigo-600 scale-100' 
+            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-2 ${view === 'preview'
+                ? 'bg-white shadow-md text-indigo-600 scale-100'
                 : 'text-slate-500 hover:text-indigo-600 hover:bg-white/50 hover:scale-105'
-            }`}
+              }`}
           >
             <Eye size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Preview</span>
           </button>
@@ -744,7 +729,7 @@ export default function App() {
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="hidden lg:flex flex-col items-end gap-0.5 mr-2">
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Public Link</span>
-            <a 
+            <a
               href={`/${profile.username}`}
               target="_blank"
               rel="noopener noreferrer"
@@ -757,7 +742,7 @@ export default function App() {
 
           <div className="hidden md:flex items-center gap-2">
             {user && (
-              <button 
+              <button
                 onClick={handleCopyLink}
                 className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-white hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 active:scale-95"
               >
@@ -765,12 +750,11 @@ export default function App() {
                 <span>{isCopying ? 'Copied!' : 'Share'}</span>
               </button>
             )}
-            <button 
+            <button
               onClick={handleSave}
               disabled={isSaving || !user}
-              className={`${
-                isSavedSuccessfully ? 'bg-green-600' : 'bg-indigo-600'
-              } text-white px-3 py-2 rounded-lg text-xs font-medium hover:opacity-90 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:translate-y-0 min-w-[80px] justify-center active:scale-95`}
+              className={`${isSavedSuccessfully ? 'bg-green-600' : 'bg-indigo-600'
+                } text-white px-3 py-2 rounded-lg text-xs font-medium hover:opacity-90 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:translate-y-0 min-w-[80px] justify-center active:scale-95`}
             >
               {isSavedSuccessfully ? (
                 <>
@@ -789,7 +773,7 @@ export default function App() {
           {user ? (
             <div className="flex items-center gap-2 sm:gap-3">
               <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-8 h-8 rounded-full border border-slate-200 shrink-0" />
-              <button 
+              <button
                 onClick={handleLogout}
                 className="text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 p-2 active:scale-90"
                 title="Logout"
@@ -798,7 +782,7 @@ export default function App() {
               </button>
             </div>
           ) : (
-            <button 
+            <button
               onClick={handleLogin}
               className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-medium text-xs sm:text-sm"
             >
@@ -810,14 +794,14 @@ export default function App() {
           <div className="md:hidden flex items-center gap-1">
             {user && (
               <>
-                <button 
+                <button
                   onClick={handleCopyLink}
                   className="p-2 text-slate-600 hover:text-indigo-600"
                   title="Share Profile"
                 >
                   {isCopying ? <Check size={18} className="text-green-600" /> : <Share2 size={18} />}
                 </button>
-                <button 
+                <button
                   onClick={handleSave}
                   disabled={isSaving}
                   className={`p-2 transition-colors ${isSavedSuccessfully ? 'text-green-600' : 'text-indigo-600'} hover:opacity-80 disabled:opacity-50`}
@@ -841,7 +825,7 @@ export default function App() {
               </div>
               <h2 className="text-xl font-bold mb-2">Sign in to edit</h2>
               <p className="text-slate-500 mb-6">You need to be logged in to customize and save your LinkFlow profile.</p>
-              <button 
+              <button
                 onClick={handleLogin}
                 className="bg-indigo-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-200 flex items-center gap-2 mx-auto"
               >
@@ -859,321 +843,318 @@ export default function App() {
                   <p className="text-xs text-indigo-500 mt-1 font-medium italic">Just a moment while we fetch your profile</p>
                 </div>
               )}
-              
+
               <div className={`space-y-8 transition-all duration-300 ${isFetching ? 'opacity-20 pointer-events-none scale-[0.98] blur-[2px]' : 'opacity-100'}`}>
                 <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
                   <div className="flex items-center gap-2 mb-6">
                     <Palette className="text-indigo-600" size={20} />
                     <h2 className="text-lg font-semibold">Templates</h2>
                   </div>
-                  
+
                   <div className="space-y-6">
 
-                  {/* Preset Templates */}
-                  <div>
-                    <div className="flex items-center justify-between mb-3">
-                      <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Top Templates</label>
-                      <button 
-                        onClick={() => setShowTemplateModal(true)}
-                        className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
-                      >
-                        More Templates <Sparkles size={12} />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                      {TEMPLATES.slice(0, 3).map((tpl) => (
+                    {/* Preset Templates */}
+                    <div>
+                      <div className="flex items-center justify-between mb-3">
+                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Top Templates</label>
                         <button
-                          key={tpl.name}
-                          onClick={() => setProfile({...profile, theme: tpl.theme})}
-                          className="group relative flex flex-col items-center gap-2 p-2 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                          onClick={() => setShowTemplateModal(true)}
+                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
                         >
-                          <div 
-                            className="w-full aspect-video rounded-lg shadow-sm flex flex-col gap-1 p-1.5"
-                            style={{ backgroundColor: tpl.theme.backgroundColor }}
-                          >
-                            <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
-                            <div className="w-2/3 h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">{tpl.name}</span>
-                          {JSON.stringify(profile.theme) === JSON.stringify(tpl.theme) && (
-                            <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center text-white">
-                              <Check size={10} />
-                            </div>
-                          )}
+                          More Templates <Sparkles size={12} />
                         </button>
-                      ))}
+                      </div>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        {TEMPLATES.slice(0, 3).map((tpl) => (
+                          <button
+                            key={tpl.name}
+                            onClick={() => setProfile({ ...profile, theme: tpl.theme })}
+                            className="group relative flex flex-col items-center gap-2 p-2 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                          >
+                            <div
+                              className="w-full aspect-video rounded-lg shadow-sm flex flex-col gap-1 p-1.5"
+                              style={{ backgroundColor: tpl.theme.backgroundColor }}
+                            >
+                              <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
+                              <div className="w-2/3 h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">{tpl.name}</span>
+                            {JSON.stringify(profile.theme) === JSON.stringify(tpl.theme) && (
+                              <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center text-white">
+                                <Check size={10} />
+                              </div>
+                            )}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </section>
+                </section>
 
-              <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center gap-2">
-                    <User className="text-indigo-600" size={20} />
-                    <h2 className="text-lg font-semibold">Profile Info</h2>
+                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-2">
+                      <User className="text-indigo-600" size={20} />
+                      <h2 className="text-lg font-semibold">Profile Info</h2>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="space-y-6">
-                  <div className="flex items-center gap-6">
-                    <div className="relative group">
-                      <input 
-                        type="file" 
-                        id="avatar-upload" 
-                        className="hidden" 
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                      />
-                      <label 
-                        htmlFor="avatar-upload"
-                        className={`block cursor-pointer relative ${isImageUploading ? 'pointer-events-none opacity-70' : ''}`}
-                      >
-                        <img 
-                          src={profile.avatarUrl} 
-                          alt="Avatar" 
-                          className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-100 hover:border-indigo-300 transition-all"
-                          referrerPolicy="no-referrer"
+
+                  <div className="space-y-6">
+                    <div className="flex items-center gap-6">
+                      <div className="relative group">
+                        <input
+                          type="file"
+                          id="avatar-upload"
+                          className="hidden"
+                          accept="image/*"
+                          onChange={handleImageUpload}
                         />
-                        <div className={`absolute inset-0 rounded-2xl flex items-center justify-center transition-all ${isImageUploading ? 'opacity-100 bg-black/40' : 'opacity-0 bg-black/20 hover:opacity-100'}`}>
-                          {isImageUploading ? (
-                            <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                          ) : (
-                            <span className="text-[10px] text-white font-bold uppercase tracking-wider">Upload</span>
-                          )}
-                        </div>
-                      </label>
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                        }}
-                        disabled={true}
-                        className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-lg shadow-sm border border-slate-200 text-slate-300 cursor-not-allowed"
-                        title="Avatar management disabled"
-                        style={{display: 'none'}}
-                      >
-                        <Sparkles size={14} />
-                      </button>
-                    </div>
-                    <div className="flex-1 space-y-4">
-                      <div>
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Display Name</label>
-                        <input 
-                          type="text" 
-                          value={profile.displayName}
-                          onChange={(e) => setProfile({...profile, displayName: e.target.value})}
-                          className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
-                          placeholder="Your Name"
-                        />
-                      </div>
-                      <div>
-                        <p className="text-xs text-slate-500 font-medium">
-                          Your Public Link: <span className="font-bold text-indigo-600">linkflow.me/{profile.username}</span>
-                        </p>
-                      </div>
-
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Bio</label>
-                    </div>
-                    <textarea 
-                      value={profile.bio}
-                      onChange={(e) => setProfile({...profile, bio: e.target.value})}
-                      className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
-                    />
-                  </div>
-                </div>
-              </section>
-
-          <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <Layout className="text-indigo-600" size={20} />
-                  <h2 className="text-lg font-semibold">Links</h2>
-                </div>
-                {/* Social Style Toggle */}
-                <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
-                  <button 
-                    onClick={() => setProfile({...profile, socialLinksStyle: 'grid'})}
-                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
-                      profile.socialLinksStyle === 'grid' 
-                        ? 'bg-white text-indigo-600 shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    Grid
-                  </button>
-                  <button 
-                    onClick={() => setProfile({...profile, socialLinksStyle: 'list'})}
-                    className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${
-                      profile.socialLinksStyle === 'list' 
-                        ? 'bg-white text-indigo-600 shadow-sm' 
-                        : 'text-slate-500 hover:text-slate-700'
-                    }`}
-                  >
-                    List
-                  </button>
-                </div>
-              </div>
-              <button 
-                onClick={() => setProfile({...profile, links: [...profile.links, { title: 'New Link', url: '', icon: 'globe' }]})}
-                className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
-                title="Add New Link"
-              >
-                <Plus size={20} />
-              </button>
-            </div>
-            <div className="space-y-4">
-              {/* Real-time Link Preview (Icon-only) */}
-              {profile.links.length > 0 && (
-                <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl border border-dashed border-slate-300 mb-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest w-full mb-1">Quick Preview</span>
-                  {profile.links.map((link, idx) => {
-                    const Icon = ICON_MAP[link.icon] || Globe;
-                    return (
-                      <div 
-                        key={idx} 
-                        className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
-                        style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
-                        title={link.title}
-                      >
-                        <Icon size={16} />
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {profile.links.map((link, idx) => (
-                <motion.div 
-                  layout
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  key={idx} 
-                  className="p-4 bg-slate-50 rounded-xl border border-slate-200 group"
-                >
-                  <div className="flex gap-4">
-                    <div className="flex-1 space-y-3">
-                      <input 
-                        type="text" 
-                        value={link.title}
-                        placeholder="Link Title (e.g. My Website)"
-                        onChange={(e) => {
-                          const newLinks = [...profile.links];
-                          newLinks[idx].title = e.target.value;
-                          setProfile({...profile, links: newLinks});
-                        }}
-                        className="w-full bg-transparent font-bold focus:outline-none placeholder:font-medium"
-                      />
-                      <textarea 
-                        value={link.description || ''}
-                        placeholder="Short description (optional)"
-                        onChange={(e) => {
-                          const newLinks = [...profile.links];
-                          newLinks[idx].description = e.target.value;
-                          setProfile({...profile, links: newLinks});
-                        }}
-                        rows={1}
-                        className="w-full bg-transparent text-xs text-slate-500 focus:outline-none resize-none min-h-[1.5rem]"
-                        style={{ height: 'auto' }}
-                        onInput={(e: any) => {
-                          e.target.style.height = 'auto';
-                          e.target.style.height = e.target.scrollHeight + 'px';
-                        }}
-                      />
-                      <div className="relative">
-                        <input 
-                          type="text" 
-                          value={link.url}
-                          placeholder="URL (https://...)"
-                          onChange={(e) => {
-                            const newUrl = e.target.value;
-                            const newLinks = [...profile.links];
-                            newLinks[idx].url = newUrl;
-                            // Auto-detect icon
-                            newLinks[idx].icon = detectIcon(newUrl);
-                            setProfile({...profile, links: newLinks});
+                        <label
+                          htmlFor="avatar-upload"
+                          className={`block cursor-pointer relative ${isImageUploading ? 'pointer-events-none opacity-70' : ''}`}
+                        >
+                          <img
+                            src={profile.avatarUrl}
+                            alt="Avatar"
+                            className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-100 hover:border-indigo-300 transition-all"
+                            referrerPolicy="no-referrer"
+                          />
+                          <div className={`absolute inset-0 rounded-2xl flex items-center justify-center transition-all ${isImageUploading ? 'opacity-100 bg-black/40' : 'opacity-0 bg-black/20 hover:opacity-100'}`}>
+                            {isImageUploading ? (
+                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                            ) : (
+                              <span className="text-[10px] text-white font-bold uppercase tracking-wider">Upload</span>
+                            )}
+                          </div>
+                        </label>
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
                           }}
-                          className={`w-full bg-transparent text-sm focus:outline-none transition-colors ${
-                            link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) 
-                              ? 'text-red-500 placeholder:text-red-300' 
-                              : 'text-slate-500'
-                          }`}
-                        />
-                        {link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) && (
-                          <p className="text-[10px] text-red-500 mt-1 font-medium animate-pulse">
-                            URL must start with http://, https://, or mailto:
+                          disabled={true}
+                          className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-lg shadow-sm border border-slate-200 text-slate-300 cursor-not-allowed"
+                          title="Avatar management disabled"
+                          style={{ display: 'none' }}
+                        >
+                          <Sparkles size={14} />
+                        </button>
+                      </div>
+                      <div className="flex-1 space-y-4">
+                        <div>
+                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Display Name</label>
+                          <input
+                            type="text"
+                            value={profile.displayName}
+                            onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
+                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            placeholder="Your Name"
+                          />
+                        </div>
+                        <div>
+                          <p className="text-xs text-slate-500 font-medium">
+                            Your Public Link: <span className="font-bold text-indigo-600">linkflow.me/{profile.username}</span>
                           </p>
-                        )}
+                        </div>
+
                       </div>
                     </div>
-                    <button 
-                      onClick={() => {
-                        const newLinks = profile.links.filter((_, i) => i !== idx);
-                        setProfile({...profile, links: newLinks});
-                      }}
-                      className="text-slate-400 hover:text-red-500 transition-colors"
+
+                    <div>
+                      <div className="flex items-center justify-between mb-1">
+                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Bio</label>
+                      </div>
+                      <textarea
+                        value={profile.bio}
+                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
+                      />
+                    </div>
+                  </div>
+                </section>
+
+                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <Layout className="text-indigo-600" size={20} />
+                        <h2 className="text-lg font-semibold">Links</h2>
+                      </div>
+                      {/* Social Style Toggle */}
+                      <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                        <button
+                          onClick={() => setProfile({ ...profile, socialLinksStyle: 'grid' })}
+                          className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${profile.socialLinksStyle === 'grid'
+                              ? 'bg-white text-indigo-600 shadow-sm'
+                              : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                          Grid
+                        </button>
+                        <button
+                          onClick={() => setProfile({ ...profile, socialLinksStyle: 'list' })}
+                          className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${profile.socialLinksStyle === 'list'
+                              ? 'bg-white text-indigo-600 shadow-sm'
+                              : 'text-slate-500 hover:text-slate-700'
+                            }`}
+                        >
+                          List
+                        </button>
+                      </div>
+                    </div>
+                    <button
+                      onClick={() => setProfile({ ...profile, links: [...profile.links, { title: 'New Link', url: '', icon: 'globe' }] })}
+                      className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
+                      title="Add New Link"
                     >
-                      <Trash2 size={18} />
+                      <Plus size={20} />
                     </button>
                   </div>
-                </motion.div>
-              ))}
-            </div>
-          </section>
+                  <div className="space-y-4">
+                    {/* Real-time Link Preview (Icon-only) */}
+                    {profile.links.length > 0 && (
+                      <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl border border-dashed border-slate-300 mb-2">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest w-full mb-1">Quick Preview</span>
+                        {profile.links.map((link, idx) => {
+                          const Icon = ICON_MAP[link.icon] || Globe;
+                          return (
+                            <div
+                              key={idx}
+                              className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
+                              style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
+                              title={link.title}
+                            >
+                              <Icon size={16} />
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
 
-          <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-            <div className="flex items-center gap-2 mb-6">
-              <Palette className="text-indigo-600" size={20} />
-              <h2 className="text-lg font-semibold">Appearance</h2>
+                    {profile.links.map((link, idx) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        key={idx}
+                        className="p-4 bg-slate-50 rounded-xl border border-slate-200 group"
+                      >
+                        <div className="flex gap-4">
+                          <div className="flex-1 space-y-3">
+                            <input
+                              type="text"
+                              value={link.title}
+                              placeholder="Link Title (e.g. My Website)"
+                              onChange={(e) => {
+                                const newLinks = [...profile.links];
+                                newLinks[idx].title = e.target.value;
+                                setProfile({ ...profile, links: newLinks });
+                              }}
+                              className="w-full bg-transparent font-bold focus:outline-none placeholder:font-medium"
+                            />
+                            <textarea
+                              value={link.description || ''}
+                              placeholder="Short description (optional)"
+                              onChange={(e) => {
+                                const newLinks = [...profile.links];
+                                newLinks[idx].description = e.target.value;
+                                setProfile({ ...profile, links: newLinks });
+                              }}
+                              rows={1}
+                              className="w-full bg-transparent text-xs text-slate-500 focus:outline-none resize-none min-h-[1.5rem]"
+                              style={{ height: 'auto' }}
+                              onInput={(e: any) => {
+                                e.target.style.height = 'auto';
+                                e.target.style.height = e.target.scrollHeight + 'px';
+                              }}
+                            />
+                            <div className="relative">
+                              <input
+                                type="text"
+                                value={link.url}
+                                placeholder="URL (https://...)"
+                                onChange={(e) => {
+                                  const newUrl = e.target.value;
+                                  const newLinks = [...profile.links];
+                                  newLinks[idx].url = newUrl;
+                                  // Auto-detect icon
+                                  newLinks[idx].icon = detectIcon(newUrl);
+                                  setProfile({ ...profile, links: newLinks });
+                                }}
+                                className={`w-full bg-transparent text-sm focus:outline-none transition-colors ${link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url)
+                                    ? 'text-red-500 placeholder:text-red-300'
+                                    : 'text-slate-500'
+                                  }`}
+                              />
+                              {link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) && (
+                                <p className="text-[10px] text-red-500 mt-1 font-medium animate-pulse">
+                                  URL must start with http://, https://, or mailto:
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => {
+                              const newLinks = profile.links.filter((_, i) => i !== idx);
+                              setProfile({ ...profile, links: newLinks });
+                            }}
+                            className="text-slate-400 hover:text-red-500 transition-colors"
+                          >
+                            <Trash2 size={18} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </section>
+
+                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="flex items-center gap-2 mb-6">
+                    <Palette className="text-indigo-600" size={20} />
+                    <h2 className="text-lg font-semibold">Appearance</h2>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Background</label>
+                      <input
+                        type="color"
+                        value={profile.theme.backgroundColor}
+                        onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, backgroundColor: e.target.value } })}
+                        className="w-full h-10 rounded-lg cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Text Color</label>
+                      <input
+                        type="color"
+                        value={profile.theme.textColor}
+                        onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, textColor: e.target.value } })}
+                        className="w-full h-10 rounded-lg cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Button Color</label>
+                      <input
+                        type="color"
+                        value={profile.theme.buttonColor}
+                        onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonColor: e.target.value } })}
+                        className="w-full h-10 rounded-lg cursor-pointer"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Button Text</label>
+                      <input
+                        type="color"
+                        value={profile.theme.buttonTextColor}
+                        onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonTextColor: e.target.value } })}
+                        className="w-full h-10 rounded-lg cursor-pointer"
+                      />
+                    </div>
+                  </div>
+                </section>
+              </div>
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Background</label>
-                <input 
-                  type="color" 
-                  value={profile.theme.backgroundColor}
-                  onChange={(e) => setProfile({...profile, theme: {...profile.theme, backgroundColor: e.target.value}})}
-                  className="w-full h-10 rounded-lg cursor-pointer"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Text Color</label>
-                <input 
-                  type="color" 
-                  value={profile.theme.textColor}
-                  onChange={(e) => setProfile({...profile, theme: {...profile.theme, textColor: e.target.value}})}
-                  className="w-full h-10 rounded-lg cursor-pointer"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Button Color</label>
-                <input 
-                  type="color" 
-                  value={profile.theme.buttonColor}
-                  onChange={(e) => setProfile({...profile, theme: {...profile.theme, buttonColor: e.target.value}})}
-                  className="w-full h-10 rounded-lg cursor-pointer"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Button Text</label>
-                <input 
-                  type="color" 
-                  value={profile.theme.buttonTextColor}
-                  onChange={(e) => setProfile({...profile, theme: {...profile.theme, buttonTextColor: e.target.value}})}
-                  className="w-full h-10 rounded-lg cursor-pointer"
-                />
-              </div>
-            </div>
-          </section>
+          )}
         </div>
-      </div>
-    )}
-  </div>
 
         {/* Right Column: Live Preview */}
         <div className={`lg:sticky lg:top-24 h-[calc(100vh-8rem)] flex items-center justify-center ${view === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
@@ -1183,20 +1164,20 @@ export default function App() {
               <div className="w-2 h-2 rounded-full bg-slate-800/80"></div>
               <div className="w-3 h-3 rounded-full bg-indigo-900/40 border border-slate-700/50"></div>
             </div>
-            
-            <div 
+
+            <div
               className="w-full h-full overflow-y-auto p-6 pt-16 text-center scrollbar-hide relative"
               style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
             >
               <div className="relative w-24 h-24 mx-auto mb-4">
                 <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-md"></div>
                 <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
-                <motion.img 
+                <motion.img
                   key={profile.avatarUrl}
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
-                  src={profile.avatarUrl} 
-                  alt="Avatar" 
+                  src={profile.avatarUrl}
+                  alt="Avatar"
                   className="absolute inset-[3px] w-[calc(100%-6px)] h-[calc(100%-6px)] rounded-full object-cover shadow-xl"
                   style={{ border: `3px solid ${profile.theme.backgroundColor}` }}
                   referrerPolicy="no-referrer"
@@ -1289,14 +1270,14 @@ export default function App() {
       <AnimatePresence>
         {showTemplateModal && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowTemplateModal(false)}
               className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
             />
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -1307,7 +1288,7 @@ export default function App() {
                   <h2 className="text-xl font-bold text-slate-900">Choose a Template</h2>
                   <p className="text-sm text-slate-500">Select a pre-designed theme for your profile</p>
                 </div>
-                <button 
+                <button
                   onClick={() => setShowTemplateModal(false)}
                   className="p-2 hover:bg-slate-100 rounded-full transition-colors"
                 >
@@ -1320,12 +1301,12 @@ export default function App() {
                     <button
                       key={tpl.name}
                       onClick={() => {
-                        setProfile({...profile, theme: tpl.theme});
+                        setProfile({ ...profile, theme: tpl.theme });
                         setShowTemplateModal(false);
                       }}
                       className="group relative flex flex-col items-center gap-3 p-3 rounded-2xl border-2 border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all text-left"
                     >
-                      <div 
+                      <div
                         className="w-full aspect-[4/3] rounded-xl shadow-sm flex flex-col gap-2 p-3"
                         style={{ backgroundColor: tpl.theme.backgroundColor }}
                       >
@@ -1346,7 +1327,7 @@ export default function App() {
                 </div>
               </div>
               <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
-                <button 
+                <button
                   onClick={() => setShowTemplateModal(false)}
                   className="px-6 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all"
                 >
@@ -1360,7 +1341,7 @@ export default function App() {
 
       {/* Save Success Toast */}
       {showSaveToast && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 50 }}
@@ -1377,7 +1358,7 @@ export default function App() {
       )}
       {/* Error Toast */}
       {showErrorToast && (
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 50 }}
