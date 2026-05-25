@@ -1159,42 +1159,44 @@ export default function App() {
           </motion.p>
           {/* Optimized Link Layout */}
           <div className="space-y-6">
-            {/* Social Icons Row (Shown only in 'grid' mode) */}
-            {profile.socialLinksStyle === 'grid' && profile.links.filter(l => l.isActive !== false && l.icon !== 'globe').length > 0 && (
+            {/* Social Icons Row */}
+            {profile.links.filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe'))).length > 0 && (
               <div className="flex flex-wrap justify-center gap-4 mb-8">
-                {profile.links.filter(l => l.isActive !== false && l.icon !== 'globe').map((link, idx) => {
-                  const Icon = ICON_MAP[link.icon] || Globe;
-                  const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
-                  return (
-                    <motion.a
-                      key={idx}
-                      whileHover={{ scale: 1.15, y: -3, boxShadow: "0 10px 15px -3px rgba(99, 102, 241, 0.3)" }}
-                      whileTap={{ scale: 0.9 }}
-                      {...animProps}
-                      href={link.url}
-                      onClick={() => handleLinkClick(link)}
-                      target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
-                      rel="noopener noreferrer"
-                      className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-all relative group overflow-hidden"
-                      style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
-                      title={link.title}
-                    >
-                      <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                      {link.thumbnailUrl ? (
-                        <img src={link.thumbnailUrl} alt={link.title} className="w-6 h-6 rounded-full object-cover relative z-10" />
-                      ) : (
-                        <Icon size={24} className="relative z-10" />
-                      )}
-                    </motion.a>
-                  );
-                })}
+                {profile.links
+                  .filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe')))
+                  .map((link, idx) => {
+                    const Icon = ICON_MAP[link.icon] || Globe;
+                    const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
+                    return (
+                      <motion.a
+                        key={idx}
+                        whileHover={{ scale: 1.15, y: -3, boxShadow: "0 10px 15px -3px rgba(99, 102, 241, 0.3)" }}
+                        whileTap={{ scale: 0.9 }}
+                        {...animProps}
+                        href={link.url}
+                        onClick={() => handleLinkClick(link)}
+                        target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
+                        rel="noopener noreferrer"
+                        className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-all relative group overflow-hidden"
+                        style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
+                        title={link.title}
+                      >
+                        <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        {link.thumbnailUrl ? (
+                          <img src={link.thumbnailUrl} alt={link.title} className="w-6 h-6 rounded-full object-cover relative z-10" />
+                        ) : (
+                          <Icon size={24} className="relative z-10" />
+                        )}
+                      </motion.a>
+                    );
+                  })}
               </div>
             )}
 
             {/* Primary Links & Bar Socials */}
             <div className="space-y-4">
               {profile.links
-                .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))
+                .filter(l => l.isActive !== false && (l.display === 'card' || (l.display !== 'icon' && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))))
                 .map((link, idx) => {
                   const Icon = ICON_MAP[link.icon] || Globe;
                   const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
@@ -1796,6 +1798,45 @@ export default function App() {
                                     />
                                   </button>
                                 </div>
+
+                                {/* 2. Display Mode Selector (Wide Card vs Top Icon) */}
+                                <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
+                                  <span className="font-bold text-slate-500 uppercase tracking-wider">Display</span>
+                                  <div className="flex items-center bg-slate-900 rounded-md p-0.5 border border-white/5">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        const newLinks = [...profile.links];
+                                        newLinks[idx] = { ...newLinks[idx], display: 'card' };
+                                        setProfile({ ...profile, links: newLinks });
+                                      }}
+                                      className={`px-2 py-0.5 rounded-md font-bold transition-all ${
+                                        link.display !== 'icon'
+                                          ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
+                                          : 'text-slate-400 hover:text-white'
+                                      }`}
+                                    >
+                                      Card
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        const newLinks = [...profile.links];
+                                        newLinks[idx] = { ...newLinks[idx], display: 'icon' };
+                                        setProfile({ ...profile, links: newLinks });
+                                      }}
+                                      className={`px-2 py-0.5 rounded-md font-bold transition-all ${
+                                        link.display === 'icon'
+                                          ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
+                                          : 'text-slate-400 hover:text-white'
+                                      }`}
+                                    >
+                                      Icon
+                                    </button>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                             <div className="flex flex-col items-center justify-center shrink-0 mt-1">
@@ -2064,34 +2105,36 @@ export default function App() {
                 {profile.bio || "Your bio will appear here..."}
               </motion.p>
               <div className="space-y-4 relative z-10">
-                {/* Social Icons Row (Shown only in 'grid' mode) */}
-                {profile.socialLinksStyle === 'grid' && profile.links.filter(l => l.isActive !== false && l.icon !== 'globe').length > 0 && (
+                {/* Social Icons Row */}
+                {profile.links.filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe'))).length > 0 && (
                   <div className="flex flex-wrap justify-center gap-3 mb-6">
-                    {profile.links.filter(l => l.isActive !== false && l.icon !== 'globe').map((link, idx) => {
-                      const Icon = ICON_MAP[link.icon] || Globe;
-                      const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
-                      return (
-                        <motion.a
-                          key={idx}
-                          initial={{ opacity: 0, scale: 0.8 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          whileHover={{ scale: 1.15, y: -2, boxShadow: "0 8px 12px -3px rgba(99, 102, 241, 0.25)" }}
-                          {...animProps}
-                          href={link.url}
-                          target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
-                          rel="noopener noreferrer"
-                          className="w-10 h-10 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden group"
-                          style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
-                        >
-                          <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                          {link.thumbnailUrl ? (
-                            <img src={link.thumbnailUrl} alt={link.title} className="w-5 h-5 rounded-full object-cover relative z-10" />
-                          ) : (
-                            <Icon size={18} className="relative z-10" />
-                          )}
-                        </motion.a>
-                      );
-                    })}
+                    {profile.links
+                      .filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe')))
+                      .map((link, idx) => {
+                        const Icon = ICON_MAP[link.icon] || Globe;
+                        const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
+                        return (
+                          <motion.a
+                            key={idx}
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            whileHover={{ scale: 1.15, y: -2, boxShadow: "0 8px 12px -3px rgba(99, 102, 241, 0.25)" }}
+                            {...animProps}
+                            href={link.url}
+                            target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
+                            rel="noopener noreferrer"
+                            className="w-10 h-10 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden group"
+                            style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
+                          >
+                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            {link.thumbnailUrl ? (
+                              <img src={link.thumbnailUrl} alt={link.title} className="w-5 h-5 rounded-full object-cover relative z-10" />
+                            ) : (
+                              <Icon size={18} className="relative z-10" />
+                            )}
+                          </motion.a>
+                        );
+                      })}
                   </div>
                 )}
 
@@ -2099,7 +2142,7 @@ export default function App() {
                 <div className="space-y-2.5">
                   <AnimatePresence mode="popLayout">
                     {profile.links
-                      .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))
+                      .filter(l => l.isActive !== false && (l.display === 'card' || (l.display !== 'icon' && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))))
                       .map((link, idx) => {
                         const Icon = ICON_MAP[link.icon] || Globe;
                         const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
