@@ -33,7 +33,8 @@ import {
   ChevronUp,
   ChevronDown,
   GripVertical,
-  TrendingUp
+  TrendingUp,
+  RotateCw
 } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -287,6 +288,19 @@ export default function App() {
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showDeleteToast, setShowDeleteToast] = useState(false);
   const [claimedTakenAlert, setClaimedTakenAlert] = useState<string | null>(null);
+  const [isRefreshingAnalytics, setIsRefreshingAnalytics] = useState(false);
+
+  const handleRefreshAnalytics = async () => {
+    if (!user) return;
+    setIsRefreshingAnalytics(true);
+    try {
+      await fetchProfile(user.uid, true);
+    } catch (err) {
+      console.error("Failed to refresh analytics:", err);
+    } finally {
+      setIsRefreshingAnalytics(false);
+    }
+  };
 
   // Responsive View Handler with History tracking for back gesture
   const handleSetView = (newView: 'preview' | 'edit') => {
@@ -1446,6 +1460,15 @@ export default function App() {
                         <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-0.5 animate-pulse">● Live Tracking Active</p>
                       </div>
                     </div>
+                    <button
+                      onClick={handleRefreshAnalytics}
+                      disabled={isRefreshingAnalytics}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 active:scale-95 transition-all disabled:opacity-50"
+                      title="Refresh Analytics"
+                    >
+                      <RotateCw size={12} className={isRefreshingAnalytics ? 'animate-spin' : ''} />
+                      <span>{isRefreshingAnalytics ? 'Syncing...' : 'Refresh'}</span>
+                    </button>
                   </div>
 
                   {(() => {
@@ -1470,35 +1493,25 @@ export default function App() {
                           </div>
                         </div>
 
-                        {/* Detailed Link Clicks Progress Bar List */}
+                        {/* Detailed Link Clicks Breakdown List */}
                         <div className="space-y-3.5">
                           <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Clicks Breakdown</label>
                           {profile.links.length === 0 ? (
                             <p className="text-xs text-slate-400 italic">No links added to your profile yet.</p>
                           ) : (
-                            <div className="space-y-4 max-h-60 overflow-y-auto pr-1">
+                            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
                               {profile.links.map((link, i) => {
                                 const clicks = link.clicks || 0;
-                                const percentage = totalClicks > 0 ? Math.round((clicks / totalClicks) * 100) : 0;
                                 const LinkIcon = ICON_MAP[link.icon] || Globe;
 
                                 return (
-                                  <div key={link.id || i} className="space-y-1.5 bg-slate-950/20 p-2.5 rounded-xl border border-white/5 hover:bg-slate-950/40 transition-colors">
-                                    <div className="flex items-center justify-between text-xs font-bold">
-                                      <div className="flex items-center gap-2 text-slate-300">
-                                        <LinkIcon size={14} className="text-indigo-400 shrink-0" />
-                                        <span className="truncate max-w-[150px] sm:max-w-[200px]">{link.title || 'Untitled Link'}</span>
-                                      </div>
-                                      <div className="flex items-center gap-1.5 shrink-0">
-                                        <span className="text-white">{clicks} clicks</span>
-                                        <span className="text-slate-500 text-[10px]">({percentage}%)</span>
-                                      </div>
+                                  <div key={link.id || i} className="flex items-center justify-between bg-slate-950/20 px-3.5 py-3 rounded-xl border border-white/5 hover:bg-slate-950/40 transition-colors">
+                                    <div className="flex items-center gap-2 text-slate-300">
+                                      <LinkIcon size={14} className="text-indigo-400 shrink-0" />
+                                      <span className="truncate max-w-[150px] sm:max-w-[200px] font-bold text-slate-200">{link.title || 'Untitled Link'}</span>
                                     </div>
-                                    <div className="w-full h-2 bg-slate-950/80 rounded-full overflow-hidden border border-white/5">
-                                      <div 
-                                        className="h-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500 ease-out"
-                                        style={{ width: `${percentage}%` }}
-                                      />
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <span className="text-white font-extrabold bg-indigo-500/10 px-2.5 py-0.5 rounded-md border border-indigo-500/25 text-[11px] min-w-[20px] text-center">{clicks} clicks</span>
                                     </div>
                                   </div>
                                 );
