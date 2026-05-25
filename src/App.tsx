@@ -1487,6 +1487,7 @@ export default function App() {
                       <Reorder.Item
                         value={link}
                         key={link.id || `link-${idx}`}
+                        dragConstraints={{ top: -3000, bottom: 3000 }}
                         className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative select-none"
                       >
                         <div className="flex items-start gap-4">
