@@ -396,10 +396,23 @@ export default function App() {
     // Handle public profile routing
     const path = window.location.pathname;
     const parts = path.split('/').filter(Boolean);
-    const isPublicProfile = parts.length === 1 && !['api', 'admin', 'assets', 'static', 'edit', 'preview', 'index.html'].includes(parts[0]);
+    
+    // 1. Check for old prefix links (e.g., /linkflow/username or /u/username)
+    const isOldLink = parts.length === 2 && (parts[0] === 'linkflow' || parts[0] === 'u');
+    
+    // 2. Check for new direct short link (e.g., /username)
+    const isNewLink = parts.length === 1 && !['api', 'admin', 'assets', 'static', 'edit', 'preview', 'index.html'].includes(parts[0]);
+    
+    const isPublicProfile = isOldLink || isNewLink;
     
     if (isPublicProfile) {
-      const username = parts[0];
+      const username = isOldLink ? parts[1] : parts[0];
+      
+      // If it is an old link, seamlessly upgrade browser URL to direct short link
+      if (isOldLink) {
+        window.history.replaceState(null, '', `/${username}`);
+      }
+      
       setView('public');
       fetchProfile(username);
     }
