@@ -1020,7 +1020,9 @@ export default function App() {
       } else if (res.status !== 409) {
         // Only show generic error if it wasn't a handled 409 conflict
         const errorData = await res.json().catch(() => ({}));
-        const msg = errorData.error || errorData.details || "Failed to save profile. Please try again.";
+        const msg = errorData.reason 
+          ? `${errorData.error} - ${errorData.reason}` 
+          : (errorData.error || errorData.details || "Failed to save profile. Please try again.");
         setSaveError(msg);
         setShowErrorToast(true);
         setTimeout(() => setShowErrorToast(false), 5000);
