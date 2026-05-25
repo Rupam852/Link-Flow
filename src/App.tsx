@@ -6,6 +6,7 @@ import {
   ExternalLink,
   Settings,
   Eye,
+  EyeOff,
   Edit3,
   Github,
   Twitter,
@@ -56,6 +57,7 @@ interface Profile {
     buttonTextColor: string;
   };
   socialLinksStyle: 'grid' | 'list';
+  isActive?: boolean;
 }
 
 const DEFAULT_PROFILE: Profile = {
@@ -76,7 +78,8 @@ const DEFAULT_PROFILE: Profile = {
     buttonColor: '#334155',
     buttonTextColor: '#f8fafc',
   },
-  socialLinksStyle: 'grid'
+  socialLinksStyle: 'grid',
+  isActive: true
 };
 
 const ICON_MAP: Record<string, any> = {
@@ -537,6 +540,52 @@ export default function App() {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    if (!user) return;
+    const confirmDelete = window.confirm(
+      "Are you absolutely sure you want to delete your account? This will permanently wipe all your profiles, links, and themes from our databases. This cannot be undone."
+    );
+    if (!confirmDelete) return;
+
+    setIsSaving(true);
+    try {
+      // 1. Wipe profile data from MongoDB
+      const res = await fetch(`/api/profiles/uid/${user.uid}`, {
+        method: 'DELETE',
+      });
+      
+      if (res.ok) {
+        // 2. Clear local session
+        sessionStorage.clear();
+        
+        // 3. Try to delete the Firebase Auth user account
+        try {
+          const currentUser = auth.currentUser;
+          if (currentUser) {
+            await currentUser.delete();
+          }
+        } catch (fbErr: any) {
+          console.warn("Firebase user deletion requires recent login, logging out instead:", fbErr);
+        }
+        
+        // 4. Force Sign Out
+        await signOut(auth);
+        
+        // 5. Reset App States
+        setProfile(DEFAULT_PROFILE);
+        setView('edit');
+        alert("Your account and all associated profile data have been permanently deleted successfully. You can now register as a new user.");
+      } else {
+        alert("Failed to delete your database profile. Please try again later.");
+      }
+    } catch (err) {
+      console.error("Delete account failed:", err);
+      alert("An unexpected error occurred during account deletion.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   const handleSave = async () => {
     setIsSaving(true);
     setSaveError(null);
@@ -638,6 +687,42 @@ export default function App() {
 
 
   if (view === 'public') {
+    if (profile.isActive === false) {
+      return (
+        <div
+          className="min-h-screen w-full overflow-hidden flex items-center justify-center p-6 bg-[#090d16]"
+        >
+          {/* Radial Mesh Glows */}
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/40 blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/40 blur-[120px]" />
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md text-center p-8 bg-slate-900/30 border border-white/5 rounded-3xl backdrop-blur-xl shadow-2xl relative z-10"
+          >
+            <div className="w-16 h-16 mx-auto mb-6 bg-slate-800/80 rounded-2xl flex items-center justify-center text-slate-500 shadow-md">
+              <EyeOff size={28} />
+            </div>
+            
+            <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">Profile Currently Offline</h2>
+            <p className="text-sm text-slate-400 leading-relaxed mb-6">
+              The owner of this link has temporarily disabled public access to their page. Please check back later.
+            </p>
+            
+            <div className="h-[1px] bg-white/5 w-full mb-6" />
+            
+            <a
+              href="/"
+              className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
+            >
+              Create Your Own LinkFlow Page →
+            </a>
+          </motion.div>
+        </div>
+      );
+    }
+
     return (
       <div
         className="min-h-screen w-full overflow-y-auto p-6 flex items-center justify-center"
@@ -1027,6 +1112,58 @@ export default function App() {
                         onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
                         className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
                       />
+                    </div>
+                  </div>
+                </section>
+
+                {/* Account Settings Card: Public Link Toggle & Danger Zone */}
+                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Settings className="text-indigo-600" size={20} />
+                    <h2 className="text-lg font-semibold">Account Settings</h2>
+                  </div>
+
+                  <div className="divide-y divide-slate-100">
+                    {/* Public Status Toggle */}
+                    <div className="py-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800">Public Link Status</h3>
+                        <p className="text-xs text-slate-500 mt-0.5">
+                          {profile.isActive !== false 
+                            ? 'Your profile is online and searchable.' 
+                            : 'Your profile is offline and hidden.'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const updated = { ...profile, isActive: profile.isActive === false ? true : false };
+                          setProfile(updated);
+                        }}
+                        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
+                          profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-200'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full shadow-sm transition-transform duration-200 ${
+                            profile.isActive !== false ? 'translate-x-6' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Danger Zone: Delete Account */}
+                    <div className="py-4">
+                      <h3 className="text-sm font-bold text-red-600 mb-1">Danger Zone</h3>
+                      <p className="text-xs text-slate-500 mb-3">
+                        Permanently delete your profile and all associated links. This action is irreversible.
+                      </p>
+                      <button
+                        onClick={handleDeleteAccount}
+                        className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 animate-pulse hover:animate-none"
+                      >
+                        <Trash2 size={14} />
+                        Delete My Account
+                      </button>
                     </div>
                   </div>
                 </section>

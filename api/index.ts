@@ -48,6 +48,7 @@ const profileSchema = new mongoose.Schema({
     buttonColor: String,
     buttonTextColor: String,
   },
+  isActive: { type: Boolean, default: true },
   links: [
     {
       title: String,
@@ -114,6 +115,21 @@ app.put("/api/profiles/uid/:uid", async (req, res) => {
       return res.status(409).json({ error: "Username already taken" });
     }
     res.status(400).json({ error: "Error updating profile", details: err.message });
+  }
+});
+
+app.delete("/api/profiles/uid/:uid", async (req, res) => {
+  try {
+    await connectToDatabase();
+    const result = await Profile.deleteOne({ uid: req.params.uid });
+    if (result.deletedCount > 0) {
+      res.json({ success: true, message: "Profile permanently deleted" });
+    } else {
+      res.status(404).json({ error: "Profile not found" });
+    }
+  } catch (err: any) {
+    console.error("API DELETE Error:", err);
+    res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
 });
 
