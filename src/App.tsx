@@ -885,29 +885,34 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="relative min-h-screen bg-[#070a13] text-slate-100 font-sans selection:bg-indigo-500 selection:text-white pb-20">
+      {/* Dynamic Background Radial Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] aspect-square rounded-full bg-indigo-900/10 blur-[150px] pointer-events-none" />
+      <div className="absolute bottom-[20%] right-[-10%] w-[45%] aspect-square rounded-full bg-purple-900/8 blur-[120px] pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293703_1px,transparent_1px),linear-gradient(to_bottom,#1f293703_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none opacity-40" />
+
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-white border-b border-slate-200 z-50 px-4 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 h-20 bg-slate-950/60 border-b border-white/5 backdrop-blur-xl z-50 px-6 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-2 shrink-0">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shrink-0">L</div>
-          <span className="font-bold text-lg sm:text-xl tracking-tight hidden sm:block">LinkFlow</span>
+          <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-black shrink-0 shadow-lg shadow-indigo-500/20">L</div>
+          <span className="font-extrabold text-xl tracking-tight hidden sm:block bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">LinkFlow</span>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 bg-slate-100 p-1 rounded-full lg:hidden">
+        <div className="flex items-center gap-1 sm:gap-2 bg-slate-950/50 border border-white/5 p-1 rounded-full lg:hidden">
           <button
             onClick={() => handleSetView('edit')}
-            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-2 ${view === 'edit'
-                ? 'bg-white shadow-md text-indigo-600 scale-100'
-                : 'text-slate-500 hover:text-indigo-600 hover:bg-white/50 hover:scale-105'
+            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${view === 'edit'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md text-white scale-100'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <Edit3 size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Editor</span>
           </button>
           <button
             onClick={() => handleSetView('preview')}
-            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-2 ${view === 'preview'
-                ? 'bg-white shadow-md text-indigo-600 scale-100'
-                : 'text-slate-500 hover:text-indigo-600 hover:bg-white/50 hover:scale-105'
+            className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${view === 'preview'
+                ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md text-white scale-100'
+                : 'text-slate-400 hover:text-white hover:bg-white/5'
               }`}
           >
             <Eye size={14} className="sm:w-4 sm:h-4" /> <span className="hidden sm:inline">Preview</span>
@@ -916,12 +921,12 @@ export default function App() {
 
         <div className="flex items-center gap-2 sm:gap-4">
           <div className="hidden lg:flex flex-col items-end gap-0.5 mr-2">
-            <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Public Link</span>
+            <span className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Public Link</span>
             <a
               href={`/${profile.username}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group"
+              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 group bg-indigo-500/5 px-3 py-1.5 rounded-full border border-indigo-500/10 transition-all hover:bg-indigo-500/10"
             >
               link-flow-program.vercel.app/{profile.username || '...'}
               <ExternalLink size={10} className="group-hover:scale-110 transition-transform" />
@@ -932,17 +937,17 @@ export default function App() {
             {user && (
               <button
                 onClick={handleCopyLink}
-                className="bg-white border border-slate-200 text-slate-700 px-3 py-2 rounded-lg text-xs font-medium hover:bg-white hover:border-indigo-200 hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 active:scale-95"
+                className="bg-slate-900 border border-white/10 text-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
               >
-                {isCopying ? <Check size={14} className="text-green-600" /> : <Share2 size={14} />}
+                {isCopying ? <Check size={14} className="text-green-400" /> : <Share2 size={14} />}
                 <span>{isCopying ? 'Copied!' : 'Share'}</span>
               </button>
             )}
             <button
               onClick={handleSave}
               disabled={isSaving || !user}
-              className={`${isSavedSuccessfully ? 'bg-green-600' : 'bg-indigo-600'
-                } text-white px-3 py-2 rounded-lg text-xs font-medium hover:opacity-90 hover:shadow-lg hover:shadow-indigo-500/20 hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:translate-y-0 min-w-[80px] justify-center active:scale-95`}
+              className={`${isSavedSuccessfully ? 'bg-green-600' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500'
+                } text-white px-5 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 min-w-[85px] justify-center hover:shadow-lg hover:shadow-indigo-600/20`}
             >
               {isSavedSuccessfully ? (
                 <>
@@ -960,10 +965,10 @@ export default function App() {
 
           {user ? (
             <div className="flex items-center gap-2 sm:gap-3">
-              <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-8 h-8 rounded-full border border-slate-200 shrink-0" />
+              <img src={user.photoURL || ''} alt={user.displayName || ''} className="w-9 h-9 rounded-full border border-white/10 shrink-0 object-cover" />
               <button
                 onClick={handleLogout}
-                className="text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all duration-200 p-2 active:scale-90"
+                className="text-slate-400 hover:text-red-400 hover:bg-red-500/10 rounded-full transition-all duration-200 p-2.5 active:scale-90"
                 title="Logout"
               >
                 <LogOut size={18} />
@@ -972,7 +977,7 @@ export default function App() {
           ) : (
             <button
               onClick={handleLogin}
-              className="flex items-center gap-2 text-slate-600 hover:text-indigo-600 font-medium text-xs sm:text-sm"
+              className="flex items-center gap-2 text-slate-400 hover:text-white font-bold text-xs sm:text-sm bg-white/5 border border-white/10 px-4 py-2 rounded-xl transition-all"
             >
               <LogIn size={18} /> <span className="hidden sm:inline">Sign In</span>
             </button>
@@ -984,15 +989,15 @@ export default function App() {
               <>
                 <button
                   onClick={handleCopyLink}
-                  className="p-2 text-slate-600 hover:text-indigo-600"
+                  className="p-2.5 text-slate-400 hover:text-white"
                   title="Share Profile"
                 >
-                  {isCopying ? <Check size={18} className="text-green-600" /> : <Share2 size={18} />}
+                  {isCopying ? <Check size={18} className="text-green-400" /> : <Share2 size={18} />}
                 </button>
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className={`p-2 transition-colors ${isSavedSuccessfully ? 'text-green-600' : 'text-indigo-600'} hover:opacity-80 disabled:opacity-50`}
+                  className={`p-2.5 transition-colors ${isSavedSuccessfully ? 'text-green-500' : 'text-indigo-400'} hover:opacity-80 disabled:opacity-50`}
                   title="Save Changes"
                 >
                   {isSavedSuccessfully ? <Check size={18} /> : <Save size={18} className={isSaving ? 'animate-pulse' : ''} />}
@@ -1033,21 +1038,23 @@ export default function App() {
               )}
 
               <div className={`space-y-8 transition-all duration-300 ${isFetching ? 'opacity-20 pointer-events-none scale-[0.98] blur-[2px]' : 'opacity-100'}`}>
-                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Palette className="text-indigo-600" size={20} />
-                    <h2 className="text-lg font-semibold">Templates</h2>
+                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                      <Palette size={20} />
+                    </div>
+                    <h2 className="text-lg font-extrabold text-white tracking-tight">Templates</h2>
                   </div>
 
                   <div className="space-y-6">
 
                     {/* Preset Templates */}
                     <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Top Templates</label>
+                      <div className="flex items-center justify-between mb-4">
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Top Templates</label>
                         <button
                           onClick={() => setShowTemplateModal(true)}
-                          className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors"
+                          className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
                         >
                           More Templates <Sparkles size={12} />
                         </button>
@@ -1057,7 +1064,7 @@ export default function App() {
                           <button
                             key={tpl.name}
                             onClick={() => setProfile({ ...profile, theme: tpl.theme })}
-                            className="group relative flex flex-col items-center gap-2 p-2 rounded-xl border border-slate-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all"
+                            className="group relative flex flex-col items-center gap-2 p-2 rounded-xl border border-white/5 bg-slate-950/40 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all"
                           >
                             <div
                               className="w-full aspect-video rounded-lg shadow-sm flex flex-col gap-1 p-1.5"
@@ -1066,9 +1073,9 @@ export default function App() {
                               <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
                               <div className="w-2/3 h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
                             </div>
-                            <span className="text-[10px] font-bold text-slate-600 uppercase tracking-tight">{tpl.name}</span>
+                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{tpl.name}</span>
                             {JSON.stringify(profile.theme) === JSON.stringify(tpl.theme) && (
-                              <div className="absolute top-1 right-1 w-4 h-4 bg-indigo-600 rounded-full flex items-center justify-center text-white">
+                              <div className="absolute top-1.5 right-1.5 w-4.5 h-4.5 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-md">
                                 <Check size={10} />
                               </div>
                             )}
@@ -1079,17 +1086,17 @@ export default function App() {
                   </div>
                 </section>
 
-                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-2">
-                      <User className="text-indigo-600" size={20} />
-                      <h2 className="text-lg font-semibold">Profile Info</h2>
+                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                      <User size={20} />
                     </div>
+                    <h2 className="text-lg font-extrabold text-white tracking-tight">Profile Info</h2>
                   </div>
 
                   <div className="space-y-6">
-                    <div className="flex items-center gap-6">
-                      <div className="relative group">
+                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                      <div className="relative group shrink-0">
                         <input
                           type="file"
                           id="avatar-upload"
@@ -1104,10 +1111,10 @@ export default function App() {
                           <img
                             src={profile.avatarUrl}
                             alt="Avatar"
-                            className="w-20 h-20 rounded-2xl object-cover border-2 border-slate-100 hover:border-indigo-300 transition-all"
+                            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/10 hover:border-indigo-500/40 transition-all shadow-md"
                             referrerPolicy="no-referrer"
                           />
-                          <div className={`absolute inset-0 rounded-2xl flex items-center justify-center transition-all ${isImageUploading ? 'opacity-100 bg-black/40' : 'opacity-0 bg-black/20 hover:opacity-100'}`}>
+                          <div className={`absolute inset-0 rounded-2xl flex items-center justify-center transition-all ${isImageUploading ? 'opacity-100 bg-black/40' : 'opacity-0 bg-black/40 hover:opacity-100'}`}>
                             {isImageUploading ? (
                               <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                             ) : (
@@ -1115,32 +1122,21 @@ export default function App() {
                             )}
                           </div>
                         </label>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                          }}
-                          disabled={true}
-                          className="absolute -bottom-2 -right-2 bg-white p-1.5 rounded-lg shadow-sm border border-slate-200 text-slate-300 cursor-not-allowed"
-                          title="Avatar management disabled"
-                          style={{ display: 'none' }}
-                        >
-                          <Sparkles size={14} />
-                        </button>
                       </div>
-                      <div className="flex-1 space-y-4">
+                      <div className="flex-1 space-y-4 w-full">
                         <div>
-                          <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Display Name</label>
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Display Name</label>
                           <input
                             type="text"
                             value={profile.displayName}
                             onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-                            className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+                            className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-700 font-medium"
                             placeholder="Your Name"
                           />
                         </div>
                         <div>
-                          <p className="text-xs text-slate-500 font-medium">
-                            Your Public Link: <span className="font-bold text-indigo-600">link-flow-program.vercel.app/{profile.username}</span>
+                          <p className="text-xs text-slate-400 font-semibold tracking-wide">
+                            Your Public Link: <span className="font-bold text-indigo-400">link-flow-program.vercel.app/{profile.username}</span>
                           </p>
                         </div>
 
@@ -1148,31 +1144,34 @@ export default function App() {
                     </div>
 
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Bio</label>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Bio</label>
                       </div>
                       <textarea
                         value={profile.bio}
                         onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                        className="w-full px-4 py-2 rounded-lg border border-slate-200 focus:ring-2 focus:ring-indigo-500 outline-none transition-all h-24 resize-none"
+                        className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all h-28 resize-none placeholder:text-slate-700 text-sm leading-relaxed"
+                        placeholder="Tell the world about yourself..."
                       />
                     </div>
                   </div>
                 </section>
 
                 {/* Account Settings Card: Public Link Toggle & Danger Zone */}
-                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Settings className="text-indigo-600" size={20} />
-                    <h2 className="text-lg font-semibold">Account Settings</h2>
+                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300 space-y-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                      <Settings size={20} />
+                    </div>
+                    <h2 className="text-lg font-extrabold text-white tracking-tight">Account Settings</h2>
                   </div>
 
-                  <div className="divide-y divide-slate-100">
+                  <div className="divide-y divide-white/5">
                     {/* Public Status Toggle */}
                     <div className="py-4 flex items-center justify-between">
                       <div>
-                        <h3 className="text-sm font-bold text-slate-800">Public Link Status</h3>
-                        <p className="text-xs text-slate-500 mt-0.5">
+                        <h3 className="text-sm font-bold text-slate-200">Public Link Status</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
                           {profile.isActive !== false 
                             ? 'Your profile is online and searchable.' 
                             : 'Your profile is offline and hidden.'}
@@ -1184,7 +1183,7 @@ export default function App() {
                           setProfile(updated);
                         }}
                         className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
-                          profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-200'
+                          profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
                         }`}
                       >
                         <span
@@ -1197,13 +1196,13 @@ export default function App() {
 
                     {/* Danger Zone: Delete Account */}
                     <div className="py-4">
-                      <h3 className="text-sm font-bold text-red-600 mb-1">Danger Zone</h3>
-                      <p className="text-xs text-slate-500 mb-3">
+                      <h3 className="text-sm font-bold text-red-400 mb-1">Danger Zone</h3>
+                      <p className="text-xs text-slate-400 mb-3">
                         Permanently delete your profile and all associated links. This action is irreversible.
                       </p>
                       <button
                         onClick={handleDeleteAccount}
-                        className="bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 animate-pulse hover:animate-none"
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 animate-pulse hover:animate-none"
                       >
                         <Trash2 size={14} />
                         Delete My Account
@@ -1212,20 +1211,22 @@ export default function App() {
                   </div>
                 </section>
 
-                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-2">
-                        <Layout className="text-indigo-600" size={20} />
-                        <h2 className="text-lg font-semibold">Links</h2>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                          <Layout size={20} />
+                        </div>
+                        <h2 className="text-lg font-extrabold text-white tracking-tight">Links</h2>
                       </div>
                       {/* Social Style Toggle */}
-                      <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-lg">
+                      <div className="flex items-center gap-2 bg-slate-950/60 border border-white/5 p-1 rounded-lg">
                         <button
                           onClick={() => setProfile({ ...profile, socialLinksStyle: 'grid' })}
                           className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${profile.socialLinksStyle === 'grid'
-                              ? 'bg-white text-indigo-600 shadow-sm'
-                              : 'text-slate-500 hover:text-slate-700'
+                              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
+                              : 'text-slate-400 hover:text-white'
                             }`}
                         >
                           Grid
@@ -1233,8 +1234,8 @@ export default function App() {
                         <button
                           onClick={() => setProfile({ ...profile, socialLinksStyle: 'list' })}
                           className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${profile.socialLinksStyle === 'list'
-                              ? 'bg-white text-indigo-600 shadow-sm'
-                              : 'text-slate-500 hover:text-slate-700'
+                              ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
+                              : 'text-slate-400 hover:text-white'
                             }`}
                         >
                           List
@@ -1243,7 +1244,7 @@ export default function App() {
                     </div>
                     <button
                       onClick={() => setProfile({ ...profile, links: [...profile.links, { title: 'New Link', url: '', icon: 'globe' }] })}
-                      className="text-indigo-600 hover:bg-indigo-50 p-2 rounded-lg transition-colors"
+                      className="text-indigo-400 hover:bg-indigo-500/10 p-2.5 rounded-xl border border-white/5 transition-all"
                       title="Add New Link"
                     >
                       <Plus size={20} />
@@ -1252,8 +1253,8 @@ export default function App() {
                   <div className="space-y-4">
                     {/* Real-time Link Preview (Icon-only) */}
                     {profile.links.length > 0 && (
-                      <div className="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl border border-dashed border-slate-300 mb-2">
-                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest w-full mb-1">Quick Preview</span>
+                      <div className="flex flex-wrap gap-2 p-3 bg-slate-950/40 rounded-2xl border border-dashed border-white/10 mb-2">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest w-full mb-1">Quick Preview</span>
                         {profile.links.map((link, idx) => {
                           const Icon = ICON_MAP[link.icon] || Globe;
                           return (
@@ -1276,9 +1277,9 @@ export default function App() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         key={idx}
-                        className="p-4 bg-slate-50 rounded-xl border border-slate-200 group"
+                        className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group"
                       >
-                        <div className="flex gap-4">
+                        <div className="flex items-center gap-4">
                           <div className="flex-1 space-y-3">
                             <input
                               type="text"
@@ -1289,7 +1290,7 @@ export default function App() {
                                 newLinks[idx].title = e.target.value;
                                 setProfile({ ...profile, links: newLinks });
                               }}
-                              className="w-full bg-transparent font-bold focus:outline-none placeholder:font-medium"
+                              className="w-full bg-transparent font-bold text-white focus:outline-none placeholder:text-slate-700 text-base"
                             />
                             <textarea
                               value={link.description || ''}
@@ -1300,7 +1301,7 @@ export default function App() {
                                 setProfile({ ...profile, links: newLinks });
                               }}
                               rows={1}
-                              className="w-full bg-transparent text-xs text-slate-500 focus:outline-none resize-none min-h-[1.5rem]"
+                              className="w-full bg-transparent text-xs text-slate-400 focus:outline-none resize-none min-h-[1.5rem] placeholder:text-slate-700"
                               style={{ height: 'auto' }}
                               onInput={(e: any) => {
                                 e.target.style.height = 'auto';
@@ -1320,13 +1321,13 @@ export default function App() {
                                   newLinks[idx].icon = detectIcon(newUrl);
                                   setProfile({ ...profile, links: newLinks });
                                 }}
-                                className={`w-full bg-transparent text-sm focus:outline-none transition-colors ${link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url)
-                                    ? 'text-red-500 placeholder:text-red-300'
-                                    : 'text-slate-500'
+                                className={`w-full bg-transparent text-sm focus:outline-none transition-colors placeholder:text-slate-700 font-semibold ${link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url)
+                                    ? 'text-red-400 placeholder:text-red-300'
+                                    : 'text-indigo-400/90'
                                   }`}
                               />
                               {link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) && (
-                                <p className="text-[10px] text-red-500 mt-1 font-medium animate-pulse">
+                                <p className="text-[10px] text-red-400 mt-1 font-medium animate-pulse">
                                   URL must start with http://, https://, or mailto:
                                 </p>
                               )}
@@ -1337,7 +1338,7 @@ export default function App() {
                               const newLinks = profile.links.filter((_, i) => i !== idx);
                               setProfile({ ...profile, links: newLinks });
                             }}
-                            className="text-slate-400 hover:text-red-500 transition-colors"
+                            className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2.5 rounded-xl transition-all active:scale-90"
                           >
                             <Trash2 size={18} />
                           </button>
@@ -1347,46 +1348,48 @@ export default function App() {
                   </div>
                 </section>
 
-                <section className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                  <div className="flex items-center gap-2 mb-6">
-                    <Palette className="text-indigo-600" size={20} />
-                    <h2 className="text-lg font-semibold">Appearance</h2>
+                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                      <Palette size={20} />
+                    </div>
+                    <h2 className="text-lg font-extrabold text-white tracking-tight">Appearance</h2>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Background</label>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Background</label>
                       <input
                         type="color"
                         value={profile.theme.backgroundColor}
                         onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, backgroundColor: e.target.value } })}
-                        className="w-full h-10 rounded-lg cursor-pointer"
+                        className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Text Color</label>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Text Color</label>
                       <input
                         type="color"
                         value={profile.theme.textColor}
                         onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, textColor: e.target.value } })}
-                        className="w-full h-10 rounded-lg cursor-pointer"
+                        className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Button Color</label>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Button Color</label>
                       <input
                         type="color"
                         value={profile.theme.buttonColor}
                         onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonColor: e.target.value } })}
-                        className="w-full h-10 rounded-lg cursor-pointer"
+                        className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1">Button Text</label>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Button Text</label>
                       <input
                         type="color"
                         value={profile.theme.buttonTextColor}
                         onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonTextColor: e.target.value } })}
-                        className="w-full h-10 rounded-lg cursor-pointer"
+                        className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
                       />
                     </div>
                   </div>
@@ -1398,7 +1401,7 @@ export default function App() {
 
         {/* Right Column: Live Preview */}
         <div className={`lg:sticky lg:top-24 h-[calc(100vh-8rem)] flex items-center justify-center ${view === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
-          <div className="relative w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] xl:max-w-[400px] aspect-[9/19] bg-white rounded-[3rem] border-[8px] sm:border-[12px] border-slate-900 shadow-2xl overflow-hidden ring-4 ring-slate-800">
+          <div className="relative w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] xl:max-w-[400px] aspect-[9/19] bg-slate-950 rounded-[3rem] border-[8px] sm:border-[12px] border-slate-950 shadow-2xl shadow-indigo-500/5 overflow-hidden ring-4 ring-indigo-500/10">
             {/* Dynamic Island / Notch Mockup */}
             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 flex items-center justify-between px-2 shadow-inner">
               <div className="w-2 h-2 rounded-full bg-slate-800/80"></div>
