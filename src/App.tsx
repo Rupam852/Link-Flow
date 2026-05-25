@@ -539,9 +539,17 @@ export default function App() {
     setProfile(prev => ({ ...prev, links: newLinks }));
   };
 
-  const handleLinkClick = async (linkIndex: number) => {
-    const clickedLink = profile.links[linkIndex];
+  const handleLinkClick = async (clickedLink: any) => {
     if (!clickedLink) return;
+
+    // Dynamically find index using stable identity (id, _id, or url)
+    const linkIndex = profile.links.findIndex(l => 
+      (l.id && l.id === clickedLink.id) || 
+      (l._id && l._id === clickedLink._id) || 
+      l.url === clickedLink.url
+    );
+
+    if (linkIndex === -1) return;
 
     // Instantly update UI for perfect instantaneous feel
     const newLinks = [...profile.links];
@@ -1000,7 +1008,7 @@ export default function App() {
                       whileTap={{ scale: 0.9 }}
                       {...animProps}
                       href={link.url}
-                      onClick={() => handleLinkClick(idx)}
+                      onClick={() => handleLinkClick(link)}
                       target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
                       className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-colors relative group overflow-hidden"
@@ -1034,7 +1042,7 @@ export default function App() {
                       transition={{ delay: idx * 0.1, type: "spring", stiffness: 300, damping: 20 }}
                       {...animProps}
                       href={link.url}
-                      onClick={() => handleLinkClick(idx)}
+                      onClick={() => handleLinkClick(link)}
                       target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
                       className="block w-full p-5 rounded-2xl transition-all hover:scale-105 active:scale-95 flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
