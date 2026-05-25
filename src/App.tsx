@@ -35,7 +35,13 @@ import {
   ChevronDown,
   GripVertical,
   TrendingUp,
-  RotateCw
+  RotateCw,
+  HardDrive,
+  Link,
+  Phone,
+  ShoppingBag,
+  Coffee,
+  Music
 } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -121,6 +127,12 @@ const ICON_MAP: Record<string, any> = {
   discord: MessageCircle,
   tiktok: Play,
   globe: Globe,
+  drive: HardDrive,
+  link: Link,
+  phone: Phone,
+  shop: ShoppingBag,
+  coffee: Coffee,
+  music: Music,
 };
 
 const detectIcon = (url: string): string => {
@@ -136,6 +148,9 @@ const detectIcon = (url: string): string => {
   if (lowercaseUrl.includes('discord.gg') || lowercaseUrl.includes('discord.com')) return 'discord';
   if (lowercaseUrl.includes('tiktok.com')) return 'tiktok';
   if (lowercaseUrl.includes('mailto:')) return 'mail';
+  if (lowercaseUrl.includes('drive.google.com') || lowercaseUrl.includes('docs.google.com')) return 'drive';
+  if (lowercaseUrl.includes('spotify.com') || lowercaseUrl.includes('soundcloud.com') || lowercaseUrl.includes('music.apple.com')) return 'music';
+  if (lowercaseUrl.includes('tel:')) return 'phone';
   return 'globe';
 };
 
@@ -1658,7 +1673,7 @@ export default function App() {
                                     className="fixed inset-0 z-10"
                                     onClick={() => setActiveIconPickerIdx(null)}
                                   />
-                                  <div className="absolute left-0 mt-2 p-2 bg-slate-950 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl z-20 w-48 grid grid-cols-4 gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                  <div className="absolute left-0 mt-2 p-2 bg-slate-950 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl z-20 w-72 grid grid-cols-6 gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
                                     {Object.keys(ICON_MAP).map((iconName) => {
                                       const PickerIcon = ICON_MAP[iconName];
                                       return (
