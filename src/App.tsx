@@ -436,6 +436,46 @@ export default function App() {
     }
   };
 
+  const handleGenerateAITheme = () => {
+    const hue = Math.floor(Math.random() * 360);
+    const hslToHex = (h: number, s: number, l: number): string => {
+      l /= 100;
+      const a = (s * Math.min(l, 1 - l)) / 100;
+      const f = (n: number) => {
+        const k = (n + h / 30) % 12;
+        const color = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1);
+        return Math.round(255 * color).toString(16).padStart(2, '0');
+      };
+      return `#${f(0)}${f(8)}${f(4)}`;
+    };
+
+    const isDark = Math.random() < 0.8;
+    let bgColor, textColor, btnColor, btnTextColor;
+
+    if (isDark) {
+      bgColor = hslToHex(hue, 35, 8);
+      textColor = '#f8fafc';
+      const btnHue = (hue + 120 + Math.floor(Math.random() * 120)) % 360;
+      btnColor = hslToHex(btnHue, 60, 45);
+      btnTextColor = '#ffffff';
+    } else {
+      bgColor = hslToHex(hue, 25, 95);
+      textColor = hslToHex(hue, 60, 20);
+      btnColor = hslToHex((hue + 180) % 360, 50, 45);
+      btnTextColor = '#ffffff';
+    }
+
+    setProfile(prev => ({
+      ...prev,
+      theme: {
+        backgroundColor: bgColor,
+        textColor: textColor,
+        buttonColor: btnColor,
+        buttonTextColor: btnTextColor
+      }
+    }));
+  };
+
   // Avatar generation removed - user manages avatar manually
 
 
@@ -1158,6 +1198,98 @@ export default function App() {
                   </div>
                 </section>
 
+                {/* SEO & Social Preview Card Editor */}
+                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300 space-y-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                      <Share2 size={20} />
+                    </div>
+                    <h2 className="text-lg font-extrabold text-white tracking-tight">SEO & Social Previews</h2>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">SEO Meta Title</label>
+                      <input
+                        type="text"
+                        value={profile.seoTitle || ''}
+                        placeholder={profile.displayName || profile.username || 'LinkFlow Profile'}
+                        onChange={(e) => setProfile({ ...profile, seoTitle: e.target.value })}
+                        className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-700 font-medium text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">SEO Meta Description</label>
+                      <textarea
+                        value={profile.seoDescription || ''}
+                        placeholder={profile.bio || 'Check out my LinkFlow profile!'}
+                        onChange={(e) => setProfile({ ...profile, seoDescription: e.target.value })}
+                        className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all h-20 resize-none placeholder:text-slate-700 text-sm"
+                      />
+                    </div>
+
+                    {/* Live Previews Container */}
+                    <div className="pt-4 border-t border-white/5 space-y-4">
+                      <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Live Social Card Previews</span>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {/* WhatsApp Mock */}
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">WhatsApp Preview</span>
+                          <div className="bg-[#0b141a] p-4 rounded-2xl border border-white/5 font-sans text-left relative overflow-hidden select-none">
+                            <div className="max-w-[85%] bg-[#1f2c34] text-slate-100 rounded-2xl p-2.5 text-xs shadow-md border-l-4 border-emerald-500 relative">
+                              <div className="flex gap-2.5 items-start bg-[#182229] p-2 rounded-lg border border-white/5">
+                                <div className="flex-1 space-y-1 overflow-hidden">
+                                  <p className="font-extrabold text-emerald-400 truncate text-[11px]">{profile.seoTitle || profile.displayName || profile.username || 'LinkFlow Profile'}</p>
+                                  <p className="text-slate-300 text-[10px] line-clamp-2 leading-relaxed">{profile.seoDescription || profile.bio || 'Check out my LinkFlow profile!'}</p>
+                                  <p className="text-slate-500 text-[9px] truncate">link-flow-program.vercel.app</p>
+                                </div>
+                                <img
+                                  src={profile.avatarUrl}
+                                  alt="Preview"
+                                  className="w-14 h-14 rounded-lg object-cover bg-slate-800 shrink-0 border border-white/5"
+                                />
+                              </div>
+                              <p className="text-slate-300 text-[11px] mt-1.5 leading-relaxed">Check out my new page! 🚀</p>
+                              <span className="text-[9px] text-slate-400 absolute bottom-1 right-2">12:34 PM</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Twitter Mock */}
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Twitter/X Card Preview</span>
+                          <div className="bg-black p-4 rounded-2xl border border-white/5 font-sans text-left select-none space-y-2">
+                            <div className="flex gap-2">
+                              <img src={profile.avatarUrl} alt="Avatar" className="w-8 h-8 rounded-full border border-white/10 object-cover" />
+                              <div>
+                                <p className="text-xs font-bold text-white leading-none">{profile.displayName || 'User'}</p>
+                                <p className="text-[10px] text-slate-500 mt-1">@{profile.username || 'username'}</p>
+                              </div>
+                            </div>
+                            <p className="text-xs text-slate-200">Check out my new page! 🚀</p>
+                            
+                            {/* Large Image Card */}
+                            <div className="border border-white/10 rounded-2xl overflow-hidden bg-slate-950">
+                              <img
+                                src={profile.avatarUrl}
+                                alt="Cover"
+                                className="w-full aspect-[1.91/1] object-cover border-b border-white/10"
+                              />
+                              <div className="p-3 space-y-1 text-xs">
+                                <p className="text-slate-500 text-[10px]">link-flow-program.vercel.app</p>
+                                <p className="font-bold text-white truncate">{profile.seoTitle || profile.displayName || profile.username || 'LinkFlow Profile'}</p>
+                                <p className="text-slate-400 text-[11px] line-clamp-1 leading-snug">{profile.seoDescription || profile.bio || 'Check out my LinkFlow profile!'}</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+
                 {/* Account Settings Card: Public Link Toggle & Danger Zone */}
                 <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300 space-y-6">
                   <div className="flex items-center gap-3 mb-2">
@@ -1444,6 +1576,16 @@ export default function App() {
                         className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
                       />
                     </div>
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        handleGenerateAITheme();
+                      }}
+                      className="col-span-2 mt-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 border border-white/10 group"
+                    >
+                      <Sparkles size={14} className="group-hover:animate-spin-slow" />
+                      <span>Inspire Me (AI Theme)</span>
+                    </button>
                   </div>
                 </section>
               </div>
