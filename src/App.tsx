@@ -299,6 +299,15 @@ const TEMPLATES = [
 export default function App() {
   const [view, setView] = useState<'preview' | 'edit' | 'public'>('edit');
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
+  const [debouncedProfile, setDebouncedProfile] = useState<Profile>(DEFAULT_PROFILE);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedProfile(profile);
+    }, 150);
+    return () => clearTimeout(handler);
+  }, [profile]);
+
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
@@ -2031,153 +2040,158 @@ export default function App() {
 
         {/* Right Column: Live Preview */}
         <div className={`lg:sticky lg:top-24 lg:self-start flex items-start justify-center pt-4 ${view === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
-          <div className="relative w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] xl:max-w-[400px] aspect-[9/19] bg-slate-950 rounded-[3rem] border-[8px] sm:border-[12px] border-slate-950 shadow-2xl shadow-indigo-500/5 overflow-hidden ring-4 ring-indigo-500/10">
-            {/* Dynamic Island / Notch Mockup */}
-            <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 flex items-center justify-between px-2 shadow-inner">
-              <div className="w-2 h-2 rounded-full bg-slate-800/80"></div>
-              <div className="w-3 h-3 rounded-full bg-indigo-900/40 border border-slate-700/50"></div>
-            </div>
+          {(() => {
+            const previewProfile = debouncedProfile;
+            return (
+              <div className="relative w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] xl:max-w-[400px] aspect-[9/19] bg-slate-950 rounded-[3rem] border-[8px] sm:border-[12px] border-slate-950 shadow-2xl shadow-indigo-500/5 overflow-hidden ring-4 ring-indigo-500/10">
+                {/* Dynamic Island / Notch Mockup */}
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 flex items-center justify-between px-2 shadow-inner">
+                  <div className="w-2 h-2 rounded-full bg-slate-800/80"></div>
+                  <div className="w-3 h-3 rounded-full bg-indigo-900/40 border border-slate-700/50"></div>
+                </div>
 
-            <div
-              className="w-full h-full overflow-y-auto p-6 pt-16 text-center scrollbar-hide relative"
-              style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
-            >
-              <div className="relative w-24 h-24 mx-auto mb-4">
-                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-md"></div>
-                <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
-                <motion.img
-                  key={profile.avatarUrl}
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{ delay: 0.1, duration: 0.5 }}
-                  src={profile.avatarUrl}
-                  alt="Avatar"
-                  className="absolute inset-[3px] w-[calc(100%-6px)] h-[calc(100%-6px)] rounded-full object-cover shadow-xl"
-                  style={{ border: `3px solid ${profile.theme.backgroundColor}` }}
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              <motion.h1
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.15, duration: 0.4 }}
-                className="text-xl font-extrabold mb-1 tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient"
-              >
-                {profile.displayName}
-              </motion.h1>
-              <motion.p
-                initial={{ y: 8, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.2, duration: 0.4 }}
-                className="text-xs opacity-75 mb-4 font-semibold"
-              >
-                @{profile.username}
-              </motion.p>
-              <motion.p
-                initial={{ y: 10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.25, duration: 0.4 }}
-                className="text-sm opacity-80 mb-4 whitespace-pre-wrap leading-relaxed"
-                style={{ color: profile.theme.textColor }}
-              >
-                {profile.bio || "Your bio will appear here..."}
-              </motion.p>
-              <div className="space-y-4 relative z-10">
-                {/* Social Icons Row */}
-                {profile.links.filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe'))).length > 0 && (
-                  <div className="flex flex-wrap justify-center gap-3 mb-6">
-                    {profile.links
-                      .filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe')))
-                      .map((link, idx) => {
-                        const Icon = ICON_MAP[link.icon] || Globe;
-                        const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
-                        return (
-                          <motion.a
-                            key={idx}
-                            initial={{ opacity: 0, scale: 0.8 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            whileHover={{ scale: 1.15, y: -2, boxShadow: "0 8px 12px -3px rgba(99, 102, 241, 0.25)" }}
-                            {...animProps}
-                            href={link.url}
-                            target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
-                            rel="noopener noreferrer"
-                            className="w-10 h-10 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden group"
-                            style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
-                          >
-                            <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                            {link.thumbnailUrl ? (
-                              <img src={link.thumbnailUrl} alt={link.title} className="w-5 h-5 rounded-full object-cover relative z-10" />
-                            ) : (
-                              <Icon size={18} className="relative z-10" />
-                            )}
-                          </motion.a>
-                        );
-                      })}
+                <div
+                  className="w-full h-full overflow-y-auto p-6 pt-16 text-center scrollbar-hide relative"
+                  style={{ backgroundColor: previewProfile.theme.backgroundColor, color: previewProfile.theme.textColor }}
+                >
+                  <div className="relative w-24 h-24 mx-auto mb-4">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-md"></div>
+                    <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
+                    <motion.img
+                      key={previewProfile.avatarUrl}
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.1, duration: 0.5 }}
+                      src={previewProfile.avatarUrl}
+                      alt="Avatar"
+                      className="absolute inset-[3px] w-[calc(100%-6px)] h-[calc(100%-6px)] rounded-full object-cover shadow-xl"
+                      style={{ border: `3px solid ${previewProfile.theme.backgroundColor}` }}
+                      referrerPolicy="no-referrer"
+                    />
                   </div>
-                )}
-
-                {/* Primary Links & Bar Socials */}
-                <div className="space-y-2.5">
-                  <AnimatePresence mode="popLayout">
-                    {profile.links
-                      .filter(l => l.isActive !== false && (l.display === 'card' || (l.display !== 'icon' && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))))
-                      .map((link, idx) => {
-                        const Icon = ICON_MAP[link.icon] || Globe;
-                        const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
-                        return (
-                          <motion.a
-                            key={idx}
-                            initial={{ opacity: 0, x: -20 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            whileHover={{ 
-                              scale: 1.02, 
-                              y: -2,
-                              boxShadow: "0 10px 20px -5px rgba(99, 102, 241, 0.2), 0 8px 10px -6px rgba(99, 102, 241, 0.2)",
-                              borderColor: "rgba(99, 102, 241, 0.35)"
-                            }}
-                            whileTap={{ scale: 0.98 }}
-                            transition={{ delay: 0.3 + idx * 0.05, type: "spring", stiffness: 300, damping: 20 }}
-                            {...animProps}
-                            href={link.url}
-                            target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
-                            rel="noopener noreferrer"
-                            className="block w-full p-4 rounded-xl transition-all flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative"
-                            style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
-                          >
-                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                            <div className="flex items-center gap-3 relative z-10 w-full">
-                              {link.thumbnailUrl ? (
-                                <img src={link.thumbnailUrl} alt={link.title} className="w-7 h-7 rounded-lg object-cover shadow-sm shrink-0" />
-                              ) : (
-                                <Icon size={18} className="drop-shadow-sm shrink-0" />
-                              )}
-                              <div className="text-left overflow-hidden">
-                                <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
-                                {link.description && (
-                                  <p className="text-[10px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left">{link.description}</p>
+                  <motion.h1
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.15, duration: 0.4 }}
+                    className="text-xl font-extrabold mb-1 tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient"
+                  >
+                    {previewProfile.displayName}
+                  </motion.h1>
+                  <motion.p
+                    initial={{ y: 8, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.2, duration: 0.4 }}
+                    className="text-xs opacity-75 mb-4 font-semibold"
+                  >
+                    @{previewProfile.username}
+                  </motion.p>
+                  <motion.p
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.25, duration: 0.4 }}
+                    className="text-sm opacity-80 mb-4 whitespace-pre-wrap leading-relaxed"
+                    style={{ color: previewProfile.theme.textColor }}
+                  >
+                    {previewProfile.bio || "Your bio will appear here..."}
+                  </motion.p>
+                  <div className="space-y-4 relative z-10">
+                    {/* Social Icons Row */}
+                    {previewProfile.links.filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && previewProfile.socialLinksStyle === 'grid' && l.icon !== 'globe'))).length > 0 && (
+                      <div className="flex flex-wrap justify-center gap-3 mb-6">
+                        {previewProfile.links
+                          .filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && previewProfile.socialLinksStyle === 'grid' && l.icon !== 'globe')))
+                          .map((link, idx) => {
+                            const Icon = ICON_MAP[link.icon] || Globe;
+                            const animProps = getAnimationProps(link.animation, previewProfile.theme.buttonColor);
+                            return (
+                              <motion.a
+                                key={idx}
+                                initial={{ opacity: 0, scale: 0.8 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                whileHover={{ scale: 1.15, y: -2, boxShadow: "0 8px 12px -3px rgba(99, 102, 241, 0.25)" }}
+                                {...animProps}
+                                href={link.url}
+                                target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
+                                rel="noopener noreferrer"
+                                className="w-10 h-10 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden group"
+                                style={{ backgroundColor: previewProfile.theme.buttonColor, color: previewProfile.theme.buttonTextColor }}
+                              >
+                                <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                {link.thumbnailUrl ? (
+                                  <img src={link.thumbnailUrl} alt={link.title} className="w-5 h-5 rounded-full object-cover relative z-10" />
+                                ) : (
+                                  <Icon size={18} className="relative z-10" />
                                 )}
-                              </div>
-                            </div>
-                            <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
-                          </motion.a>
-                        );
-                      })}
-                  </AnimatePresence>
-                </div>
-              </div>
+                              </motion.a>
+                            );
+                          })}
+                      </div>
+                    )}
 
-              <div className="mt-12 pt-8 border-t border-white/10">
-                <div className="flex justify-center gap-4 opacity-60">
-                  {profile.links.filter(l => l.isActive !== false).slice(0, 5).map((link, idx) => {
-                    const Icon = ICON_MAP[link.icon] || Globe;
-                    return <Icon key={idx} size={20} />;
-                  })}
+                    {/* Primary Links & Bar Socials */}
+                    <div className="space-y-2.5">
+                      <AnimatePresence mode="popLayout">
+                        {previewProfile.links
+                          .filter(l => l.isActive !== false && (l.display === 'card' || (l.display !== 'icon' && (previewProfile.socialLinksStyle === 'list' || l.icon === 'globe'))))
+                          .map((link, idx) => {
+                            const Icon = ICON_MAP[link.icon] || Globe;
+                            const animProps = getAnimationProps(link.animation, previewProfile.theme.buttonColor);
+                            return (
+                              <motion.a
+                                key={idx}
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                whileHover={{ 
+                                  scale: 1.02, 
+                                  y: -2,
+                                  boxShadow: "0 10px 20px -5px rgba(99, 102, 241, 0.2), 0 8px 10px -6px rgba(99, 102, 241, 0.2)",
+                                  borderColor: "rgba(99, 102, 241, 0.35)"
+                                }}
+                                whileTap={{ scale: 0.98 }}
+                                transition={{ delay: 0.3 + idx * 0.05, type: "spring", stiffness: 300, damping: 20 }}
+                                {...animProps}
+                                href={link.url}
+                                target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
+                                rel="noopener noreferrer"
+                                className="block w-full p-4 rounded-xl transition-all flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative"
+                                style={{ backgroundColor: previewProfile.theme.buttonColor, color: previewProfile.theme.buttonTextColor }}
+                              >
+                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                <div className="flex items-center gap-3 relative z-10 w-full">
+                                  {link.thumbnailUrl ? (
+                                    <img src={link.thumbnailUrl} alt={link.title} className="w-7 h-7 rounded-lg object-cover shadow-sm shrink-0" />
+                                  ) : (
+                                    <Icon size={18} className="drop-shadow-sm shrink-0" />
+                                  )}
+                                  <div className="text-left overflow-hidden">
+                                    <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
+                                    {link.description && (
+                                      <p className="text-[10px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left">{link.description}</p>
+                                    )}
+                                  </div>
+                                </div>
+                                <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
+                              </motion.a>
+                            );
+                          })}
+                      </AnimatePresence>
+                    </div>
+                  </div>
+
+                  <div className="mt-12 pt-8 border-t border-white/10">
+                    <div className="flex justify-center gap-4 opacity-60">
+                      {previewProfile.links.filter(l => l.isActive !== false).slice(0, 5).map((link, idx) => {
+                        const Icon = ICON_MAP[link.icon] || Globe;
+                        return <Icon key={idx} size={20} />;
+                      })}
+                    </div>
+                    <p className="text-[10px] mt-4 uppercase tracking-widest opacity-40">Powered by LinkFlow</p>
+                  </div>
                 </div>
-                <p className="text-[10px] mt-4 uppercase tracking-widest opacity-40">Powered by LinkFlow</p>
               </div>
-            </div>
-          </div>
+            );
+          })()}
         </div>
       </main>
 
