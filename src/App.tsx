@@ -756,6 +756,11 @@ export default function App() {
       setUsernameStatus('invalid');
       return;
     }
+    // If checking their own current username, immediately allow it as available
+    if (val.toLowerCase().trim() === (profile.username || '').toLowerCase().trim()) {
+      setUsernameStatus('available');
+      return;
+    }
     setUsernameStatus('checking');
     try {
       const res = await fetch(`/api/profiles/${val}`);
@@ -888,9 +893,23 @@ export default function App() {
         }
       }
 
-      // Sanitize profile: Remove MongoDB internal fields before sending
+      // Sanitize profile: Remove MongoDB internal fields and format link URLs securely before sending
       const { _id, __v, ...pureProfileData } = profile as any;
-      const updatedProfile = { ...pureProfileData, uid: targetUid, username: currentUsername };
+
+      const sanitizedLinks = (pureProfileData.links || []).map((link: any) => {
+        const trimmedUrl = link.url ? link.url.trim() : '';
+        if (trimmedUrl && !/^(https?:\/\/|mailto:|tel:)/.test(trimmedUrl) && !trimmedUrl.startsWith('/')) {
+          return { ...link, url: `https://${trimmedUrl}` };
+        }
+        return { ...link, url: trimmedUrl };
+      });
+
+      const updatedProfile = { 
+        ...pureProfileData, 
+        uid: targetUid, 
+        username: currentUsername,
+        links: sanitizedLinks 
+      };
 
       // Use the final UID for the request
       const res = await fetch(`/api/profiles/uid/${targetUid}`, {
@@ -1672,6 +1691,16 @@ export default function App() {
                                     // Auto-detect icon
                                     newLinks[idx].icon = detectIcon(newUrl);
                                     setProfile({ ...profile, links: newLinks });
+                                  }}
+                                  onBlur={(e) => {
+                                    const val = e.target.value.trim();
+                                    if (val && !/^(https?:\/\/|mailto:|tel:)/.test(val) && !val.startsWith('/')) {
+                                      const formatted = `https://${val}`;
+                                      const newLinks = [...profile.links];
+                                      newLinks[idx].url = formatted;
+                                      newLinks[idx].icon = detectIcon(formatted);
+                                      setProfile({ ...profile, links: newLinks });
+                                    }
                                   }}
                                   className={`w-full bg-transparent text-sm focus:outline-none transition-colors placeholder:text-slate-700 font-semibold ${link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url)
                                     ? 'text-red-400 placeholder:text-red-300'
