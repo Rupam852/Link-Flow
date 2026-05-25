@@ -740,7 +740,7 @@ export default function App() {
               rel="noopener noreferrer"
               className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group"
             >
-              linkflow.me/{profile.username || '...'}
+              link-flow-program.vercel.app/{profile.username || '...'}
               <ExternalLink size={10} className="group-hover:scale-110 transition-transform" />
             </a>
           </div>
@@ -957,7 +957,7 @@ export default function App() {
                         </div>
                         <div>
                           <p className="text-xs text-slate-500 font-medium">
-                            Your Public Link: <span className="font-bold text-indigo-600">linkflow.me/{profile.username}</span>
+                            Your Public Link: <span className="font-bold text-indigo-600">link-flow-program.vercel.app/{profile.username}</span>
                           </p>
                         </div>
 
