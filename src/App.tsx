@@ -1624,8 +1624,7 @@ export default function App() {
                               }}
                               className="w-full bg-transparent font-bold text-white focus:outline-none placeholder:text-slate-700 text-base"
                             />
-                            <input
-                              type="text"
+                            <textarea
                               value={link.description || ''}
                               placeholder="Short description (optional)"
                               onChange={(e) => {
@@ -1633,7 +1632,8 @@ export default function App() {
                                 newLinks[idx].description = e.target.value;
                                 setProfile({ ...profile, links: newLinks });
                               }}
-                              className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all shadow-inner mt-1 block"
+                              rows={2}
+                              className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all shadow-inner mt-1 block resize-none min-h-[3rem]"
                             />
                             <div className="relative">
                               <input
