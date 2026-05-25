@@ -1062,7 +1062,7 @@ export default function App() {
             transition={{ delay: 0.2, duration: 0.4 }}
             className="text-3xl font-extrabold mb-1 tracking-tight animate-gradient"
             style={{
-              backgroundImage: `linear-gradient(to right, ${profile.theme.textColor}, ${profile.theme.buttonColor}, ${profile.theme.textColor})`,
+              backgroundImage: `linear-gradient(to right, ${profile.theme.textColor}, ${profile.theme.buttonColor === '#334155' || profile.theme.buttonColor === '#1e293b' || profile.theme.buttonColor === '#0f172a' || profile.theme.buttonColor === '#000000' ? '#a5b4fc' : profile.theme.buttonColor}, ${profile.theme.textColor})`,
               WebkitBackgroundClip: 'text',
               backgroundClip: 'text',
               color: 'transparent'
@@ -1971,7 +1971,7 @@ export default function App() {
                 transition={{ delay: 0.15, duration: 0.4 }}
                 className="text-xl font-extrabold mb-1 tracking-tight animate-gradient"
                 style={{
-                  backgroundImage: `linear-gradient(to right, ${profile.theme.textColor}, ${profile.theme.buttonColor}, ${profile.theme.textColor})`,
+                  backgroundImage: `linear-gradient(to right, ${profile.theme.textColor}, ${profile.theme.buttonColor === '#334155' || profile.theme.buttonColor === '#1e293b' || profile.theme.buttonColor === '#0f172a' || profile.theme.buttonColor === '#000000' ? '#a5b4fc' : profile.theme.buttonColor}, ${profile.theme.textColor})`,
                   WebkitBackgroundClip: 'text',
                   backgroundClip: 'text',
                   color: 'transparent'
