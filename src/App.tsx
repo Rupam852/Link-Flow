@@ -1192,13 +1192,12 @@ export default function App() {
             )}
 
             {/* Primary Links & Bar Socials */}
-            <div className="flex flex-wrap gap-4 w-full justify-start">
+            <div className="space-y-4">
               {profile.links
-                .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe' || l.display === 'grid' || l.display === 'list'))
+                .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))
                 .map((link, idx) => {
                   const Icon = ICON_MAP[link.icon] || Globe;
                   const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
-                  const isGrid = link.display === 'grid';
                   return (
                     <motion.a
                       key={idx}
@@ -1217,34 +1216,24 @@ export default function App() {
                       onClick={() => handleLinkClick(link)}
                       target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
-                      className={`transition-all flex rounded-2xl group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative ${
-                        isGrid 
-                          ? 'w-[calc(50%-8px)] p-4 flex-col items-center justify-center text-center aspect-square' 
-                          : 'w-full p-5 flex-row items-center justify-between'
-                      }`}
+                      className="block w-full p-5 rounded-2xl transition-all flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
                       style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                      <div className={`flex items-center gap-4 relative z-10 w-full ${isGrid ? 'flex-col justify-center text-center' : 'flex-row text-left'}`}>
+                      <div className="flex items-center gap-4 relative z-10 w-full">
                         {link.thumbnailUrl ? (
-                          <img 
-                            src={link.thumbnailUrl} 
-                            alt={link.title} 
-                            className={`rounded-xl object-cover shadow-sm shrink-0 ${isGrid ? 'w-12 h-12' : 'w-10 h-10'}`} 
-                          />
+                          <img src={link.thumbnailUrl} alt={link.title} className="w-10 h-10 rounded-xl object-cover shadow-sm shrink-0" />
                         ) : (
-                          <Icon size={isGrid ? 32 : 24} className="drop-shadow-sm shrink-0 animate-in fade-in zoom-in-50 duration-200" />
+                          <Icon size={24} className="drop-shadow-sm shrink-0" />
                         )}
-                        <div className={`${isGrid ? 'text-center' : 'text-left'} overflow-hidden w-full`}>
-                          <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
-                          {link.description && !isGrid && (
+                        <div className="text-left">
+                          <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight">{link.title}</p>
+                          {link.description && (
                             <p className="text-sm font-semibold text-white/80 mt-1.5 whitespace-pre-wrap leading-snug text-left">{link.description}</p>
                           )}
                         </div>
                       </div>
-                      {!isGrid && (
-                        <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
-                      )}
+                      <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
                     </motion.a>
                   );
                 })}
@@ -1807,45 +1796,6 @@ export default function App() {
                                     />
                                   </button>
                                 </div>
-
-                                {/* 2. Layout Style Selector (List vs Grid) */}
-                                <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
-                                  <span className="font-bold text-slate-500 uppercase tracking-wider">Style</span>
-                                  <div className="flex items-center bg-slate-900 rounded-md p-0.5 border border-white/5">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        const newLinks = [...profile.links];
-                                        newLinks[idx] = { ...newLinks[idx], display: 'list' };
-                                        setProfile({ ...profile, links: newLinks });
-                                      }}
-                                      className={`px-2 py-0.5 rounded-md font-bold transition-all ${
-                                        link.display !== 'grid'
-                                          ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
-                                          : 'text-slate-400 hover:text-white'
-                                      }`}
-                                    >
-                                      List
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        const newLinks = [...profile.links];
-                                        newLinks[idx] = { ...newLinks[idx], display: 'grid' };
-                                        setProfile({ ...profile, links: newLinks });
-                                      }}
-                                      className={`px-2 py-0.5 rounded-md font-bold transition-all ${
-                                        link.display === 'grid'
-                                          ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
-                                          : 'text-slate-400 hover:text-white'
-                                      }`}
-                                    >
-                                      Grid
-                                    </button>
-                                  </div>
-                                </div>
                               </div>
                             </div>
                             <div className="flex flex-col items-center justify-center shrink-0 mt-1">
@@ -2146,14 +2096,13 @@ export default function App() {
                 )}
 
                 {/* Primary Links & Bar Socials */}
-                <div className="flex flex-wrap gap-3 w-full justify-start">
+                <div className="space-y-2.5">
                   <AnimatePresence mode="popLayout">
                     {profile.links
-                      .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe' || l.display === 'grid' || l.display === 'list'))
+                      .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))
                       .map((link, idx) => {
                         const Icon = ICON_MAP[link.icon] || Globe;
                         const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
-                        const isGrid = link.display === 'grid';
                         return (
                           <motion.a
                             key={idx}
@@ -2172,34 +2121,24 @@ export default function App() {
                             href={link.url}
                             target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                             rel="noopener noreferrer"
-                            className={`transition-all flex rounded-xl group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative ${
-                              isGrid 
-                                ? 'w-[calc(50%-6px)] p-3.5 flex-col items-center justify-center text-center aspect-square' 
-                                : 'w-full p-4 flex-row items-center justify-between'
-                            }`}
+                            className="block w-full p-4 rounded-xl transition-all flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative"
                             style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                           >
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                            <div className={`flex items-center gap-3 relative z-10 w-full ${isGrid ? 'flex-col justify-center text-center' : 'flex-row text-left'}`}>
+                            <div className="flex items-center gap-3 relative z-10 w-full">
                               {link.thumbnailUrl ? (
-                                <img 
-                                  src={link.thumbnailUrl} 
-                                  alt={link.title} 
-                                  className={`rounded-lg object-cover shadow-sm shrink-0 ${isGrid ? 'w-10 h-10' : 'w-7 h-7'}`} 
-                                />
+                                <img src={link.thumbnailUrl} alt={link.title} className="w-7 h-7 rounded-lg object-cover shadow-sm shrink-0" />
                               ) : (
-                                <Icon size={isGrid ? 24 : 18} className="drop-shadow-sm shrink-0 animate-in fade-in zoom-in-50 duration-200" />
+                                <Icon size={18} className="drop-shadow-sm shrink-0" />
                               )}
-                              <div className={`${isGrid ? 'text-center' : 'text-left'} overflow-hidden w-full`}>
+                              <div className="text-left overflow-hidden">
                                 <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
-                                {link.description && !isGrid && (
+                                {link.description && (
                                   <p className="text-[10px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left">{link.description}</p>
                                 )}
                               </div>
                             </div>
-                            {!isGrid && (
-                              <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
-                            )}
+                            <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
                           </motion.a>
                         );
                       })}
