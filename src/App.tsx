@@ -1932,7 +1932,7 @@ export default function App() {
         </div>
 
         {/* Right Column: Live Preview */}
-        <div className={`lg:sticky lg:top-24 h-[calc(100vh-8rem)] flex items-center justify-center ${view === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
+        <div className={`lg:sticky lg:top-24 lg:self-start flex items-start justify-center pt-4 ${view === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
           <div className="relative w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] xl:max-w-[400px] aspect-[9/19] bg-slate-950 rounded-[3rem] border-[8px] sm:border-[12px] border-slate-950 shadow-2xl shadow-indigo-500/5 overflow-hidden ring-4 ring-indigo-500/10">
             {/* Dynamic Island / Notch Mockup */}
             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 flex items-center justify-between px-2 shadow-inner">
