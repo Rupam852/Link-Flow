@@ -258,6 +258,7 @@ export default function App() {
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [activeIconPickerIdx, setActiveIconPickerIdx] = useState<number | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
   const [showDeleteToast, setShowDeleteToast] = useState(false);
@@ -1279,7 +1280,58 @@ export default function App() {
                         key={idx}
                         className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group"
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-start gap-4">
+                          {/* Icon Selector Button & Dropdown Container */}
+                          <div className="relative shrink-0 mt-1">
+                            <button
+                              onClick={() => {
+                                const currentOpen = activeIconPickerIdx === idx ? null : idx;
+                                setActiveIconPickerIdx(currentOpen);
+                              }}
+                              className="w-12 h-12 rounded-xl bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md group/iconbtn active:scale-95"
+                              title="Choose Custom Icon"
+                            >
+                              {(() => {
+                                const IconComp = ICON_MAP[link.icon] || Globe;
+                                return <IconComp size={20} className="group-hover/iconbtn:scale-110 transition-transform" />;
+                              })()}
+                            </button>
+
+                            {/* Floating icon selector picker */}
+                            {activeIconPickerIdx === idx && (
+                              <>
+                                <div 
+                                  className="fixed inset-0 z-10" 
+                                  onClick={() => setActiveIconPickerIdx(null)} 
+                                />
+                                <div className="absolute left-0 mt-2 p-2 bg-slate-950 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl z-20 w-48 grid grid-cols-4 gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                                  {Object.keys(ICON_MAP).map((iconName) => {
+                                    const PickerIcon = ICON_MAP[iconName];
+                                    return (
+                                      <button
+                                        key={iconName}
+                                        onClick={() => {
+                                          const newLinks = [...profile.links];
+                                          newLinks[idx].icon = iconName;
+                                          setProfile({ ...profile, links: newLinks });
+                                          setActiveIconPickerIdx(null);
+                                        }}
+                                        className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${
+                                          link.icon === iconName 
+                                            ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-md' 
+                                            : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                        }`}
+                                        title={iconName}
+                                      >
+                                        <PickerIcon size={16} />
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                              </>
+                            )}
+                          </div>
+
                           <div className="flex-1 space-y-3">
                             <input
                               type="text"
@@ -1338,7 +1390,7 @@ export default function App() {
                               const newLinks = profile.links.filter((_, i) => i !== idx);
                               setProfile({ ...profile, links: newLinks });
                             }}
-                            className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2.5 rounded-xl transition-all active:scale-90"
+                            className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2.5 rounded-xl transition-all active:scale-90 mt-1"
                           >
                             <Trash2 size={18} />
                           </button>
