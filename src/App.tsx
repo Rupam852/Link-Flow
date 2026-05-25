@@ -928,31 +928,6 @@ export default function App() {
           <p className="text-lg opacity-80 mb-6 max-w-sm mx-auto leading-relaxed whitespace-pre-wrap">
             {profile.bio || "No bio yet."}
           </p>
-
-          {/* Quick Socials Icon Row (Feature 8) */}
-          {profile.quickSocials && profile.quickSocials.filter(s => s.isActive && s.url).length > 0 && (
-            <div className="flex flex-wrap justify-center gap-4.5 mb-8">
-              {profile.quickSocials.filter(s => s.isActive && s.url).map((social, idx) => {
-                const IconComp = ICON_MAP[social.icon] || Globe;
-                return (
-                  <motion.a
-                    key={idx}
-                    whileHover={{ scale: 1.15, y: -2 }}
-                    whileTap={{ scale: 0.9 }}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-10 h-10 rounded-full flex items-center justify-center border border-white/10 hover:border-white/20 shadow-md backdrop-blur-md transition-all"
-                    style={{ backgroundColor: `${profile.theme.buttonColor}20`, color: profile.theme.textColor }}
-                    title={social.platform}
-                  >
-                    <IconComp size={18} />
-                  </motion.a>
-                );
-              })}
-            </div>
-          )}
-
           {/* Optimized Link Layout */}
           <div className="space-y-6">
             {/* Social Icons Row (Shown only in 'grid' mode) */}
@@ -1390,92 +1365,6 @@ export default function App() {
                   </div>
                 </section>
 
-                {/* Feature 8: Quick Social Icon Links row Configurator */}
-                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                      <Globe size={20} />
-                    </div>
-                    <div>
-                      <h2 className="text-lg font-extrabold text-white tracking-tight">Quick Social Links</h2>
-                      <p className="text-xs text-slate-400 mt-0.5">Compact colored social icon bar rendered under your bio.</p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {(profile.quickSocials || [
-                      { platform: 'instagram', url: '', icon: 'instagram', isActive: false },
-                      { platform: 'twitter', url: '', icon: 'twitter', isActive: false },
-                      { platform: 'youtube', url: '', icon: 'youtube', isActive: false },
-                      { platform: 'whatsapp', url: '', icon: 'whatsapp', isActive: false },
-                      { platform: 'mail', url: '', icon: 'mail', isActive: false }
-                    ]).map((social, idx) => {
-                      const IconComp = ICON_MAP[social.icon] || Globe;
-                      return (
-                        <div key={social.platform} className="flex items-center gap-4 bg-slate-950/40 p-3 rounded-2xl border border-white/5 hover:border-white/10 transition-all">
-                          <div className="w-9 h-9 rounded-xl bg-slate-900 flex items-center justify-center text-slate-300">
-                            <IconComp size={16} />
-                          </div>
-                          
-                          <div className="flex-1">
-                            <input
-                              type="text"
-                              value={social.url}
-                              placeholder={`${social.platform.charAt(0).toUpperCase() + social.platform.slice(1)} Profile Link`}
-                              onChange={(e) => {
-                                const currentSocials = [...(profile.quickSocials || [
-                                  { platform: 'instagram', url: '', icon: 'instagram', isActive: false },
-                                  { platform: 'twitter', url: '', icon: 'twitter', isActive: false },
-                                  { platform: 'youtube', url: '', icon: 'youtube', isActive: false },
-                                  { platform: 'whatsapp', url: '', icon: 'whatsapp', isActive: false },
-                                  { platform: 'mail', url: '', icon: 'mail', isActive: false }
-                                ])];
-                                if (currentSocials[idx]) {
-                                  currentSocials[idx].url = e.target.value;
-                                  if (e.target.value) {
-                                    currentSocials[idx].isActive = true;
-                                  }
-                                }
-                                setProfile({ ...profile, quickSocials: currentSocials });
-                              }}
-                              className="w-full bg-transparent text-sm text-white focus:outline-none placeholder:text-slate-700 font-semibold"
-                            />
-                          </div>
-
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[9px] font-bold text-slate-500 uppercase tracking-wider">Active</span>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                const currentSocials = [...(profile.quickSocials || [
-                                  { platform: 'instagram', url: '', icon: 'instagram', isActive: false },
-                                  { platform: 'twitter', url: '', icon: 'twitter', isActive: false },
-                                  { platform: 'youtube', url: '', icon: 'youtube', isActive: false },
-                                  { platform: 'whatsapp', url: '', icon: 'whatsapp', isActive: false },
-                                  { platform: 'mail', url: '', icon: 'mail', isActive: false }
-                                ])];
-                                if (currentSocials[idx]) {
-                                  currentSocials[idx].isActive = !currentSocials[idx].isActive;
-                                }
-                                setProfile({ ...profile, quickSocials: currentSocials });
-                              }}
-                              className={`relative w-8 h-4 rounded-full transition-colors duration-150 focus:outline-none ${
-                                social.isActive ? 'bg-indigo-600' : 'bg-slate-800'
-                              }`}
-                            >
-                              <span
-                                className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transition-transform duration-150 ${
-                                  social.isActive ? 'translate-x-4' : 'translate-x-0'
-                                }`}
-                              />
-                            </button>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </section>
-
                 <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-6">
@@ -1658,9 +1547,7 @@ export default function App() {
                                   URL must start with http://, https://, or mailto:
                                 </p>
                               )}
-                            </div>
-
-                            {/* Secondary Features Control Row */}
+                            </div>                             {/* Secondary Features Control Row */}
                             <div className="flex flex-wrap items-center gap-2.5 pt-2.5 border-t border-white/5 text-[10px]">
                               {/* 1. Toggle Switch (Visibility) */}
                               <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
@@ -1684,91 +1571,19 @@ export default function App() {
                                   />
                                 </button>
                               </div>
-
-                              {/* 2. Highlight Animation Selector */}
-                              <div className="flex items-center gap-1 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
-                                <span className="font-bold text-slate-500 uppercase tracking-wider">Effect:</span>
-                                <select
-                                  value={link.animation || 'none'}
-                                  onChange={(e) => {
-                                    const newLinks = [...profile.links];
-                                    newLinks[idx].animation = e.target.value as any;
-                                    setProfile({ ...profile, links: newLinks });
-                                  }}
-                                  className="bg-transparent text-indigo-400 font-bold uppercase focus:outline-none cursor-pointer"
-                                >
-                                  <option value="none" className="bg-slate-950 text-slate-300">None</option>
-                                  <option value="pulse" className="bg-slate-950 text-indigo-400">⚡ Pulse</option>
-                                  <option value="wobble" className="bg-slate-950 text-indigo-400">✨ Wobble</option>
-                                  <option value="glow" className="bg-slate-950 text-indigo-400">🌟 Glow</option>
-                                </select>
-                              </div>
-
-                              {/* 3. Custom Thumbnail Uploader */}
-                              <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
-                                <span className="font-bold text-slate-500 uppercase tracking-wider">Thumbnail</span>
-                                <input
-                                  type="text"
-                                  value={link.thumbnailUrl || ''}
-                                  placeholder="Image URL..."
-                                  onChange={(e) => {
-                                    const newLinks = [...profile.links];
-                                    newLinks[idx].thumbnailUrl = e.target.value;
-                                    setProfile({ ...profile, links: newLinks });
-                                  }}
-                                  className="bg-transparent text-indigo-400 font-medium placeholder:text-slate-700 w-20 focus:outline-none truncate"
-                                />
-                              </div>
-
-                              {/* 4. Analytics badge */}
-                              <div className="flex items-center gap-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-1 rounded-lg font-bold uppercase tracking-wider">
-                                <span>⚡ {link.clicks || 0} clicks</span>
-                              </div>
                             </div>
                           </div>
-                          <div className="flex flex-col items-center justify-center gap-1 shrink-0 mt-1">
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleMoveLink(idx, 'up');
-                              }}
-                              disabled={idx === 0}
-                              className={`p-1.5 rounded-lg border border-white/5 transition-all active:scale-90 ${
-                                idx === 0 
-                                  ? 'text-slate-700 cursor-not-allowed opacity-30 bg-transparent border-transparent' 
-                                  : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'
-                              }`}
-                              title="Move Link Up"
-                            >
-                              <ChevronUp size={15} />
-                            </button>
-                            
-                            <button
-                              onClick={(e) => {
-                                e.preventDefault();
-                                handleMoveLink(idx, 'down');
-                              }}
-                              disabled={idx === profile.links.length - 1}
-                              className={`p-1.5 rounded-lg border border-white/5 transition-all active:scale-90 ${
-                                idx === profile.links.length - 1 
-                                  ? 'text-slate-700 cursor-not-allowed opacity-30 bg-transparent border-transparent' 
-                                  : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'
-                              }`}
-                              title="Move Link Down"
-                            >
-                              <ChevronDown size={15} />
-                            </button>
-
+                          <div className="flex flex-col items-center justify-center shrink-0 mt-1">
                             <button
                               onClick={(e) => {
                                 e.preventDefault();
                                 const newLinks = profile.links.filter((_, i) => i !== idx);
                                 setProfile({ ...profile, links: newLinks });
                               }}
-                              className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-1.5 rounded-lg transition-all active:scale-90 mt-0.5"
+                              className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2.5 rounded-xl border border-white/5 transition-all active:scale-90"
                               title="Delete Link"
                             >
-                              <Trash2 size={15} />
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </div>
@@ -1870,30 +1685,6 @@ export default function App() {
               <p className="text-sm opacity-80 mb-4 whitespace-pre-wrap leading-relaxed" style={{ color: profile.theme.textColor }}>
                 {profile.bio || "Your bio will appear here..."}
               </p>
-
-              {/* Quick Socials Icon Row (Feature 8) */}
-              {profile.quickSocials && profile.quickSocials.filter(s => s.isActive && s.url).length > 0 && (
-                <div className="flex flex-wrap justify-center gap-3 mb-6">
-                  {profile.quickSocials.filter(s => s.isActive && s.url).map((social, idx) => {
-                    const IconComp = ICON_MAP[social.icon] || Globe;
-                    return (
-                      <motion.a
-                        key={idx}
-                        whileHover={{ scale: 1.1 }}
-                        href={social.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="w-8 h-8 rounded-full flex items-center justify-center border border-white/10 shadow-sm backdrop-blur-sm transition-all"
-                        style={{ backgroundColor: `${profile.theme.buttonColor}20`, color: profile.theme.textColor }}
-                        title={social.platform}
-                      >
-                        <IconComp size={14} />
-                      </motion.a>
-                    );
-                  })}
-                </div>
-              )}
-
               <div className="space-y-4 relative z-10">
                 {/* Social Icons Row (Shown only in 'grid' mode) */}
                 {profile.socialLinksStyle === 'grid' && profile.links.filter(l => l.isActive !== false && l.icon !== 'globe').length > 0 && (
