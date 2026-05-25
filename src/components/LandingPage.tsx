@@ -131,12 +131,13 @@ const FAQS = [
 export default function LandingPage({ onLogin }: LandingPageProps) {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
+  const [isChecking, setIsChecking] = useState(false);
   const [activeThemeIdx, setActiveThemeIdx] = useState(0);
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(null);
 
   const activeTheme = PRESET_THEMES[activeThemeIdx];
 
-  const handleClaim = (e: React.FormEvent) => {
+  const handleClaim = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -156,9 +157,24 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
       return;
     }
 
-    // Save proposed username to session storage and trigger login
-    sessionStorage.setItem('claimedUsername', cleanUsername);
-    onLogin();
+    setIsChecking(true);
+    try {
+      const res = await fetch(`/api/profiles/${cleanUsername}`);
+      if (res.ok) {
+        // Taken
+        setError("This username is already claimed. If you already own this page, please click 'Sign In' at the top right.");
+      } else {
+        // Available (404)
+        sessionStorage.setItem('claimedUsername', cleanUsername);
+        onLogin();
+      }
+    } catch (err) {
+      // Fallback
+      sessionStorage.setItem('claimedUsername', cleanUsername);
+      onLogin();
+    } finally {
+      setIsChecking(false);
+    }
   };
 
   const toggleFaq = (idx: number) => {
@@ -238,10 +254,15 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
               </div>
               <button 
                 type="submit" 
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+                disabled={isChecking}
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0 disabled:opacity-50 disabled:scale-100 disabled:pointer-events-none"
               >
-                <span>Claim for Free</span>
-                <ArrowRight size={16} />
+                <span>{isChecking ? 'Checking...' : 'Claim for Free'}</span>
+                {isChecking ? (
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                ) : (
+                  <ArrowRight size={16} />
+                )}
               </button>
             </form>
             {error && (
