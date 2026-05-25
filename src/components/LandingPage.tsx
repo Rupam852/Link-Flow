@@ -184,8 +184,12 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
 
       {/* Header */}
       <header className="relative max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-50">
-        <div className="flex items-center gap-2">
-          <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-black text-xl shadow-lg shadow-indigo-500/20">L</div>
+        <div className="flex items-center gap-2.5">
+          <img
+            src="/favicon.png"
+            alt="LinkFlow Logo"
+            className="w-10 h-10 rounded-xl shadow-lg border border-white/10 hover:rotate-6 transition-all duration-300 object-cover"
+          />
           <span className="font-extrabold text-2xl tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">LinkFlow</span>
         </div>
         <div className="flex items-center gap-6">

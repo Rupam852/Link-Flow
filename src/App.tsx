@@ -948,10 +948,13 @@ export default function App() {
       <div className="absolute bottom-[20%] right-[-10%] w-[45%] aspect-square rounded-full bg-purple-900/8 blur-[120px] pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293703_1px,transparent_1px),linear-gradient(to_bottom,#1f293703_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none opacity-40" />
 
-      {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 h-20 bg-slate-950/60 border-b border-white/5 backdrop-blur-xl z-50 px-6 flex items-center justify-between shadow-lg">
-        <div className="flex items-center gap-2 shrink-0">
-          <div className="w-9 h-9 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-black shrink-0 shadow-lg shadow-indigo-500/20">L</div>
+        <div className="flex items-center gap-2.5 shrink-0">
+          <img
+            src="/favicon.png"
+            alt="LinkFlow Logo"
+            className="w-9 h-9 rounded-xl shadow-lg border border-white/10 object-cover"
+          />
           <span className="font-extrabold text-xl tracking-tight hidden sm:block bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">LinkFlow</span>
         </div>
 
