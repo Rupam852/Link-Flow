@@ -55,6 +55,7 @@ const profileSchema = new mongoose.Schema({
       description: String,
       isActive: { type: Boolean, default: true },
       thumbnailUrl: String,
+      display: { type: String, default: 'list' },
       clicks: { type: Number, default: 0 },
     },
   ],
