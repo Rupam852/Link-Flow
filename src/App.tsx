@@ -260,6 +260,7 @@ export default function App() {
   const [isImageUploading, setIsImageUploading] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [showDeleteToast, setShowDeleteToast] = useState(false);
 
   // Responsive View Handler with History tracking for back gesture
   const handleSetView = (newView: 'preview' | 'edit') => {
@@ -288,6 +289,17 @@ export default function App() {
     handlePopState(new PopStateEvent('popstate'));
     return () => window.removeEventListener('popstate', handlePopState);
   }, []);
+
+  // Check for post-deletion redirect success toast trigger
+  useEffect(() => {
+    const isDeleted = sessionStorage.getItem('deleteSuccess');
+    if (isDeleted === 'true') {
+      sessionStorage.removeItem('deleteSuccess');
+      setShowDeleteToast(true);
+      const timer = setTimeout(() => setShowDeleteToast(false), 7000);
+      return () => clearTimeout(timer);
+    }
+  }, [user]);
 
   // Helper for generating URL slugs
   const generateSlug = (name?: string | null) => {
@@ -559,8 +571,9 @@ export default function App() {
       });
       
       if (res.ok) {
-        // 2. Clear local session
+        // 2. Clear local session & set deletion success indicator
         sessionStorage.clear();
+        sessionStorage.setItem('deleteSuccess', 'true');
         
         // 3. Try to delete the Firebase Auth user account
         try {
@@ -578,7 +591,6 @@ export default function App() {
         // 5. Reset App States
         setProfile(DEFAULT_PROFILE);
         setView('edit');
-        alert("Your account and all associated profile data have been permanently deleted successfully. You can now register as a new user.");
       } else {
         alert("Failed to delete your database profile. Please try again later.");
       }
@@ -1706,6 +1718,26 @@ export default function App() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Account Deleted Success Toast */}
+      <AnimatePresence>
+        {showDeleteToast && (
+          <motion.div
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 50 }}
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100] bg-slate-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 border border-red-500/20 max-w-md w-[calc(100%-2rem)]"
+          >
+            <div className="w-10 h-10 bg-red-500/10 border border-red-500/20 rounded-full flex items-center justify-center shrink-0">
+              <Trash2 size={18} className="text-red-500 animate-bounce" />
+            </div>
+            <div className="flex flex-col text-left">
+              <span className="text-sm font-bold text-white">Account Permanently Deleted</span>
+              <span className="text-[11px] text-slate-400 mt-0.5 font-medium leading-normal">All your profile configurations have been securely wiped. You can register as a new user.</span>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>
