@@ -68,6 +68,7 @@ app.get("/api/profiles/uid/:uid", async (req, res) => {
     await connectToDatabase();
     const profile = await Profile.findOne({ uid: req.params.uid });
     if (profile) {
+      res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate=59');
       res.json(profile);
     } else {
       res.status(404).json({ error: "Profile not found" });
@@ -87,6 +88,7 @@ app.get("/api/profiles/:username", async (req, res) => {
     await connectToDatabase();
     const profile = await Profile.findOne({ username: req.params.username });
     if (profile) {
+      res.setHeader('Cache-Control', 's-maxage=1, stale-while-revalidate=59');
       res.json(profile);
     } else {
       res.status(404).json({ error: "Profile not found" });

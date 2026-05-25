@@ -334,12 +334,28 @@ export default function App() {
 
   const fetchProfile = async (id: string, isUid: boolean = false, autoSaveUserData?: any) => {
     setIsFetching(true);
+    const cacheKey = `linkflow_profile_cache_${isUid ? 'uid_' : ''}${id}`;
+    
+    // 1. Try loading instantly from localStorage cache (SWR Strategy)
+    const cached = localStorage.getItem(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        setProfile(parsed);
+        setLoading(false);
+      } catch (e) {
+        console.error('Failed to parse cached profile', e);
+      }
+    }
+
     try {
       const endpoint = isUid ? `/api/profiles/uid/${id}` : `/api/profiles/${id}`;
       const res = await fetch(endpoint);
       if (res.ok) {
         const data = await res.json();
         setProfile(data);
+        // 2. Save fresh version to cache
+        localStorage.setItem(cacheKey, JSON.stringify(data));
       } else if (res.status === 404 && isUid && autoSaveUserData) {
         // AUTOSAVE: The profile wasn't found in DB (new user or DB deleted), auto-create it now
         const claimedName = sessionStorage.getItem('claimedUsername');
