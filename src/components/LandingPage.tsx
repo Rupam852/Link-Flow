@@ -236,17 +236,18 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
 
           {/* Claim Username Form */}
           <div className="max-w-md mx-auto pt-6">
-            <form onSubmit={handleClaim} className="flex flex-col sm:flex-row gap-3 bg-slate-900/50 p-2 rounded-2xl border border-white/10 backdrop-blur-md focus-within:border-indigo-500/50 transition-all shadow-2xl">
-              <div className="flex items-center px-4 flex-1 py-1">
+            <form onSubmit={handleClaim} className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 bg-transparent sm:bg-slate-900/50 p-0 sm:p-2 rounded-2xl sm:border sm:border-white/10 backdrop-blur-md focus-within:border-indigo-500/50 transition-all sm:shadow-2xl">
+              <div className="flex items-center px-4 py-3 sm:py-1 bg-slate-900/60 sm:bg-transparent rounded-xl sm:rounded-none border border-white/10 sm:border-none focus-within:border-indigo-500/50 flex-1">
+                <span className="text-slate-500 font-bold text-sm select-none mr-1">linkflow.me/</span>
                 <input 
                   type="text" 
                   value={username}
                   onChange={(e) => {
-                    setUsername(e.target.value);
+                    setUsername(e.target.value.toLowerCase());
                     setError('');
                   }}
-                  placeholder="Enter your username"
-                  className="bg-transparent border-0 outline-none w-full text-white font-bold placeholder:text-slate-600 focus:ring-0 px-1 text-base"
+                  placeholder="username"
+                  className="bg-transparent border-0 outline-none w-full text-white font-bold placeholder:text-slate-600 focus:ring-0 px-0 text-base"
                 />
               </div>
               <button 

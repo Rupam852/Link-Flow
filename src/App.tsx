@@ -1125,10 +1125,10 @@ export default function App() {
 
     return (
       <div
-        className="min-h-screen w-full overflow-y-auto p-6 flex items-center justify-center"
+        className="min-h-screen w-full overflow-y-auto px-4 py-8 sm:py-16 flex flex-col items-center justify-start"
         style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
       >
-        <div className="w-full max-w-md text-center py-12 relative z-10">
+        <div className="w-full max-w-md text-center relative z-10">
           <div className="relative w-32 h-32 mx-auto mb-6">
             <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-xl"></div>
             <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
@@ -1232,20 +1232,20 @@ export default function App() {
                       style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                      <div className="flex items-center gap-4 relative z-10 w-full">
+                      <div className="flex items-center gap-4 relative z-10 w-full min-w-0">
                         {link.thumbnailUrl ? (
                           <img src={link.thumbnailUrl} alt={link.title} className="w-10 h-10 rounded-xl object-cover shadow-sm shrink-0" />
                         ) : (
                           <Icon size={24} className="drop-shadow-sm shrink-0" />
                         )}
-                        <div className="text-left">
-                          <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight">{link.title}</p>
+                        <div className="text-left min-w-0 flex-1">
+                          <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
                           {link.description && (
-                            <p className="text-sm font-semibold text-white/80 mt-1.5 whitespace-pre-wrap leading-snug text-left">{link.description}</p>
+                            <p className="text-sm font-semibold text-white/80 mt-1.5 whitespace-pre-wrap leading-snug text-left break-words">{link.description}</p>
                           )}
                         </div>
+                        <ExternalLink size={18} className="opacity-40 group-hover:opacity-100 transition-opacity relative z-10 shrink-0 ml-auto" />
                       </div>
-                      <ExternalLink size={20} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0" />
                     </motion.a>
                   );
                 })}
@@ -1388,6 +1388,15 @@ export default function App() {
           <div className="md:hidden flex items-center gap-1">
             {user && (
               <>
+                <a
+                  href={`/${profile.username}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="p-2.5 text-slate-400 hover:text-indigo-400"
+                  title="Open Live Profile"
+                >
+                  <ExternalLink size={18} />
+                </a>
                 <button
                   onClick={handleCopyLink}
                   className="p-2.5 text-slate-400 hover:text-white"
@@ -2039,19 +2048,19 @@ export default function App() {
         </div>
 
         {/* Right Column: Live Preview */}
-        <div className={`lg:sticky lg:top-24 lg:self-start flex items-start justify-center pt-4 ${view === 'edit' ? 'hidden lg:flex' : 'flex'}`}>
+        <div className={`lg:sticky lg:top-24 lg:self-start flex items-start justify-center pt-4 ${view === 'edit' ? 'hidden lg:flex' : 'flex w-full'}`}>
           {(() => {
             const previewProfile = debouncedProfile;
             return (
-              <div className="relative w-full max-w-[280px] sm:max-w-[320px] lg:max-w-[360px] xl:max-w-[400px] aspect-[9/19] bg-slate-950 rounded-[3rem] border-[8px] sm:border-[12px] border-slate-950 shadow-2xl shadow-indigo-500/5 overflow-hidden ring-4 ring-indigo-500/10">
+              <div className="relative w-full max-w-full lg:max-w-[360px] xl:max-w-[400px] h-[calc(100vh-8rem)] lg:h-auto lg:aspect-[9/19] bg-slate-950/20 lg:bg-slate-950 rounded-[2rem] lg:rounded-[3rem] border-0 lg:border-[12px] border-slate-950 shadow-2xl shadow-indigo-500/5 overflow-hidden ring-0 lg:ring-4 ring-indigo-500/10">
                 {/* Dynamic Island / Notch Mockup */}
-                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 flex items-center justify-between px-2 shadow-inner">
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 hidden lg:flex items-center justify-between px-2 shadow-inner">
                   <div className="w-2 h-2 rounded-full bg-slate-800/80"></div>
                   <div className="w-3 h-3 rounded-full bg-indigo-900/40 border border-slate-700/50"></div>
                 </div>
 
                 <div
-                  className="w-full h-full overflow-y-auto p-6 pt-16 text-center scrollbar-hide relative"
+                  className="w-full h-full overflow-y-auto p-4 sm:p-8 pt-8 lg:pt-16 text-center scrollbar-hide relative"
                   style={{ backgroundColor: previewProfile.theme.backgroundColor, color: previewProfile.theme.textColor }}
                 >
                   <div className="relative w-24 h-24 mx-auto mb-4">
