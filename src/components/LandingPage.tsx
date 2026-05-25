@@ -174,10 +174,12 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
 
   return (
     <div className="relative min-h-screen bg-[#090d16] text-slate-100 font-sans overflow-x-hidden selection:bg-indigo-500 selection:text-white">
-      {/* Decorative Radial Background Glows */}
-      <div className="absolute top-[-20%] left-[-10%] w-[60%] aspect-square rounded-full bg-indigo-900/20 blur-[150px] pointer-events-none" />
-      <div className="absolute top-[40%] right-[-10%] w-[50%] aspect-square rounded-full bg-purple-900/15 blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] left-[20%] w-[55%] aspect-square rounded-full bg-blue-900/20 blur-[150px] pointer-events-none" />
+      {/* Decorative Radial Background Glows clipped inside a full-bleed wrapper */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0">
+        <div className="absolute top-[-20%] left-[-10%] w-[60%] aspect-square rounded-full bg-indigo-900/20 blur-[150px]" />
+        <div className="absolute top-[40%] right-[-10%] w-[50%] aspect-square rounded-full bg-purple-900/15 blur-[150px]" />
+        <div className="absolute bottom-[-10%] left-[20%] w-[55%] aspect-square rounded-full bg-blue-900/20 blur-[150px]" />
+      </div>
 
       {/* Grid Pattern Overlay */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293708_1px,transparent_1px),linear-gradient(to_bottom,#1f293708_1px,transparent_1px)] bg-[size:4rem_4rem] pointer-events-none opacity-40" />
