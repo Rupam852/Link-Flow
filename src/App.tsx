@@ -1060,7 +1060,13 @@ export default function App() {
             initial={{ y: 15, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.4 }}
-            className="text-3xl font-extrabold mb-1 tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient"
+            className="text-3xl font-extrabold mb-1 tracking-tight animate-gradient"
+            style={{
+              backgroundImage: `linear-gradient(to right, ${profile.theme.textColor}, ${profile.theme.buttonColor}, ${profile.theme.textColor})`,
+              WebkitBackgroundClip: 'text',
+              backgroundClip: 'text',
+              color: 'transparent'
+            }}
           >
             {profile.displayName}
           </motion.h1>
@@ -1963,7 +1969,13 @@ export default function App() {
                 initial={{ y: 10, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.15, duration: 0.4 }}
-                className="text-xl font-extrabold mb-1 tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient"
+                className="text-xl font-extrabold mb-1 tracking-tight animate-gradient"
+                style={{
+                  backgroundImage: `linear-gradient(to right, ${profile.theme.textColor}, ${profile.theme.buttonColor}, ${profile.theme.textColor})`,
+                  WebkitBackgroundClip: 'text',
+                  backgroundClip: 'text',
+                  color: 'transparent'
+                }}
               >
                 {profile.displayName}
               </motion.h1>
