@@ -32,6 +32,7 @@ import {
 } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
+import LandingPage from './components/LandingPage';
 
 interface Link {
   title: string;
@@ -266,7 +267,7 @@ export default function App() {
 
   useEffect(() => {
     const handlePopState = (event: PopStateEvent) => {
-      if (window.location.pathname.startsWith('/linkflow/') || window.location.pathname.startsWith('/u/')) {
+      if (window.location.pathname !== '/') {
         return;
       }
       const urlParams = new URLSearchParams(window.location.search);
@@ -297,7 +298,11 @@ export default function App() {
         setProfile(data);
       } else if (res.status === 404 && isUid && autoSaveUserData) {
         // AUTOSAVE: The profile wasn't found in DB (new user or DB deleted), auto-create it now
-        const suggestedName = autoSaveUserData.displayName ? generateSlug(autoSaveUserData.displayName) : autoSaveUserData.uid;
+        const claimedName = sessionStorage.getItem('claimedUsername');
+        const suggestedName = claimedName || (autoSaveUserData.displayName ? generateSlug(autoSaveUserData.displayName) : autoSaveUserData.uid);
+        if (claimedName) {
+          sessionStorage.removeItem('claimedUsername');
+        }
         
         const newProfile = {
           ...DEFAULT_PROFILE,
@@ -334,7 +339,7 @@ export default function App() {
   };
 
   const handleCopyLink = () => {
-    const url = `${window.location.origin}/linkflow/${profile.username}`;
+    const url = `${window.location.origin}/${profile.username}`;
     navigator.clipboard.writeText(url);
     setIsCopying(true);
     setTimeout(() => setIsCopying(false), 2000);
@@ -390,25 +395,20 @@ export default function App() {
   useEffect(() => {
     // Handle public profile routing
     const path = window.location.pathname;
-    if (path.startsWith('/linkflow/')) {
-      const username = path.split('/linkflow/')[1];
-      if (username) {
-        setView('public');
-        fetchProfile(username);
-      }
-    } else if (path.startsWith('/u/')) {
-      const username = path.split('/u/')[1];
-      if (username) {
-        setView('public');
-        fetchProfile(username);
-      }
+    const parts = path.split('/').filter(Boolean);
+    const isPublicProfile = parts.length === 1 && !['api', 'admin', 'assets', 'static', 'edit', 'preview', 'index.html'].includes(parts[0]);
+    
+    if (isPublicProfile) {
+      const username = parts[0];
+      setView('public');
+      fetchProfile(username);
     }
 
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setLoading(false);
       if (currentUser) {
-        if (!window.location.pathname.startsWith('/linkflow/')) {
+        if (!isPublicProfile) {
           fetchProfile(currentUser.uid, true, currentUser);
         } else {
           setIsFetching(false);
@@ -680,6 +680,22 @@ export default function App() {
     );
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#090d16] flex flex-col items-center justify-center">
+        <div className="relative">
+          <div className="w-16 h-16 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+          <div className="absolute inset-0 w-16 h-16 bg-indigo-500/10 rounded-full blur-md"></div>
+        </div>
+        <p className="text-slate-400 font-bold text-sm mt-6 tracking-wide animate-pulse">Initializing LinkFlow...</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <LandingPage onLogin={handleLogin} />;
+  }
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
       {/* Navigation */}
@@ -716,7 +732,7 @@ export default function App() {
           <div className="hidden lg:flex flex-col items-end gap-0.5 mr-2">
             <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Public Link</span>
             <a 
-              href={`/linkflow/${profile.username}`}
+              href={`/${profile.username}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-xs font-medium text-indigo-600 hover:text-indigo-800 flex items-center gap-1 group"
