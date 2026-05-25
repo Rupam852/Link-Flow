@@ -1388,15 +1388,6 @@ export default function App() {
           <div className="md:hidden flex items-center gap-1">
             {user && (
               <>
-                <a
-                  href={`/${profile.username}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2.5 text-slate-400 hover:text-indigo-400"
-                  title="Open Live Profile"
-                >
-                  <ExternalLink size={18} />
-                </a>
                 <button
                   onClick={handleCopyLink}
                   className="p-2.5 text-slate-400 hover:text-white"
