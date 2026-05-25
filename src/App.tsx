@@ -1547,7 +1547,8 @@ export default function App() {
                                   URL must start with http://, https://, or mailto:
                                 </p>
                               )}
-                            </div>                             {/* Secondary Features Control Row */}
+                            </div>
+                            {/* Secondary Features Control Row */}
                             <div className="flex flex-wrap items-center gap-2.5 pt-2.5 border-t border-white/5 text-[10px]">
                               {/* 1. Toggle Switch (Visibility) */}
                               <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
@@ -1570,6 +1571,22 @@ export default function App() {
                                     }`}
                                   />
                                 </button>
+                              </div>
+
+                              {/* 2. Custom Thumbnail Uploader */}
+                              <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
+                                <span className="font-bold text-slate-500 uppercase tracking-wider">Thumbnail</span>
+                                <input
+                                  type="text"
+                                  value={link.thumbnailUrl || ''}
+                                  placeholder="Image URL..."
+                                  onChange={(e) => {
+                                    const newLinks = [...profile.links];
+                                    newLinks[idx].thumbnailUrl = e.target.value;
+                                    setProfile({ ...profile, links: newLinks });
+                                  }}
+                                  className="bg-transparent text-indigo-400 font-medium placeholder:text-slate-700 w-36 focus:outline-none truncate"
+                                />
                               </div>
                             </div>
                           </div>

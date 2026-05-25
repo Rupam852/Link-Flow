@@ -56,6 +56,7 @@ const profileSchema = new mongoose.Schema({
       icon: String,
       description: String,
       isActive: { type: Boolean, default: true },
+      thumbnailUrl: String,
     },
   ],
 });
