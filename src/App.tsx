@@ -800,7 +800,7 @@ export default function App() {
   };
 
   const executeDeleteAccount = async () => {
-    if (!user || deleteConfirmText !== 'DELETE') return;
+    if (!user || deleteConfirmText.trim().toUpperCase() !== 'DELETE') return;
 
     setIsSaving(true);
     setShowDeleteModal(false);
@@ -2207,7 +2207,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={executeDeleteAccount}
-                  disabled={deleteConfirmText !== 'DELETE'}
+                  disabled={deleteConfirmText.trim().toUpperCase() !== 'DELETE'}
                   className="flex-1 bg-red-600 hover:bg-red-500 disabled:opacity-30 text-white font-bold py-3.5 px-6 rounded-2xl transition-all active:scale-95 shadow-lg shadow-red-600/20 disabled:pointer-events-none text-sm"
                 >
                   Wipe Data
