@@ -1194,7 +1194,7 @@ export default function App() {
             {/* Primary Links & Bar Socials */}
             <div className="flex flex-wrap gap-4 w-full justify-start">
               {profile.links
-                .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))
+                .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe' || l.display === 'grid' || l.display === 'list'))
                 .map((link, idx) => {
                   const Icon = ICON_MAP[link.icon] || Globe;
                   const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
@@ -1792,7 +1792,10 @@ export default function App() {
                                     onClick={(e) => {
                                       e.preventDefault();
                                       const newLinks = [...profile.links];
-                                      newLinks[idx].isActive = newLinks[idx].isActive !== false ? false : true;
+                                      newLinks[idx] = { 
+                                        ...newLinks[idx], 
+                                        isActive: newLinks[idx].isActive !== false ? false : true 
+                                      };
                                       setProfile({ ...profile, links: newLinks });
                                     }}
                                     className={`relative w-8 h-4 rounded-full transition-colors duration-150 focus:outline-none ${link.isActive !== false ? 'bg-green-500' : 'bg-slate-800'
@@ -1814,7 +1817,7 @@ export default function App() {
                                       onClick={(e) => {
                                         e.preventDefault();
                                         const newLinks = [...profile.links];
-                                        newLinks[idx].display = 'list';
+                                        newLinks[idx] = { ...newLinks[idx], display: 'list' };
                                         setProfile({ ...profile, links: newLinks });
                                       }}
                                       className={`px-2 py-0.5 rounded-md font-bold transition-all ${
@@ -1830,7 +1833,7 @@ export default function App() {
                                       onClick={(e) => {
                                         e.preventDefault();
                                         const newLinks = [...profile.links];
-                                        newLinks[idx].display = 'grid';
+                                        newLinks[idx] = { ...newLinks[idx], display: 'grid' };
                                         setProfile({ ...profile, links: newLinks });
                                       }}
                                       className={`px-2 py-0.5 rounded-md font-bold transition-all ${
@@ -2146,7 +2149,7 @@ export default function App() {
                 <div className="flex flex-wrap gap-3 w-full justify-start">
                   <AnimatePresence mode="popLayout">
                     {profile.links
-                      .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))
+                      .filter(l => l.isActive !== false && (profile.socialLinksStyle === 'list' || l.icon === 'globe' || l.display === 'grid' || l.display === 'list'))
                       .map((link, idx) => {
                         const Icon = ICON_MAP[link.icon] || Globe;
                         const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
