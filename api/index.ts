@@ -51,12 +51,14 @@ const profileSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
   links: [
     {
+      id: String,
       title: String,
       url: String,
       icon: String,
       description: String,
       isActive: { type: Boolean, default: true },
       thumbnailUrl: String,
+      clicks: { type: Number, default: 0 },
     },
   ],
 });
@@ -101,6 +103,40 @@ app.get("/api/profiles/:username", async (req, res) => {
       error: "Internal Server Error",
       details: err.message
     });
+  }
+});
+
+app.post("/api/profiles/:username/links/click", async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { url, linkId } = req.body;
+    const username = req.params.username;
+    
+    // First try updating matching link by unique id
+    if (linkId) {
+      const profile = await Profile.findOneAndUpdate(
+        { username, "links.id": linkId },
+        { $inc: { "links.$.clicks": 1 } },
+        { new: true }
+      );
+      if (profile) return res.json({ success: true, profile });
+    }
+
+    // Fallback: match by URL
+    const profile = await Profile.findOneAndUpdate(
+      { username, "links.url": url },
+      { $inc: { "links.$.clicks": 1 } },
+      { new: true }
+    );
+
+    if (profile) {
+      res.json({ success: true, profile });
+    } else {
+      res.status(404).json({ error: "Link or profile not found" });
+    }
+  } catch (err: any) {
+    console.error("Click tracking error:", err);
+    res.status(500).json({ error: "Failed to record click", details: err.message });
   }
 });
 

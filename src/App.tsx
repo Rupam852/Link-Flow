@@ -540,19 +540,23 @@ export default function App() {
   };
 
   const handleLinkClick = async (linkIndex: number) => {
+    const clickedLink = profile.links[linkIndex];
+    if (!clickedLink) return;
+
+    // Instantly update UI for perfect instantaneous feel
     const newLinks = [...profile.links];
     newLinks[linkIndex].clicks = (newLinks[linkIndex].clicks || 0) + 1;
     setProfile(prev => ({ ...prev, links: newLinks }));
     
-    if (profile.uid) {
+    if (profile.username) {
       try {
-        await fetch(`/api/profiles`, {
+        await fetch(`/api/profiles/${profile.username}/links/click`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...profile, links: newLinks })
+          body: JSON.stringify({ url: clickedLink.url, linkId: clickedLink.id || clickedLink._id })
         });
       } catch (e) {
-        console.error("Silent analytics save failed:", e);
+        console.warn("Silent analytics save failed:", e);
       }
     }
   };
@@ -1664,6 +1668,14 @@ export default function App() {
                                     }`}
                                   />
                                 </button>
+                              </div>
+
+                              {/* 2. Real-time Clicks Analytics Badge */}
+                              <div className="flex items-center gap-1.5 bg-slate-950/40 px-2.5 py-1 rounded-lg border border-indigo-500/20 text-indigo-400 shadow-inner">
+                                <span className="font-bold uppercase tracking-wider text-[9px] text-slate-500">Clicks</span>
+                                <span className="font-extrabold text-white text-[10px] px-1.5 py-0.5 bg-indigo-500/15 rounded-md border border-indigo-500/30 min-w-[18px] text-center">
+                                  {link.clicks || 0}
+                                </span>
                               </div>
                             </div>
                           </div>
