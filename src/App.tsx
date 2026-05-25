@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, Reorder } from 'motion/react';
 import {
   Plus,
   Trash2,
@@ -31,7 +31,8 @@ import {
   Mail,
   Play,
   ChevronUp,
-  ChevronDown
+  ChevronDown,
+  GripVertical
 } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -1325,7 +1326,12 @@ export default function App() {
                       <Plus size={20} />
                     </button>
                   </div>
-                  <div className="space-y-4">
+                  <Reorder.Group 
+                    axis="y" 
+                    values={profile.links} 
+                    onReorder={(newLinks) => setProfile({ ...profile, links: newLinks })}
+                    className="space-y-4"
+                  >
                     {/* Real-time Link Preview (Icon-only) */}
                     {profile.links.length > 0 && (
                       <div className="flex flex-wrap gap-2 p-3 bg-slate-950/40 rounded-2xl border border-dashed border-white/10 mb-2">
@@ -1347,14 +1353,20 @@ export default function App() {
                     )}
 
                     {profile.links.map((link, idx) => (
-                      <motion.div
-                        layout
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        key={idx}
-                        className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group"
+                      <Reorder.Item
+                        value={link}
+                        key={link.title + link.url + idx}
+                        className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative select-none"
                       >
                         <div className="flex items-start gap-4">
+                          {/* Premium Drag Handle */}
+                          <div 
+                            className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-indigo-400 p-1.5 rounded-lg border border-transparent hover:bg-white/5 shrink-0 self-center transition-colors"
+                            title="Press & hold to drag to reorder"
+                          >
+                            <GripVertical size={16} />
+                          </div>
+
                           {/* Icon Selector Button & Dropdown Container */}
                           <div className="relative shrink-0 mt-1">
                             <button
@@ -1505,9 +1517,9 @@ export default function App() {
                             </button>
                           </div>
                         </div>
-                      </motion.div>
+                      </Reorder.Item>
                     ))}
-                  </div>
+                  </Reorder.Group>
                 </section>
 
                 <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
