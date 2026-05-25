@@ -258,6 +258,8 @@ export default function App() {
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(false);
   const [isImageUploading, setIsImageUploading] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   // Responsive View Handler with History tracking for back gesture
   const handleSetView = (newView: 'preview' | 'edit') => {
@@ -540,14 +542,16 @@ export default function App() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!user) return;
-    const confirmDelete = window.confirm(
-      "Are you absolutely sure you want to delete your account? This will permanently wipe all your profiles, links, and themes from our databases. This cannot be undone."
-    );
-    if (!confirmDelete) return;
+  const handleDeleteAccount = () => {
+    setDeleteConfirmText('');
+    setShowDeleteModal(true);
+  };
+
+  const executeDeleteAccount = async () => {
+    if (!user || deleteConfirmText !== 'DELETE') return;
 
     setIsSaving(true);
+    setShowDeleteModal(false);
     try {
       // 1. Wipe profile data from MongoDB
       const res = await fetch(`/api/profiles/uid/${user.uid}`, {
@@ -1648,6 +1652,62 @@ export default function App() {
           </div>
         </motion.div>
       )}
+
+      {/* Custom Delete Account Confirmation Modal */}
+      <AnimatePresence>
+        {showDeleteModal && (
+          <div className="fixed inset-0 z-[120] bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4 overflow-hidden">
+            {/* Radial Mesh Glows */}
+            <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-red-900/10 blur-[120px]" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/10 blur-[120px]" />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-slate-900/40 border border-red-500/20 backdrop-blur-xl p-8 rounded-3xl shadow-2xl text-center"
+            >
+              <div className="w-16 h-16 mx-auto mb-6 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 shadow-lg shadow-red-500/10">
+                <Trash2 size={32} className="animate-pulse" />
+              </div>
+
+              <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">Wipe Your Account?</h2>
+              <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                This will permanently delete your shortlink, links, stats, and configurations from our systems. <strong>This cannot be undone.</strong>
+              </p>
+
+              <div className="space-y-4 mb-6">
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest text-left">
+                  Type <span className="text-red-500 font-black">DELETE</span> to confirm
+                </label>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="Type DELETE"
+                  className="w-full bg-slate-950/50 border border-white/10 rounded-2xl px-5 py-3.5 text-sm font-bold text-white focus:outline-none focus:ring-2 focus:ring-red-500/50 placeholder:text-slate-700 text-center tracking-widest uppercase transition-all"
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setShowDeleteModal(false)}
+                  className="flex-1 bg-slate-800/50 hover:bg-slate-800 text-slate-300 font-bold py-3.5 px-6 rounded-2xl border border-white/5 transition-all active:scale-95 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={executeDeleteAccount}
+                  disabled={deleteConfirmText !== 'DELETE'}
+                  className="flex-1 bg-red-600 hover:bg-red-500 disabled:opacity-30 text-white font-bold py-3.5 px-6 rounded-2xl transition-all active:scale-95 shadow-lg shadow-red-600/20 disabled:pointer-events-none text-sm"
+                >
+                  Wipe Data
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
