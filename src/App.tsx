@@ -29,7 +29,9 @@ import {
   MessageCircle,
   Send,
   Mail,
-  Play
+  Play,
+  ChevronUp,
+  ChevronDown
 } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
@@ -490,6 +492,18 @@ export default function App() {
         buttonTextColor: btnTextColor
       }
     }));
+  };
+
+  const handleMoveLink = (index: number, direction: 'up' | 'down') => {
+    const newLinks = [...profile.links];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= newLinks.length) return;
+
+    const temp = newLinks[index];
+    newLinks[index] = newLinks[targetIndex];
+    newLinks[targetIndex] = temp;
+
+    setProfile(prev => ({ ...prev, links: newLinks }));
   };
 
   // Avatar generation removed - user manages avatar manually
@@ -1445,15 +1459,51 @@ export default function App() {
                               )}
                             </div>
                           </div>
-                          <button
-                            onClick={() => {
-                              const newLinks = profile.links.filter((_, i) => i !== idx);
-                              setProfile({ ...profile, links: newLinks });
-                            }}
-                            className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2.5 rounded-xl transition-all active:scale-90 mt-1"
-                          >
-                            <Trash2 size={18} />
-                          </button>
+                          <div className="flex flex-col items-center justify-center gap-1 shrink-0 mt-1">
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleMoveLink(idx, 'up');
+                              }}
+                              disabled={idx === 0}
+                              className={`p-1.5 rounded-lg border border-white/5 transition-all active:scale-90 ${
+                                idx === 0 
+                                  ? 'text-slate-700 cursor-not-allowed opacity-30 bg-transparent border-transparent' 
+                                  : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'
+                              }`}
+                              title="Move Link Up"
+                            >
+                              <ChevronUp size={15} />
+                            </button>
+                            
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleMoveLink(idx, 'down');
+                              }}
+                              disabled={idx === profile.links.length - 1}
+                              className={`p-1.5 rounded-lg border border-white/5 transition-all active:scale-90 ${
+                                idx === profile.links.length - 1 
+                                  ? 'text-slate-700 cursor-not-allowed opacity-30 bg-transparent border-transparent' 
+                                  : 'text-slate-400 hover:text-indigo-400 hover:bg-indigo-500/10'
+                              }`}
+                              title="Move Link Down"
+                            >
+                              <ChevronDown size={15} />
+                            </button>
+
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                const newLinks = profile.links.filter((_, i) => i !== idx);
+                                setProfile({ ...profile, links: newLinks });
+                              }}
+                              className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-1.5 rounded-lg transition-all active:scale-90 mt-0.5"
+                              title="Delete Link"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         </div>
                       </motion.div>
                     ))}
