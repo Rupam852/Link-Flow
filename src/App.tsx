@@ -116,14 +116,13 @@ const DEFAULT_PROFILE: Profile = {
 
 const GoogleDriveIcon = ({ size = 20, className = '' }: { size?: number, className?: string }) => (
   <svg
-    viewBox="0 0 87.3 78"
+    viewBox="0 0 24 24"
     width={size}
     height={size}
     className={className}
+    fill="currentColor"
   >
-    <path d="M6.6 66.8L22.2 40h42.9L49.5 66.8z" fill="currentColor" opacity="0.95" />
-    <path d="M22.2 40L43.7 3.2h28.5L56.5 40z" fill="currentColor" opacity="0.75" />
-    <path d="M56.5 40L71.7 66.8H42.9L56.5 40z" fill="currentColor" opacity="0.5" />
+    <path d="M12.01 1.485c-2.082 0-3.754.02-3.743.047.01.02 1.708 3.001 3.774 6.62l3.76 6.574h3.76c2.081 0 3.753-.02 3.742-.047-.005-.02-1.708-3.001-3.775-6.62l-3.76-6.574zm-4.76 1.73a789.828 789.861 0 0 0-3.63 6.319L0 15.868l1.89 3.298 1.885 3.297 3.62-6.335 3.618-6.33-1.88-3.287C8.1 4.704 7.255 3.22 7.25 3.214zm2.259 12.653-.203.348c-.114.198-.96 1.672-1.88 3.287a423.93 423.948 0 0 1-1.698 2.97c-.01.026 3.24.042 7.222.042h7.244l1.796-3.157c.992-1.734 1.85-3.23 1.906-3.323l.104-.167h-7.249z" />
   </svg>
 );
 
