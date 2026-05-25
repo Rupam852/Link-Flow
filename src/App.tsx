@@ -852,6 +852,11 @@ export default function App() {
       if (saveSuccess) {
         setIsSavedSuccessfully(true);
         setShowSaveToast(true);
+        // Update local storage cache immediately with the saved state to prevent SWR from loading stale data
+        const freshProfile = res.ok ? updatedProfile : { ...updatedProfile, username: profile.username };
+        localStorage.setItem(`linkflow_profile_cache_uid_${targetUid}`, JSON.stringify(freshProfile));
+        localStorage.setItem(`linkflow_profile_cache_${freshProfile.username}`, JSON.stringify(freshProfile));
+        
         // Silently refresh profile to ensure state is binary-perfect with DB
         fetchProfile(targetUid, true);
         // Clear success state after 3 seconds
@@ -1584,22 +1589,6 @@ export default function App() {
                                     }`}
                                   />
                                 </button>
-                              </div>
-
-                              {/* 2. Custom Thumbnail Uploader */}
-                              <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
-                                <span className="font-bold text-slate-500 uppercase tracking-wider">Thumbnail</span>
-                                <input
-                                  type="text"
-                                  value={link.thumbnailUrl || ''}
-                                  placeholder="Image URL..."
-                                  onChange={(e) => {
-                                    const newLinks = [...profile.links];
-                                    newLinks[idx].thumbnailUrl = e.target.value;
-                                    setProfile({ ...profile, links: newLinks });
-                                  }}
-                                  className="bg-transparent text-indigo-400 font-medium placeholder:text-slate-700 w-36 focus:outline-none truncate"
-                                />
                               </div>
                             </div>
                           </div>
