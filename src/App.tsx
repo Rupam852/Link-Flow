@@ -432,9 +432,14 @@ export default function App() {
             avatarUrl: autoSaveUserData.photoURL || DEFAULT_PROFILE.avatarUrl,
           };
 
+          const token = await autoSaveUserData.getIdToken();
+
           const createRes = await fetch(`/api/profiles/uid/${id}`, {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
             body: JSON.stringify(newProfile),
           });
 
@@ -443,7 +448,10 @@ export default function App() {
             const finalProfile = { ...newProfile, username: `${suggestedName}-${Math.random().toString(36).substring(2, 5)}` };
             const retryRes = await fetch(`/api/profiles/uid/${id}`, {
               method: 'PUT',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
               body: JSON.stringify(finalProfile),
             });
             if (retryRes.ok) {
@@ -789,11 +797,20 @@ export default function App() {
     if (usernameStatus !== 'available' || !user) return;
     setIsSaving(true);
     try {
+      const token = await user.getIdToken();
+      
+      // Clear old username cache entry to prevent stale storage pollution
+      const oldUsername = profile.username;
+      if (oldUsername) {
+        localStorage.removeItem(`linkflow_profile_cache_${oldUsername}`);
+      }
+
       const updatedProfile = { ...profile, username: newUsername };
       const res = await fetch(`/api/profiles/uid/${user.uid}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(updatedProfile),
       });
@@ -820,9 +837,13 @@ export default function App() {
     setIsSaving(true);
     setShowDeleteModal(false);
     try {
-      // 1. Wipe profile data from MongoDB
+      const token = await user.getIdToken();
+      // 1. Wipe profile data from MongoDB with authorization token
       const res = await fetch(`/api/profiles/uid/${user.uid}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
       });
 
       if (res.ok) {
@@ -911,10 +932,15 @@ export default function App() {
         links: sanitizedLinks 
       };
 
+      const token = await user?.getIdToken();
+
       // Use the final UID for the request
       const res = await fetch(`/api/profiles/uid/${targetUid}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(updatedProfile),
       });
 
@@ -927,7 +953,10 @@ export default function App() {
 
         const retryRes = await fetch(`/api/profiles/uid/${targetUid}`, {
           method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
           body: JSON.stringify(finalProfile),
         });
 

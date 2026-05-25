@@ -12,11 +12,8 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 
-// Global connection state for Vercel Serverless
-let isConnected = false;
-
 async function connectToDatabase() {
-  if (isConnected) return;
+  if (mongoose.connection.readyState === 1) return;
 
   const MONGODB_URI = process.env.MONGODB_URI;
   if (!MONGODB_URI) {
@@ -24,8 +21,7 @@ async function connectToDatabase() {
   }
 
   try {
-    const db = await mongoose.connect(MONGODB_URI);
-    isConnected = db.connections[0].readyState === 1;
+    await mongoose.connect(MONGODB_URI);
     console.log("Connected to MongoDB (Serverless Mode)");
   } catch (err) {
     console.error("MongoDB connection error:", err);
@@ -140,9 +136,39 @@ app.post("/api/profiles/:username/links/click", async (req, res) => {
   }
 });
 
+// Lightweight dynamic Firebase JWT verification helper using Google OAuth2 public endpoints
+async function verifyFirebaseToken(req: any, expectedUid: string): Promise<boolean> {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return false;
+    }
+    const token = authHeader.split("Bearer ")[1];
+    if (!token) return false;
+
+    // Contact Google APIs to verify JWT signature & expiry without private key config
+    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
+    if (!response.ok) return false;
+
+    const data = await response.json();
+    const tokenUid = data.user_id || data.sub; // Subject user ID in Firebase tokens
+    return tokenUid === expectedUid;
+  } catch (err) {
+    console.error("Token verification failed:", err);
+    return false;
+  }
+}
+
 app.put("/api/profiles/uid/:uid", async (req, res) => {
   try {
     await connectToDatabase();
+    
+    // Core Security: Verify authorized token matches targeted UID
+    const isAuthorized = await verifyFirebaseToken(req, req.params.uid);
+    if (!isAuthorized) {
+      return res.status(401).json({ error: "Unauthorized: Invalid or missing token" });
+    }
+
     const { _id, __v, ...updateData } = req.body;
     const profile = await Profile.findOneAndUpdate(
       { uid: req.params.uid },
@@ -161,6 +187,13 @@ app.put("/api/profiles/uid/:uid", async (req, res) => {
 app.delete("/api/profiles/uid/:uid", async (req, res) => {
   try {
     await connectToDatabase();
+
+    // Core Security: Verify authorized token matches targeted UID
+    const isAuthorized = await verifyFirebaseToken(req, req.params.uid);
+    if (!isAuthorized) {
+      return res.status(401).json({ error: "Unauthorized: Invalid or missing token" });
+    }
+
     const result = await Profile.deleteOne({ uid: req.params.uid });
     if (result.deletedCount > 0) {
       res.json({ success: true, message: "Profile permanently deleted" });
