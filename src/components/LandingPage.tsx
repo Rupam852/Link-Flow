@@ -265,24 +265,47 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
         </motion.div>
       </section>
 
-      {/* Stats Section */}
-      <section className="border-y border-white/5 bg-slate-950/40 py-12 relative z-10">
-        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div className="space-y-1">
-            <h3 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">10,000+</h3>
-            <p className="text-xs uppercase tracking-widest font-extrabold text-slate-500">Active Creators</p>
+      {/* Platform Value Highlights Banner */}
+      <section className="border-y border-white/5 bg-slate-950/40 py-16 relative z-10">
+        <div className="max-w-7xl mx-auto px-6 grid grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="flex items-start gap-4 text-left">
+            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0">
+              <Zap size={20} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">Lightning Speed</h4>
+              <p className="text-slate-400 text-xs font-medium leading-relaxed">Instant real-time updates and lightning-fast page loading.</p>
+            </div>
           </div>
-          <div className="space-y-1">
-            <h3 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">5M+</h3>
-            <p className="text-xs uppercase tracking-widest font-extrabold text-slate-500">Total Clicks Tracked</p>
+          
+          <div className="flex items-start gap-4 text-left">
+            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+              <Sparkles size={20} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">100% Free</h4>
+              <p className="text-slate-400 text-xs font-medium leading-relaxed">No subscriptions, no paywalls, premium themes included free.</p>
+            </div>
           </div>
-          <div className="space-y-1">
-            <h3 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">99.9%</h3>
-            <p className="text-xs uppercase tracking-widest font-extrabold text-slate-500">System Uptime</p>
+          
+          <div className="flex items-start gap-4 text-left">
+            <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 shrink-0">
+              <Shield size={20} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">Privacy Control</h4>
+              <p className="text-slate-400 text-xs font-medium leading-relaxed">Take your page offline or wipe your data with one click.</p>
+            </div>
           </div>
-          <div className="space-y-1">
-            <h3 className="text-3xl md:text-4xl font-extrabold bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">0$</h3>
-            <p className="text-xs uppercase tracking-widest font-extrabold text-slate-500">Cost Forever</p>
+          
+          <div className="flex items-start gap-4 text-left">
+            <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+              <Eye size={20} />
+            </div>
+            <div className="space-y-1">
+              <h4 className="text-sm font-bold text-white uppercase tracking-wider">Zero Ads</h4>
+              <p className="text-slate-400 text-xs font-medium leading-relaxed">A pristine, professional digital presence without cleanups.</p>
+            </div>
           </div>
         </div>
       </section>
