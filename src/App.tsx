@@ -1439,7 +1439,7 @@ export default function App() {
               )}
 
               <div className={`space-y-8 transition-all duration-300 ${isFetching ? 'opacity-20 pointer-events-none scale-[0.98] blur-[2px]' : 'opacity-100'}`}>
-                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
                       <Palette size={20} />
@@ -1487,7 +1487,7 @@ export default function App() {
                   </div>
                 </section>
 
-                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
                   <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
                       <User size={20} />
@@ -1558,7 +1558,7 @@ export default function App() {
                   </div>
                 </section>
 
-                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
@@ -1604,9 +1604,9 @@ export default function App() {
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -20 }}
                           transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                          className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative select-none"
+                          className="p-4 sm:p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative select-none"
                         >
-                          <div className="flex items-start gap-4">
+                          <div className="flex items-start gap-2.5 sm:gap-4">
                             {/* Up & Down Reorder Buttons */}
                             <div className="flex flex-col items-center gap-1 shrink-0 self-center">
                               <button
@@ -1703,7 +1703,7 @@ export default function App() {
                               )}
                             </div>
 
-                            <div className="flex-1 space-y-3">
+                            <div className="flex-1 space-y-3 pr-8 sm:pr-0">
                               <input
                                 type="text"
                                 value={link.title}
@@ -1826,20 +1826,21 @@ export default function App() {
                                 </div>
                               </div>
                             </div>
-                            <div className="flex flex-col items-center justify-center shrink-0 mt-1">
-                              <button
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  const newLinks = profile.links.filter((_, i) => i !== idx);
-                                  setProfile({ ...profile, links: newLinks });
-                                }}
-                                className="text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2.5 rounded-xl border border-white/5 transition-all active:scale-90"
-                                title="Delete Link"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
                           </div>
+
+                          {/* Absolutely positioned Delete Button */}
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              const newLinks = profile.links.filter((_, i) => i !== idx);
+                              setProfile({ ...profile, links: newLinks });
+                            }}
+                            className="absolute top-4 right-4 text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2 rounded-xl border border-white/5 transition-all active:scale-90 z-20"
+                            title="Delete Link"
+                          >
+                            <Trash2 size={16} />
+                          </button>
                         </motion.div>
                       ))}
                     </AnimatePresence>
