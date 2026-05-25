@@ -302,14 +302,26 @@ export default function App() {
     }
   }, [user]);
 
-  // Check if claimed username was already taken and assigned a fallback slug
+  // Check if claimed username was already taken, or if they logged into an existing account
   useEffect(() => {
     const takenName = sessionStorage.getItem('claimedUsernameTaken');
+    const pendingClaim = sessionStorage.getItem('claimedUsername');
+
     if (takenName && profile.username && profile.username !== takenName) {
       sessionStorage.removeItem('claimedUsernameTaken');
+      sessionStorage.removeItem('claimedUsername');
       setClaimedTakenAlert(`The handle @${takenName} was already registered by another creator, so we assigned a unique variation: @${profile.username}. You can customize it at any time below!`);
       const timer = setTimeout(() => setClaimedTakenAlert(null), 9000);
       return () => clearTimeout(timer);
+    }
+
+    if (pendingClaim && profile.username) {
+      sessionStorage.removeItem('claimedUsername');
+      if (profile.username !== pendingClaim) {
+        setClaimedTakenAlert(`You logged in using an account already linked to the handle @${profile.username}. We have loaded your existing profile instead of @${pendingClaim}.`);
+        const timer = setTimeout(() => setClaimedTakenAlert(null), 9000);
+        return () => clearTimeout(timer);
+      }
     }
   }, [profile.username]);
 
