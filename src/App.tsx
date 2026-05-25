@@ -619,6 +619,41 @@ export default function App() {
     return () => unsubscribe();
   }, []);
 
+  // Real-time Live Sync Polling for Public Profiles
+  useEffect(() => {
+    if (view !== 'public' || !profile.username) return;
+
+    // Periodically poll for updates every 4 seconds
+    const interval = setInterval(async () => {
+      try {
+        const endpoint = `/api/profiles/${profile.username}`;
+        const res = await fetch(endpoint);
+        if (res.ok) {
+          const freshData = await res.json();
+          // Check if anything has actually changed to avoid unnecessary state triggers
+          if (JSON.stringify(freshData.links) !== JSON.stringify(profile.links) ||
+              freshData.bio !== profile.bio ||
+              freshData.displayName !== profile.displayName ||
+              freshData.avatarUrl !== profile.avatarUrl ||
+              JSON.stringify(freshData.theme) !== JSON.stringify(profile.theme)) {
+            
+            // Assign stable ids to fetched links
+            if (freshData.links) {
+              freshData.links = freshData.links.map((l: any, i: number) => ({
+                ...l,
+                id: l.id || l._id || `link-${i}-${Math.random().toString(36).substring(2, 5)}`
+              }));
+            }
+            setProfile(freshData);
+          }
+        }
+      } catch (err) {
+        console.warn('Real-time sync polling failed:', err);
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [view, profile.username, profile.links, profile.bio, profile.displayName, profile.avatarUrl, profile.theme]);
 
 
   // Auto-populate profile with Google data if empty
