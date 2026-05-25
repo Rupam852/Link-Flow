@@ -57,6 +57,7 @@ interface Link {
   animation?: 'none' | 'pulse' | 'wobble' | 'glow'; // Feature 2: Link Highlights Animations
   clicks?: number; // Feature 3: Analytics Badges
   thumbnailUrl?: string; // Feature 6: Custom Link Thumbnail Image
+  display?: 'card' | 'icon';
 }
 
 interface QuickSocial {
@@ -1580,7 +1581,7 @@ export default function App() {
                       </div>
                     </div>
                     <button
-                      onClick={() => setProfile({ ...profile, links: [...profile.links, { id: `link-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`, title: 'New Link', url: '', icon: 'globe', isActive: true }] })}
+                      onClick={() => setProfile({ ...profile, links: [...profile.links, { id: `link-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`, title: 'New Link', url: '', icon: 'globe', isActive: true, display: 'card' }] })}
                       className="text-indigo-400 hover:bg-indigo-500/10 p-2.5 rounded-xl border border-white/5 transition-all"
                       title="Add New Link"
                     >
