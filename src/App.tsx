@@ -1551,34 +1551,11 @@ export default function App() {
 
                 <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
                   <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-6">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                          <Layout size={20} />
-                        </div>
-                        <h2 className="text-lg font-extrabold text-white tracking-tight">Links</h2>
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                        <Layout size={20} />
                       </div>
-                      {/* Social Style Toggle */}
-                      <div className="flex items-center gap-2 bg-slate-950/60 border border-white/5 p-1 rounded-lg">
-                        <button
-                          onClick={() => setProfile({ ...profile, socialLinksStyle: 'grid' })}
-                          className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${profile.socialLinksStyle === 'grid'
-                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
-                            : 'text-slate-400 hover:text-white'
-                            }`}
-                        >
-                          Grid
-                        </button>
-                        <button
-                          onClick={() => setProfile({ ...profile, socialLinksStyle: 'list' })}
-                          className={`px-3 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider transition-all ${profile.socialLinksStyle === 'list'
-                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-sm'
-                            : 'text-slate-400 hover:text-white'
-                            }`}
-                        >
-                          List
-                        </button>
-                      </div>
+                      <h2 className="text-lg font-extrabold text-white tracking-tight">Links</h2>
                     </div>
                     <button
                       onClick={() => setProfile({ ...profile, links: [...profile.links, { id: `link-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`, title: 'New Link', url: '', icon: 'globe', isActive: true, display: 'card' }] })}
