@@ -225,7 +225,6 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
           <div className="max-w-md mx-auto pt-6">
             <form onSubmit={handleClaim} className="flex flex-col sm:flex-row gap-3 bg-slate-900/50 p-2 rounded-2xl border border-white/10 backdrop-blur-md focus-within:border-indigo-500/50 transition-all shadow-2xl">
               <div className="flex items-center px-4 flex-1 py-1">
-                <span className="text-slate-500 font-semibold select-none text-base">linkflow.me/</span>
                 <input 
                   type="text" 
                   value={username}
@@ -233,8 +232,8 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
                     setUsername(e.target.value);
                     setError('');
                   }}
-                  placeholder="username"
-                  className="bg-transparent border-0 outline-none w-full text-white font-bold placeholder:text-slate-600 focus:ring-0 px-1 ml-0.5 text-base"
+                  placeholder="Enter your username"
+                  className="bg-transparent border-0 outline-none w-full text-white font-bold placeholder:text-slate-600 focus:ring-0 px-1 text-base"
                 />
               </div>
               <button 
