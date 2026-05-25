@@ -248,6 +248,8 @@ export default function App() {
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [isFetching, setIsFetching] = useState(false);
+  const [newUsername, setNewUsername] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
   const [showTemplateModal, setShowTemplateModal] = useState(false);
   const [isSavedSuccessfully, setIsSavedSuccessfully] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
@@ -299,7 +301,7 @@ export default function App() {
       } else if (res.status === 404 && isUid && autoSaveUserData) {
         // AUTOSAVE: The profile wasn't found in DB (new user or DB deleted), auto-create it now
         const claimedName = sessionStorage.getItem('claimedUsername');
-        const suggestedName = claimedName || (autoSaveUserData.displayName ? generateSlug(autoSaveUserData.displayName) : autoSaveUserData.uid);
+        const suggestedName = claimedName || autoSaveUserData.uid;
         if (claimedName) {
           sessionStorage.removeItem('claimedUsername');
         }
@@ -428,13 +430,10 @@ export default function App() {
   useEffect(() => {
     if (user && (!profile.uid || !profile.displayName)) {
       setProfile(prev => {
-        const isUid = prev.username && /^[A-Za-z0-9]{20,}$/.test(prev.username);
-        const suggestedName = user.displayName ? generateSlug(user.displayName) : user.uid;
-
         return {
           ...prev,
           uid: user.uid,
-          username: (!prev.username || isUid) ? suggestedName : prev.username,
+          username: prev.username || user.uid,
           email: prev.email || user.email || '',
           displayName: prev.displayName || user.displayName || '',
           avatarUrl: (prev.avatarUrl === DEFAULT_PROFILE.avatarUrl || !prev.avatarUrl)
@@ -451,13 +450,10 @@ export default function App() {
       const result = await signInWithPopup(auth, googleProvider);
       if (result.user) {
         setProfile(prev => {
-          const isUid = prev.username && /^[A-Za-z0-9]{20,}$/.test(prev.username);
-          const suggestedName = result.user.displayName ? generateSlug(result.user.displayName) : result.user.uid;
-
           return {
             ...prev,
             uid: result.user.uid,
-            username: (!prev.username || isUid) ? suggestedName : prev.username,
+            username: prev.username || result.user.uid,
             email: result.user.email || '',
             displayName: result.user.displayName || '',
             avatarUrl: result.user.photoURL || prev.avatarUrl,
@@ -480,6 +476,64 @@ export default function App() {
       await signOut(auth);
     } catch (err) {
       console.error('Logout failed:', err);
+    }
+  };
+
+  const checkUsernameAvailability = async (val: string) => {
+    if (!val) {
+      setUsernameStatus('idle');
+      return;
+    }
+    const clean = val.toLowerCase().trim().replace(/[^\w-]/g, '');
+    if (clean !== val || val.length < 3) {
+      setUsernameStatus('invalid');
+      return;
+    }
+    setUsernameStatus('checking');
+    try {
+      const res = await fetch(`/api/profiles/${val}`);
+      if (res.status === 404) {
+        setUsernameStatus('available');
+      } else {
+        setUsernameStatus('taken');
+      }
+    } catch {
+      setUsernameStatus('taken');
+    }
+  };
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (newUsername) {
+        checkUsernameAvailability(newUsername);
+      } else {
+        setUsernameStatus('idle');
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [newUsername]);
+
+  const handleSaveUsername = async () => {
+    if (usernameStatus !== 'available' || !user) return;
+    setIsSaving(true);
+    try {
+      const updatedProfile = { ...profile, username: newUsername };
+      const res = await fetch(`/api/profiles/uid/${user.uid}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(updatedProfile),
+      });
+      if (res.ok) {
+        setProfile(updatedProfile);
+      } else {
+        console.error('Failed to save username');
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1343,6 +1397,85 @@ export default function App() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Choose Username Modal */}
+      {user && profile.username === user.uid && (
+        <div className="fixed inset-0 z-[110] bg-[#090d16] flex items-center justify-center p-4 overflow-hidden">
+          {/* Radial Mesh Glows */}
+          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/30 blur-[120px]" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-purple-900/30 blur-[120px]" />
+          
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="relative w-full max-w-md bg-slate-900/40 border border-white/10 backdrop-blur-xl p-8 rounded-3xl shadow-2xl text-center"
+          >
+            <div className="w-16 h-16 mx-auto mb-6 bg-gradient-to-tr from-indigo-500 to-purple-500 rounded-2xl flex items-center justify-center text-white shadow-lg shadow-indigo-500/20">
+              <User size={32} />
+            </div>
+            
+            <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">Choose your Handle</h2>
+            <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+              Create your unique custom link to share your social profiles and projects with the world.
+            </p>
+            
+            <div className="space-y-4 text-left">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Desired Username</label>
+                <div className="relative flex items-center bg-slate-950/60 border border-white/10 rounded-2xl focus-within:border-indigo-500/50 transition-all p-3 shadow-inner">
+                  <span className="text-slate-600 font-bold select-none text-xs pr-1">link-flow-program.vercel.app/</span>
+                  <input
+                    type="text"
+                    value={newUsername}
+                    onChange={(e) => {
+                      const val = e.target.value.toLowerCase().replace(/[^\w-]/g, '');
+                      setNewUsername(val);
+                    }}
+                    placeholder="your-name"
+                    className="bg-transparent border-0 outline-none w-full text-white font-extrabold placeholder:text-slate-800 focus:ring-0 p-0 text-xs"
+                  />
+                </div>
+              </div>
+              
+              {/* Availability Status Indicators */}
+              <div className="min-h-[24px] px-1 text-xs">
+                {usernameStatus === 'checking' && (
+                  <span className="text-indigo-400 flex items-center gap-1.5 font-semibold animate-pulse">
+                    <span className="w-3 h-3 border-2 border-indigo-400 border-t-transparent rounded-full animate-spin inline-block"></span>
+                    Checking availability...
+                  </span>
+                )}
+                {usernameStatus === 'available' && (
+                  <span className="text-green-400 flex items-center gap-1.5 font-bold">
+                    <Check size={14} className="stroke-[3]" />
+                    Username is available!
+                  </span>
+                )}
+                {usernameStatus === 'taken' && (
+                  <span className="text-red-400 flex items-center gap-1.5 font-bold">
+                    <AlertCircle size={14} className="stroke-[2.5]" />
+                    Username is already taken.
+                  </span>
+                )}
+                {usernameStatus === 'invalid' && (
+                  <span className="text-amber-400 flex items-center gap-1.5 font-semibold">
+                    <AlertCircle size={14} />
+                    Min 3 characters, letters & hyphens only.
+                  </span>
+                )}
+              </div>
+              
+              <button
+                onClick={handleSaveUsername}
+                disabled={usernameStatus !== 'available' || isSaving}
+                className="w-full bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-extrabold py-3.5 px-6 rounded-2xl shadow-xl shadow-indigo-500/10 hover:shadow-indigo-500/20 active:scale-[0.98] transition-all disabled:opacity-30 disabled:scale-100 disabled:pointer-events-none mt-2"
+              >
+                {isSaving ? 'Configuring account...' : 'Claim & Launch Dashboard →'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
 
       {/* Save Success Toast */}
       {showSaveToast && (
