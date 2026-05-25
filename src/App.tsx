@@ -1158,18 +1158,7 @@ export default function App() {
                         <div className="text-left">
                           <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight">{link.title}</p>
                           {link.description && (
-                            <div className="text-sm font-semibold text-white/80 mt-1.5 space-y-1">
-                              {link.description.includes('\n') ? (
-                                link.description.split('\n').filter(Boolean).map((line, lIdx) => (
-                                  <div key={lIdx} className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0"></span>
-                                    <span>{line}</span>
-                                  </div>
-                                ))
-                              ) : (
-                                <p className="leading-snug">{link.description}</p>
-                              )}
-                            </div>
+                            <p className="text-sm font-semibold text-white/80 mt-1.5 whitespace-pre-wrap leading-snug text-left">{link.description}</p>
                           )}
                         </div>
                       </div>
@@ -2067,18 +2056,7 @@ export default function App() {
                               <div className="text-left overflow-hidden">
                                 <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
                                 {link.description && (
-                                  <div className="text-[10px] text-white/80 mt-1 space-y-0.5 text-left">
-                                    {link.description.includes('\n') ? (
-                                      link.description.split('\n').filter(Boolean).map((line, lIdx) => (
-                                        <div key={lIdx} className="flex items-center gap-1.5">
-                                          <span className="w-1 h-1 rounded-full bg-indigo-400 shrink-0"></span>
-                                          <span className="truncate">{line}</span>
-                                        </div>
-                                      ))
-                                    ) : (
-                                      <p className="leading-tight">{link.description}</p>
-                                    )}
-                                  </div>
+                                  <p className="text-[10px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left">{link.description}</p>
                                 )}
                               </div>
                             </div>
