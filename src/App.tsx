@@ -436,7 +436,7 @@ export default function App() {
         return {
           ...prev,
           uid: user.uid,
-          username: prev.username || user.uid,
+          username: prev.username,
           email: prev.email || user.email || '',
           displayName: prev.displayName || user.displayName || '',
           avatarUrl: (prev.avatarUrl === DEFAULT_PROFILE.avatarUrl || !prev.avatarUrl)
@@ -456,7 +456,7 @@ export default function App() {
           return {
             ...prev,
             uid: result.user.uid,
-            username: prev.username || result.user.uid,
+            username: prev.username,
             email: result.user.email || '',
             displayName: result.user.displayName || '',
             avatarUrl: result.user.photoURL || prev.avatarUrl,
@@ -1536,7 +1536,7 @@ export default function App() {
       </AnimatePresence>
 
       {/* Choose Username Modal */}
-      {user && profile.username === user.uid && (
+      {!loading && !isFetching && user && profile.username && profile.username === user.uid && (
         <div className="fixed inset-0 z-[110] bg-[#090d16] flex items-center justify-center p-4 overflow-hidden">
           {/* Radial Mesh Glows */}
           <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-indigo-900/30 blur-[120px]" />
