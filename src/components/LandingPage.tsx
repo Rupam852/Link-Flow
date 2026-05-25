@@ -141,24 +141,30 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
     e.preventDefault();
     setError('');
 
-    const cleanUsername = username.trim().toLowerCase();
-    if (!cleanUsername) {
+    const trimmedUsername = username.trim();
+    if (!trimmedUsername) {
       setError('Please enter a username.');
       return;
     }
 
-    if (cleanUsername.length < 3) {
+    // Explicitly validate for uppercase letters as requested
+    if (/[A-Z]/.test(username)) {
+      setError('Username can only contain lowercase letters.');
+      return;
+    }
+
+    if (trimmedUsername.length < 3) {
       setError('Username must be at least 3 characters.');
       return;
     }
 
-    if (!/^[a-z0-9-]+$/.test(cleanUsername)) {
+    if (!/^[a-z0-9-]+$/.test(trimmedUsername)) {
       setError('Username can only contain letters, numbers, and hyphens.');
       return;
     }
 
     // Save proposed username to session storage and trigger login directly
-    sessionStorage.setItem('claimedUsername', cleanUsername);
+    sessionStorage.setItem('claimedUsername', trimmedUsername);
     onLogin();
   };
 
