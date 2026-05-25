@@ -30,7 +30,7 @@ import {
   Mail,
   Play
 } from 'lucide-react';
-import { auth, googleProvider, signInWithPopup, signOut, onAuthStateChanged } from './firebase';
+import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
 import LandingPage from './components/LandingPage';
 
@@ -466,7 +466,12 @@ export default function App() {
         });
       }
     } catch (err) {
-      console.error('Login failed:', err);
+      console.warn('Popup login failed, attempting redirect login:', err);
+      try {
+        await signInWithRedirect(auth, googleProvider);
+      } catch (redirErr) {
+        console.error('Redirect login failed as well:', redirErr);
+      }
     }
   };
 
