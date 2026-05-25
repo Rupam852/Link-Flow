@@ -1390,140 +1390,6 @@ export default function App() {
                   </div>
                 </section>
 
-
-                {/* Account Settings Card: Public Link Toggle & Danger Zone */}
-                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300 space-y-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                      <Settings size={20} />
-                    </div>
-                    <h2 className="text-lg font-extrabold text-white tracking-tight">Account Settings</h2>
-                  </div>
-
-                  <div className="divide-y divide-white/5">
-                    {/* Public Status Toggle */}
-                    <div className="py-4 flex items-center justify-between">
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-200">Public Link Status</h3>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {profile.isActive !== false 
-                            ? 'Your profile is online and searchable.' 
-                            : 'Your profile is offline and hidden.'}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const updated = { ...profile, isActive: profile.isActive === false ? true : false };
-                          setProfile(updated);
-                        }}
-                        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
-                          profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
-                        }`}
-                      >
-                        <span
-                          className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full shadow-sm transition-transform duration-200 ${
-                            profile.isActive !== false ? 'translate-x-6' : 'translate-x-0'
-                          }`}
-                        />
-                      </button>
-                    </div>
-
-                    {/* Danger Zone: Delete Account */}
-                    <div className="py-4">
-                      <h3 className="text-sm font-bold text-red-400 mb-1">Danger Zone</h3>
-                      <p className="text-xs text-slate-400 mb-3">
-                        Permanently delete your profile and all associated links. This action is irreversible.
-                      </p>
-                      <button
-                        onClick={handleDeleteAccount}
-                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 animate-pulse hover:animate-none"
-                      >
-                        <Trash2 size={14} />
-                        Delete My Account
-                      </button>
-                    </div>
-                  </div>
-                </section>
-
-                {/* Dedicated Real-time Analytics Section */}
-                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
-                  {/* Neon Glow Effects */}
-                  <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-indigo-500/10 blur-[80px] group-hover:bg-indigo-500/15 transition-all duration-300 pointer-events-none" />
-                  
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                        <TrendingUp size={20} />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-extrabold text-white tracking-tight">Real-time Analytics</h2>
-                        <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-0.5 animate-pulse">● Live Tracking Active</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleRefreshAnalytics}
-                      disabled={isRefreshingAnalytics}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 active:scale-95 transition-all disabled:opacity-50"
-                      title="Refresh Analytics"
-                    >
-                      <RotateCw size={12} className={isRefreshingAnalytics ? 'animate-spin' : ''} />
-                      <span>{isRefreshingAnalytics ? 'Syncing...' : 'Refresh'}</span>
-                    </button>
-                  </div>
-
-                  {(() => {
-                    const totalClicks = profile.links.reduce((sum, l) => sum + (l.clicks || 0), 0);
-                    const topLink = [...profile.links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0))[0];
-
-                    return (
-                      <div className="space-y-6">
-                        {/* Summary Grid */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
-                            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Clicks</span>
-                            <span className="text-3xl font-black text-white tracking-tight">
-                              {totalClicks}
-                            </span>
-                          </div>
-                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
-                            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Top Performing Link</span>
-                            <span className="text-xs font-bold text-indigo-400 truncate block mt-2">
-                              {topLink && topLink.clicks ? `${topLink.title} (${topLink.clicks} clicks)` : 'No clicks yet'}
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Detailed Link Clicks Breakdown List */}
-                        <div className="space-y-3.5">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Clicks Breakdown</label>
-                          {profile.links.length === 0 ? (
-                            <p className="text-xs text-slate-400 italic">No links added to your profile yet.</p>
-                          ) : (
-                            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-                              {profile.links.map((link, i) => {
-                                const clicks = link.clicks || 0;
-                                const LinkIcon = ICON_MAP[link.icon] || Globe;
-
-                                return (
-                                  <div key={link.id || i} className="flex items-center justify-between bg-slate-950/20 px-3.5 py-3 rounded-xl border border-white/5 hover:bg-slate-950/40 transition-colors">
-                                    <div className="flex items-center gap-2 text-slate-300">
-                                      <LinkIcon size={14} className="text-indigo-400 shrink-0" />
-                                      <span className="truncate max-w-[150px] sm:max-w-[200px] font-bold text-slate-200">{link.title || 'Untitled Link'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                      <span className="text-white font-extrabold bg-indigo-500/10 px-2.5 py-0.5 rounded-md border border-indigo-500/25 text-[11px] min-w-[20px] text-center">{clicks} clicks</span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </section>
-
                 <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-6">
@@ -1847,6 +1713,139 @@ export default function App() {
                       <Sparkles size={14} className="group-hover:animate-spin-slow" />
                       <span>Inspire Me (AI Theme)</span>
                     </button>
+                  </div>
+                </section>
+
+                {/* Dedicated Real-time Analytics Section */}
+                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                  {/* Neon Glow Effects */}
+                  <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-indigo-500/10 blur-[80px] group-hover:bg-indigo-500/15 transition-all duration-300 pointer-events-none" />
+                  
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                        <TrendingUp size={20} />
+                      </div>
+                      <div>
+                        <h2 className="text-lg font-extrabold text-white tracking-tight">Real-time Analytics</h2>
+                        <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-0.5 animate-pulse">● Live Tracking Active</p>
+                      </div>
+                    </div>
+                    <button
+                      onClick={handleRefreshAnalytics}
+                      disabled={isRefreshingAnalytics}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 active:scale-95 transition-all disabled:opacity-50"
+                      title="Refresh Analytics"
+                    >
+                      <RotateCw size={12} className={isRefreshingAnalytics ? 'animate-spin' : ''} />
+                      <span>{isRefreshingAnalytics ? 'Syncing...' : 'Refresh'}</span>
+                    </button>
+                  </div>
+
+                  {(() => {
+                    const totalClicks = profile.links.reduce((sum, l) => sum + (l.clicks || 0), 0);
+                    const topLink = [...profile.links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0))[0];
+
+                    return (
+                      <div className="space-y-6">
+                        {/* Summary Grid */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
+                            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Clicks</span>
+                            <span className="text-3xl font-black text-white tracking-tight">
+                              {totalClicks}
+                            </span>
+                          </div>
+                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
+                            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Top Performing Link</span>
+                            <span className="text-xs font-bold text-indigo-400 truncate block mt-2">
+                              {topLink && topLink.clicks ? `${topLink.title} (${topLink.clicks} clicks)` : 'No clicks yet'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Detailed Link Clicks Breakdown List */}
+                        <div className="space-y-3.5">
+                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Clicks Breakdown</label>
+                          {profile.links.length === 0 ? (
+                            <p className="text-xs text-slate-400 italic">No links added to your profile yet.</p>
+                          ) : (
+                            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                              {profile.links.map((link, i) => {
+                                const clicks = link.clicks || 0;
+                                const LinkIcon = ICON_MAP[link.icon] || Globe;
+
+                                return (
+                                  <div key={link.id || i} className="flex items-center justify-between bg-slate-950/20 px-3.5 py-3 rounded-xl border border-white/5 hover:bg-slate-950/40 transition-colors">
+                                    <div className="flex items-center gap-2 text-slate-300">
+                                      <LinkIcon size={14} className="text-indigo-400 shrink-0" />
+                                      <span className="truncate max-w-[150px] sm:max-w-[200px] font-bold text-slate-200">{link.title || 'Untitled Link'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      <span className="text-white font-extrabold bg-indigo-500/10 px-2.5 py-0.5 rounded-md border border-indigo-500/25 text-[11px] min-w-[20px] text-center">{clicks} clicks</span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </section>
+
+                {/* Account Settings Card: Public Link Toggle & Danger Zone */}
+                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300 space-y-6">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                      <Settings size={20} />
+                    </div>
+                    <h2 className="text-lg font-extrabold text-white tracking-tight">Account Settings</h2>
+                  </div>
+
+                  <div className="divide-y divide-white/5">
+                    {/* Public Status Toggle */}
+                    <div className="py-4 flex items-center justify-between">
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-200">Public Link Status</h3>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                          {profile.isActive !== false 
+                            ? 'Your profile is online and searchable.' 
+                            : 'Your profile is offline and hidden.'}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          const updated = { ...profile, isActive: profile.isActive === false ? true : false };
+                          setProfile(updated);
+                        }}
+                        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
+                          profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
+                        }`}
+                      >
+                        <span
+                          className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full shadow-sm transition-transform duration-200 ${
+                            profile.isActive !== false ? 'translate-x-6' : 'translate-x-0'
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {/* Danger Zone: Delete Account */}
+                    <div className="py-4">
+                      <h3 className="text-sm font-bold text-red-400 mb-1">Danger Zone</h3>
+                      <p className="text-xs text-slate-400 mb-3">
+                        Permanently delete your profile and all associated links. This action is irreversible.
+                      </p>
+                      <button
+                        onClick={handleDeleteAccount}
+                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 animate-pulse hover:animate-none"
+                      >
+                        <Trash2 size={14} />
+                        Delete My Account
+                      </button>
+                    </div>
                   </div>
                 </section>
               </div>
