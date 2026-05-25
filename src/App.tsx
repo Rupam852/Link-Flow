@@ -1624,7 +1624,8 @@ export default function App() {
                               }}
                               className="w-full bg-transparent font-bold text-white focus:outline-none placeholder:text-slate-700 text-base"
                             />
-                            <textarea
+                            <input
+                              type="text"
                               value={link.description || ''}
                               placeholder="Short description (optional)"
                               onChange={(e) => {
@@ -1632,13 +1633,7 @@ export default function App() {
                                 newLinks[idx].description = e.target.value;
                                 setProfile({ ...profile, links: newLinks });
                               }}
-                              rows={1}
-                              className="w-full bg-transparent text-xs text-slate-400 focus:outline-none resize-none min-h-[1.5rem] placeholder:text-slate-700"
-                              style={{ height: 'auto' }}
-                              onInput={(e: any) => {
-                                e.target.style.height = 'auto';
-                                e.target.style.height = e.target.scrollHeight + 'px';
-                              }}
+                              className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all shadow-inner mt-1 block"
                             />
                             <div className="relative">
                               <input
