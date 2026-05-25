@@ -1457,12 +1457,7 @@ export default function App() {
                       <Plus size={20} />
                     </button>
                   </div>
-                  <Reorder.Group 
-                    axis="y" 
-                    values={profile.links} 
-                    onReorder={(newLinks) => setProfile({ ...profile, links: newLinks })}
-                    className="space-y-4"
-                  >
+                  <div className="space-y-4">
                     {/* Real-time Link Preview (Icon-only) */}
                     {profile.links.length > 0 && (
                       <div className="flex flex-wrap gap-2 p-3 bg-slate-950/40 rounded-2xl border border-dashed border-white/10 mb-2">
@@ -1483,20 +1478,64 @@ export default function App() {
                       </div>
                     )}
 
-                    {profile.links.map((link, idx) => (
-                      <Reorder.Item
-                        value={link}
-                        key={link.id || `link-${idx}`}
-                        dragConstraints={{ top: -3000, bottom: 3000 }}
-                        className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative select-none"
-                      >
+                    <AnimatePresence initial={false}>
+                      {profile.links.map((link, idx) => (
+                        <motion.div
+                          layout
+                          key={link.id || `link-${idx}`}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -20 }}
+                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                          className="p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative select-none"
+                        >
                         <div className="flex items-start gap-4">
-                          {/* Premium Drag Handle */}
-                          <div 
-                            className="cursor-grab active:cursor-grabbing text-slate-500 hover:text-indigo-400 p-1.5 rounded-lg border border-transparent hover:bg-white/5 shrink-0 self-center transition-colors"
-                            title="Press & hold to drag to reorder"
-                          >
-                            <GripVertical size={16} />
+                          {/* Up & Down Reorder Buttons */}
+                          <div className="flex flex-col items-center gap-1 shrink-0 self-center">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (idx > 0) {
+                                  const newLinks = [...profile.links];
+                                  const temp = newLinks[idx];
+                                  newLinks[idx] = newLinks[idx - 1];
+                                  newLinks[idx - 1] = temp;
+                                  setProfile({ ...profile, links: newLinks });
+                                }
+                              }}
+                              disabled={idx === 0}
+                              className={`p-1 rounded-md transition-colors ${
+                                idx === 0 
+                                  ? 'text-slate-800 cursor-not-allowed opacity-20' 
+                                  : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
+                              }`}
+                              title="Move Up"
+                            >
+                              <ChevronUp size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                if (idx < profile.links.length - 1) {
+                                  const newLinks = [...profile.links];
+                                  const temp = newLinks[idx];
+                                  newLinks[idx] = newLinks[idx + 1];
+                                  newLinks[idx + 1] = temp;
+                                  setProfile({ ...profile, links: newLinks });
+                                }
+                              }}
+                              disabled={idx === profile.links.length - 1}
+                              className={`p-1 rounded-md transition-colors ${
+                                idx === profile.links.length - 1 
+                                  ? 'text-slate-800 cursor-not-allowed opacity-20' 
+                                  : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
+                              }`}
+                              title="Move Down"
+                            >
+                              <ChevronDown size={16} />
+                            </button>
                           </div>
 
                           {/* Icon Selector Button & Dropdown Container */}
@@ -1642,9 +1681,10 @@ export default function App() {
                             </button>
                           </div>
                         </div>
-                      </Reorder.Item>
-                    ))}
-                  </Reorder.Group>
+                      </motion.div>
+                      ))}
+                    </AnimatePresence>
+                  </div>
                 </section>
 
                 <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
