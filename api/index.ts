@@ -3,6 +3,7 @@ import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
 import path from "path";
+import crypto from "crypto";
 
 dotenv.config();
 
@@ -136,7 +137,39 @@ app.post("/api/profiles/:username/links/click", async (req, res) => {
   }
 });
 
-// Lightweight dynamic Firebase JWT verification helper using Google OAuth2 public endpoints
+// Cache for Google's public certificates to prevent fetching on every request
+let googlePublicKeys: Record<string, string> = {};
+let googleKeysExpiry = 0;
+
+async function fetchGooglePublicKeys(): Promise<Record<string, string>> {
+  const now = Date.now();
+  if (Object.keys(googlePublicKeys).length > 0 && now < googleKeysExpiry) {
+    return googlePublicKeys;
+  }
+
+  try {
+    const res = await fetch("https://www.googleapis.com/robot/v1/metadata/x509/securetoken-for-firebase%40system.gserviceaccount.com");
+    if (!res.ok) return {};
+    
+    const data = await res.json();
+    googlePublicKeys = data;
+    
+    // Parse cache-control header to determine expiry
+    const cacheControl = res.headers.get("cache-control");
+    let maxAge = 3600; // default 1 hour
+    if (cacheControl) {
+      const match = cacheControl.match(/max-age=(\d+)/);
+      if (match) maxAge = parseInt(match[1], 10);
+    }
+    googleKeysExpiry = now + maxAge * 1000;
+    return googlePublicKeys;
+  } catch (err) {
+    console.error("Error fetching Google public keys:", err);
+    return {};
+  }
+}
+
+// Lightweight dynamic Firebase JWT verification helper using Google securetoken public endpoints
 async function verifyFirebaseToken(req: any, expectedUid: string): Promise<boolean> {
   try {
     const authHeader = req.headers.authorization;
@@ -146,13 +179,57 @@ async function verifyFirebaseToken(req: any, expectedUid: string): Promise<boole
     const token = authHeader.split("Bearer ")[1];
     if (!token) return false;
 
-    // Contact Google APIs to verify JWT signature & expiry without private key config
-    const response = await fetch(`https://oauth2.googleapis.com/tokeninfo?id_token=${token}`);
-    if (!response.ok) return false;
+    // 1. Decode JWT parts
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
 
-    const data = await response.json();
-    const tokenUid = data.user_id || data.sub; // Subject user ID in Firebase tokens
-    return tokenUid === expectedUid;
+    const [headerB64, payloadB64, signatureB64] = parts;
+    
+    // Helper to safely convert base64url to base64
+    const base64UrlDecode = (str: string) => {
+      const base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+      return Buffer.from(base64, 'base64').toString('utf8');
+    };
+
+    // 2. Decode header to find Key ID (kid)
+    const header = JSON.parse(base64UrlDecode(headerB64));
+    const kid = header.kid;
+    if (!kid) return false;
+
+    // 3. Decode payload
+    const payload = JSON.parse(base64UrlDecode(payloadB64));
+    
+    // 4. Verify expiration
+    const now = Math.floor(Date.now() / 1000);
+    if (payload.exp < now) {
+      console.warn("Token expired");
+      return false;
+    }
+    
+    // Verify subject matches expected UID
+    if (payload.sub !== expectedUid) {
+      console.warn("UID mismatch");
+      return false;
+    }
+
+    // 5. Fetch Google certificates and verify signature
+    const publicKeys = await fetchGooglePublicKeys();
+    const cert = publicKeys[kid];
+    if (!cert) {
+      console.warn("Public key not found for kid:", kid);
+      return false;
+    }
+
+    // Verify signature using crypto
+    const verifier = crypto.createVerify('RSA-SHA256');
+    verifier.update(`${headerB64}.${payloadB64}`);
+    
+    // Base64url to standard Base64 conversion for signature buffer
+    const sigBase64 = signatureB64.replace(/-/g, '+').replace(/_/g, '/');
+    const signature = Buffer.from(sigBase64, 'base64');
+    const isSignatureValid = verifier.verify(cert, signature);
+    
+    return isSignatureValid;
   } catch (err) {
     console.error("Token verification failed:", err);
     return false;
