@@ -27,6 +27,7 @@ body,
   margin: 0;
   padding: 0;
   position: relative;
+  background-color: #090d16;
 }
 
 /* Hide scrollbars globally across all browsers while maintaining native scroll behavior */

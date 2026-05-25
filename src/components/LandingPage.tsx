@@ -167,7 +167,7 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] text-slate-100 font-sans overflow-x-hidden selection:bg-indigo-500 selection:text-white">
+    <div className="relative min-h-screen bg-[#090d16] text-slate-100 font-sans overflow-x-hidden selection:bg-indigo-500 selection:text-white">
       {/* Decorative Radial Background Glows */}
       <div className="absolute top-[-20%] left-[-10%] w-[60%] aspect-square rounded-full bg-indigo-900/20 blur-[150px] pointer-events-none" />
       <div className="absolute top-[40%] right-[-10%] w-[50%] aspect-square rounded-full bg-purple-900/15 blur-[150px] pointer-events-none" />
