@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>📱 Link-Flow</h1>
+  <h1>Link-Flow</h1>
   <p><strong>A Premium, High-Performance, and 100% Free Personal Bio-Link Platform</strong></p>
 
   <p>
