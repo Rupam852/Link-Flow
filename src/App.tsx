@@ -1125,7 +1125,7 @@ export default function App() {
 
     return (
       <div
-        className="min-h-screen w-full overflow-y-auto px-4 py-8 sm:py-16 flex flex-col items-center justify-start"
+        className="min-h-screen w-full overflow-y-auto px-3 sm:px-4 py-8 sm:py-16 flex flex-col items-center justify-start"
         style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
       >
         <div className="w-full max-w-md text-center relative z-10">
@@ -1228,7 +1228,7 @@ export default function App() {
                       onClick={() => handleLinkClick(link)}
                       target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
-                      className="block w-full p-4 rounded-xl transition-all flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
+                      className="block w-full px-3.5 py-4 rounded-xl transition-all flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
                       style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -1241,7 +1241,7 @@ export default function App() {
                         <div className="text-left min-w-0 flex-1">
                           <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
                           {link.description && (
-                            <p className="text-[10px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left break-words">{link.description}</p>
+                            <p className="text-[11.5px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left break-words">{link.description}</p>
                           )}
                         </div>
                         <ExternalLink size={14} className="opacity-40 group-hover:opacity-100 transition-opacity relative z-10 shrink-0 ml-auto" />
@@ -2052,7 +2052,7 @@ export default function App() {
                 </div>
 
                 <div
-                  className="w-full h-full overflow-y-auto p-4 sm:p-8 pt-8 lg:pt-16 text-center scrollbar-hide relative"
+                  className="w-full h-full overflow-y-auto px-3 sm:px-8 pt-8 lg:pt-16 text-center scrollbar-hide relative"
                   style={{ backgroundColor: previewProfile.theme.backgroundColor, color: previewProfile.theme.textColor }}
                 >
                   <div className="relative w-24 h-24 mx-auto mb-4">
@@ -2155,7 +2155,7 @@ export default function App() {
                                 href={link.url}
                                 target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                                 rel="noopener noreferrer"
-                                className="block w-full p-4 rounded-xl transition-all flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative"
+                                className="block w-full px-3.5 py-4 rounded-xl transition-all flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative"
                                 style={{ backgroundColor: previewProfile.theme.buttonColor, color: previewProfile.theme.buttonTextColor }}
                               >
                                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -2168,7 +2168,7 @@ export default function App() {
                                   <div className="text-left min-w-0 flex-1 overflow-hidden">
                                     <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
                                     {link.description && (
-                                      <p className="text-[10px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left break-words">{link.description}</p>
+                                      <p className="text-[11.5px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left break-words">{link.description}</p>
                                     )}
                                   </div>
                                   <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0 ml-auto" />
