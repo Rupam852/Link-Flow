@@ -1,6 +1,4 @@
 <div align="center">
-  <img width="1200" height="475" alt="Link-Flow Header Banner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-
   <h1>📱 Link-Flow</h1>
   <p><strong>A Premium, High-Performance, and 100% Free Personal Bio-Link Platform</strong></p>
 
