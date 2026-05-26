@@ -215,11 +215,7 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
           transition={{ duration: 0.6 }}
           className="space-y-6"
         >
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 bg-indigo-500/10 border border-indigo-500/30 rounded-full px-4 py-1.5 text-xs text-indigo-400 font-bold tracking-wide uppercase">
-            <Sparkles size={12} className="animate-pulse" />
-            <span>Introducing LinkFlow 1.0</span>
-          </div>
+
 
           {/* Main Title */}
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto leading-[1.1] text-white">
