@@ -1129,8 +1129,8 @@ export default function App() {
         style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
       >
         <div className="w-full max-w-md text-center relative z-10">
-          <div className="relative w-32 h-32 mx-auto mb-6">
-            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-xl"></div>
+          <div className="relative w-24 h-24 mx-auto mb-4">
+            <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-md"></div>
             <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
             <motion.img
               initial={{ scale: 0.8, opacity: 0 }}
@@ -1139,7 +1139,7 @@ export default function App() {
               src={profile.avatarUrl}
               alt="Avatar"
               className="absolute inset-[3px] w-[calc(100%-6px)] h-[calc(100%-6px)] rounded-full object-cover shadow-2xl"
-              style={{ border: `4px solid ${profile.theme.backgroundColor}` }}
+              style={{ border: `3px solid ${profile.theme.backgroundColor}` }}
               referrerPolicy="no-referrer"
             />
           </div>
@@ -1147,7 +1147,7 @@ export default function App() {
             initial={{ y: 15, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2, duration: 0.4 }}
-            className="text-3xl font-extrabold mb-1 tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient"
+            className="text-xl font-extrabold mb-1 tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient"
           >
             {profile.displayName}
           </motion.h1>
@@ -1155,7 +1155,7 @@ export default function App() {
             initial={{ y: 10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.25, duration: 0.4 }}
-            className="text-sm opacity-60 mb-6 font-medium tracking-wide"
+            className="text-xs opacity-60 mb-4 font-semibold tracking-wide"
           >
             @{profile.username}
           </motion.p>
@@ -1163,7 +1163,7 @@ export default function App() {
             initial={{ y: 15, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.4 }}
-            className="text-lg opacity-80 mb-6 max-w-sm mx-auto leading-relaxed whitespace-pre-wrap"
+            className="text-sm opacity-80 mb-6 max-w-xs mx-auto leading-relaxed whitespace-pre-wrap"
           >
             {profile.bio || "No bio yet."}
           </motion.p>
@@ -1171,7 +1171,7 @@ export default function App() {
           <div className="space-y-6">
             {/* Social Icons Row */}
             {profile.links.filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe'))).length > 0 && (
-              <div className="flex flex-wrap justify-center gap-4 mb-8">
+              <div className="flex flex-wrap justify-center gap-3 mb-6">
                 {profile.links
                   .filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe')))
                   .map((link, idx) => {
@@ -1187,15 +1187,15 @@ export default function App() {
                         onClick={() => handleLinkClick(link)}
                         target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                         rel="noopener noreferrer"
-                        className="w-12 h-12 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-all relative group overflow-hidden"
+                        className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-all relative group overflow-hidden"
                         style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                         title={link.title}
                       >
                         <div className="absolute inset-0 bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         {link.thumbnailUrl ? (
-                          <img src={link.thumbnailUrl} alt={link.title} className="w-6 h-6 rounded-full object-cover relative z-10" />
+                          <img src={link.thumbnailUrl} alt={link.title} className="w-5 h-5 rounded-full object-cover relative z-10" />
                         ) : (
-                          <Icon size={24} className="relative z-10" />
+                          <Icon size={18} className="relative z-10" />
                         )}
                       </motion.a>
                     );
@@ -1228,23 +1228,23 @@ export default function App() {
                       onClick={() => handleLinkClick(link)}
                       target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
-                      className="block w-full p-5 rounded-2xl transition-all flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
+                      className="block w-full p-4 rounded-xl transition-all flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
                       style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                      <div className="flex items-center gap-4 relative z-10 w-full min-w-0">
+                      <div className="flex items-center gap-3 relative z-10 w-full min-w-0">
                         {link.thumbnailUrl ? (
-                          <img src={link.thumbnailUrl} alt={link.title} className="w-10 h-10 rounded-xl object-cover shadow-sm shrink-0" />
+                          <img src={link.thumbnailUrl} alt={link.title} className="w-7 h-7 rounded-lg object-cover shadow-sm shrink-0" />
                         ) : (
-                          <Icon size={24} className="drop-shadow-sm shrink-0" />
+                          <Icon size={18} className="drop-shadow-sm shrink-0" />
                         )}
                         <div className="text-left min-w-0 flex-1">
-                          <p className="font-extrabold text-lg tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
+                          <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
                           {link.description && (
-                            <p className="text-sm font-semibold text-white/80 mt-1.5 whitespace-pre-wrap leading-snug text-left break-words">{link.description}</p>
+                            <p className="text-[10px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left break-words">{link.description}</p>
                           )}
                         </div>
-                        <ExternalLink size={18} className="opacity-40 group-hover:opacity-100 transition-opacity relative z-10 shrink-0 ml-auto" />
+                        <ExternalLink size={14} className="opacity-40 group-hover:opacity-100 transition-opacity relative z-10 shrink-0 ml-auto" />
                       </div>
                     </motion.a>
                   );
@@ -2055,7 +2055,7 @@ export default function App() {
                   className="w-full h-full overflow-y-auto p-4 sm:p-8 pt-8 lg:pt-16 text-center scrollbar-hide relative"
                   style={{ backgroundColor: previewProfile.theme.backgroundColor, color: previewProfile.theme.textColor }}
                 >
-                  <div className="relative w-32 h-32 lg:w-24 lg:h-24 mx-auto mb-6 lg:mb-4">
+                  <div className="relative w-24 h-24 mx-auto mb-4">
                     <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-md"></div>
                     <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
                     <motion.img
@@ -2074,7 +2074,7 @@ export default function App() {
                     initial={{ y: 10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.15, duration: 0.4 }}
-                    className="text-3xl lg:text-xl font-black tracking-tight mb-2 lg:mb-1 drop-shadow-sm select-none"
+                    className="text-xl font-extrabold mb-1 tracking-tight bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 bg-clip-text text-transparent animate-gradient"
                   >
                     {previewProfile.displayName}
                   </motion.h1>
@@ -2082,7 +2082,7 @@ export default function App() {
                     initial={{ y: 8, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.2, duration: 0.4 }}
-                    className="text-xl lg:text-xs opacity-75 mb-4 lg:mb-3 font-semibold select-none"
+                    className="text-xs opacity-60 mb-4 font-semibold tracking-wide"
                   >
                     @{previewProfile.username}
                   </motion.p>
@@ -2090,7 +2090,7 @@ export default function App() {
                     initial={{ y: 10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: 0.25, duration: 0.4 }}
-                    className="text-lg lg:text-sm opacity-80 mb-6 max-w-sm mx-auto leading-relaxed whitespace-pre-wrap select-none"
+                    className="text-sm opacity-80 mb-6 max-w-xs mx-auto leading-relaxed whitespace-pre-wrap select-none"
                     style={{ color: previewProfile.theme.textColor }}
                   >
                     {previewProfile.bio || "Your bio will appear here..."}
@@ -2114,14 +2114,14 @@ export default function App() {
                                 href={link.url}
                                 target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                                 rel="noopener noreferrer"
-                                className="w-12 h-12 lg:w-10 lg:h-10 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden group"
+                                className="w-10 h-10 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden group"
                                 style={{ backgroundColor: previewProfile.theme.buttonColor, color: previewProfile.theme.buttonTextColor }}
                               >
                                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 {link.thumbnailUrl ? (
-                                  <img src={link.thumbnailUrl} alt={link.title} className="w-6 h-6 lg:w-5 lg:h-5 rounded-full object-cover relative z-10" />
+                                  <img src={link.thumbnailUrl} alt={link.title} className="w-5 h-5 rounded-full object-cover relative z-10" />
                                 ) : (
-                                  <Icon size={24} className="lg:w-4.5 lg:h-4.5 relative z-10" />
+                                  <Icon size={18} className="relative z-10" />
                                 )}
                               </motion.a>
                             );
@@ -2155,23 +2155,23 @@ export default function App() {
                                 href={link.url}
                                 target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                                 rel="noopener noreferrer"
-                                className="block w-full p-5 lg:p-4 rounded-2xl lg:rounded-xl transition-all flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative"
+                                className="block w-full p-4 rounded-xl transition-all flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative"
                                 style={{ backgroundColor: previewProfile.theme.buttonColor, color: previewProfile.theme.buttonTextColor }}
                               >
-                                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
-                                <div className="flex items-center gap-4 lg:gap-3 relative z-10 w-full min-w-0">
+                                <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
+                                <div className="flex items-center gap-3 relative z-10 w-full min-w-0">
                                   {link.thumbnailUrl ? (
-                                    <img src={link.thumbnailUrl} alt={link.title} className="w-10 h-10 lg:w-7 lg:h-7 rounded-xl lg:rounded-lg object-cover shadow-sm shrink-0" />
+                                    <img src={link.thumbnailUrl} alt={link.title} className="w-7 h-7 rounded-lg object-cover shadow-sm shrink-0" />
                                   ) : (
-                                    <Icon size={24} className="lg:w-4.5 lg:h-4.5 drop-shadow-sm shrink-0" />
+                                    <Icon size={18} className="drop-shadow-sm shrink-0" />
                                   )}
                                   <div className="text-left min-w-0 flex-1 overflow-hidden">
-                                    <p className="font-extrabold lg:font-bold text-lg lg:text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
+                                    <p className="font-bold text-sm tracking-tight drop-shadow-sm leading-tight truncate">{link.title}</p>
                                     {link.description && (
-                                      <p className="text-sm lg:text-[10px] text-white/80 mt-1.5 lg:mt-1 whitespace-pre-wrap leading-snug lg:leading-tight text-left break-words">{link.description}</p>
+                                      <p className="text-[10px] text-white/80 mt-1 whitespace-pre-wrap leading-tight text-left break-words">{link.description}</p>
                                     )}
                                   </div>
-                                  <ExternalLink size={18} className="lg:w-3.5 lg:h-3.5 opacity-40 group-hover:opacity-100 transition-opacity relative z-10 shrink-0 ml-auto" />
+                                  <ExternalLink size={14} className="opacity-0 group-hover:opacity-100 transition-opacity relative z-10 shrink-0 ml-auto" />
                                 </div>
                               </motion.a>
                             );
