@@ -65,6 +65,22 @@ const profileSchema = new mongoose.Schema({
 const Profile = (mongoose.models.Profile || mongoose.model("Profile", profileSchema)) as any;
 
 // API Routes
+app.get("/api/cron/keep-alive", async (req, res) => {
+  try {
+    await connectToDatabase();
+    const state = mongoose.connection.readyState;
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+    res.json({
+      success: true,
+      timestamp: new Date().toISOString(),
+      databaseState: state === 1 ? "connected" : "disconnected"
+    });
+  } catch (err: any) {
+    console.error("Cron keep-alive failed:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get("/api/profiles/uid/:uid", async (req, res) => {
   try {
     await connectToDatabase();
