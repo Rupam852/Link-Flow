@@ -1353,7 +1353,7 @@ export default function App() {
       <div className="absolute bottom-[20%] right-[-10%] w-[45%] aspect-square rounded-full bg-purple-900/8 blur-[120px] pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293703_1px,transparent_1px),linear-gradient(to_bottom,#1f293703_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none opacity-40" />
 
-      <nav className="fixed top-0 left-0 right-0 h-20 bg-slate-950/60 border-b border-white/5 backdrop-blur-xl z-50 px-6 flex items-center justify-between shadow-lg">
+      <nav className="fixed top-0 left-0 right-0 h-16 bg-slate-950/60 border-b border-white/5 backdrop-blur-xl z-50 px-6 flex items-center justify-between shadow-lg">
         <div className="flex items-center gap-2.5 shrink-0">
           <img
             src="/favicon.png"
@@ -1473,7 +1473,7 @@ export default function App() {
         </div>
       </nav>
 
-      <main className="pt-24 pb-12 px-4 lg:px-8 max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-24">
+      <main className="pt-20 pb-12 px-4 lg:px-8 max-w-[1400px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 xl:gap-24">
         {/* Left Column: Editor */}
         <div className={`space-y-8 ${view === 'preview' ? 'hidden lg:block' : 'block'}`}>
           {!user ? (
@@ -2201,7 +2201,7 @@ export default function App() {
         </div>
 
         {/* Right Column: Live Preview */}
-        <div className={`lg:sticky lg:top-24 lg:self-start flex items-start justify-center pt-4 ${view === 'edit' ? 'hidden lg:flex' : 'flex w-full'}`}>
+        <div className={`lg:sticky lg:top-20 lg:self-start flex items-start justify-center pt-4 ${view === 'edit' ? 'hidden lg:flex' : 'flex w-full'}`}>
           {(() => {
             const previewProfile = debouncedProfile;
             return (
