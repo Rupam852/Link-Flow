@@ -1317,7 +1317,14 @@ export default function App() {
                 return <Icon key={idx} size={24} />;
               })}
             </div>
-            <p className="text-xs uppercase tracking-[0.2em] opacity-40 font-extrabold relative z-10">Powered by LinkFlow</p>
+            <a
+              href="https://link-flow-program.vercel.app/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs uppercase tracking-[0.2em] opacity-40 hover:opacity-80 transition-opacity font-extrabold relative z-10 hover:underline cursor-pointer inline-block"
+            >
+              Powered by LinkFlow
+            </a>
           </div>
         </div>
       </div>
@@ -2348,7 +2355,14 @@ export default function App() {
                         return <Icon key={idx} size={20} />;
                       })}
                     </div>
-                    <p className="text-[10px] mt-4 uppercase tracking-widest opacity-40">Powered by LinkFlow</p>
+                    <a
+                      href="https://link-flow-program.vercel.app/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[10px] mt-4 uppercase tracking-widest opacity-40 hover:opacity-80 transition-opacity cursor-pointer inline-block hover:underline"
+                    >
+                      Powered by LinkFlow
+                    </a>
                   </div>
                 </div>
               </div>

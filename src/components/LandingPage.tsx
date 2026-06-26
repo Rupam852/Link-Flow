@@ -477,9 +477,14 @@ export default function LandingPage({ onLogin, loginError, clearLoginError }: La
                 </div>
 
                 {/* Powered by */}
-                <div className="mt-8 pt-6 border-t border-white/10 opacity-30 text-[9px] uppercase tracking-widest font-extrabold">
+                <a
+                  href="https://link-flow-program.vercel.app/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-8 pt-6 border-t border-white/10 opacity-30 hover:opacity-75 transition-opacity text-[9px] uppercase tracking-widest font-extrabold cursor-pointer inline-block hover:underline"
+                >
                   Powered by LinkFlow
-                </div>
+                </a>
               </div>
             </motion.div>
           </div>
