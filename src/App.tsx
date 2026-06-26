@@ -311,6 +311,7 @@ export default function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginPending, setLoginPending] = useState(false);
   const [editorTab, setEditorTab] = useState<'links' | 'profile' | 'appearance' | 'analytics' | 'settings'>('links');
   const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
@@ -786,6 +787,8 @@ export default function App() {
   }, [user, profile.displayName]);
 
   const handleLogin = async () => {
+    if (loginPending) return;
+    setLoginPending(true);
     setLoginError(null);
     sessionStorage.setItem('auth_in_progress', 'true');
     try {
@@ -807,6 +810,17 @@ export default function App() {
     } catch (err: any) {
       console.warn('Popup login failed, attempting redirect login:', err);
       
+      const dontRedirectCodes = [
+        'auth/popup-closed-by-user',
+        'auth/cancelled-popup-request',
+        'auth/request-cancelled'
+      ];
+      if (dontRedirectCodes.includes(err?.code)) {
+        sessionStorage.removeItem('auth_in_progress');
+        setLoginPending(false);
+        return;
+      }
+      
       const isStorageUnsupported = err?.code === 'auth/web-storage-unsupported' || 
                                    err?.message?.includes('storage') || 
                                    err?.message?.includes('cookie');
@@ -814,12 +828,14 @@ export default function App() {
       if (isStorageUnsupported) {
         sessionStorage.removeItem('auth_in_progress');
         setLoginError("Sign-in blocked by adblocker or browser settings. Please disable adblocker/Brave Shields and try again.");
+        setLoginPending(false);
         return;
       }
       
       if (err?.code === 'auth/unauthorized-domain') {
         sessionStorage.removeItem('auth_in_progress');
         setLoginError("This domain is not authorized in the Firebase Console. Please add it to your Firebase Authorized Domains list.");
+        setLoginPending(false);
         return;
       }
 
@@ -838,6 +854,8 @@ export default function App() {
         }
         setLoginError(msg);
       }
+    } finally {
+      setLoginPending(false);
     }
   };
 
