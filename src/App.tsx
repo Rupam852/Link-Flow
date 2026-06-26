@@ -684,7 +684,7 @@ export default function App() {
         console.error("Firebase redirect login error:", err);
         let msg = "Google Sign-In failed.";
         if (err?.code === 'auth/web-storage-unsupported' || err?.message?.includes('storage') || err?.message?.includes('cookie')) {
-          msg = "Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.";
+          msg = "Sign-in blocked by adblocker or browser settings. Please disable adblocker/Brave Shields and try again.";
         } else if (err?.code === 'auth/unauthorized-domain') {
           msg = "This domain is not authorized in the Firebase Console. Please add it to your Firebase Authorized Domains list.";
         } else if (err?.message) {
@@ -720,7 +720,7 @@ export default function App() {
         setIsFetching(false);
         if (sessionStorage.getItem('auth_in_progress') === 'true') {
           sessionStorage.removeItem('auth_in_progress');
-          setLoginError("Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.");
+          setLoginError("Sign-in blocked by adblocker or browser settings. Please disable adblocker/Brave Shields and try again.");
         }
       }
     });
@@ -811,7 +811,7 @@ export default function App() {
       
       if (isStorageUnsupported) {
         sessionStorage.removeItem('auth_in_progress');
-        setLoginError("Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.");
+        setLoginError("Sign-in blocked by adblocker or browser settings. Please disable adblocker/Brave Shields and try again.");
         return;
       }
       
@@ -828,7 +828,7 @@ export default function App() {
         sessionStorage.removeItem('auth_in_progress');
         let msg = "Google Sign-In failed.";
         if (redirErr?.code === 'auth/web-storage-unsupported' || redirErr?.message?.includes('storage') || redirErr?.message?.includes('cookie')) {
-          msg = "Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.";
+          msg = "Sign-in blocked by adblocker or browser settings. Please disable adblocker/Brave Shields and try again.";
         } else if (redirErr?.code === 'auth/unauthorized-domain') {
           msg = "This domain is not authorized in the Firebase Console. Please add it to your Firebase Authorized Domains list.";
         } else if (redirErr?.message) {
