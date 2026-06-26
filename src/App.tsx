@@ -311,6 +311,8 @@ export default function App() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [loginError, setLoginError] = useState<string | null>(null);
+  const [editorTab, setEditorTab] = useState<'links' | 'profile' | 'appearance' | 'analytics' | 'settings'>('links');
+  const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -1500,602 +1502,699 @@ export default function App() {
                 </div>
               )}
 
-              <div className={`space-y-8 transition-all duration-300 ${isFetching ? 'opacity-20 pointer-events-none scale-[0.98] blur-[2px]' : 'opacity-100'}`}>
-                <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                      <Palette size={20} />
-                    </div>
-                    <h2 className="text-lg font-extrabold text-white tracking-tight">Templates</h2>
-                  </div>
-
-                  <div className="space-y-6">
-
-                    {/* Preset Templates */}
-                    <div>
-                      <div className="flex items-center justify-between mb-4">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Top Templates</label>
-                        <button
-                          onClick={() => setShowTemplateModal(true)}
-                          className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
-                        >
-                          More Templates <Sparkles size={12} />
-                        </button>
-                      </div>
-                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        {TEMPLATES.slice(0, 3).map((tpl) => (
-                          <button
-                            key={tpl.name}
-                            onClick={() => setProfile({ ...profile, theme: tpl.theme })}
-                            className="group relative flex flex-col items-center gap-2 p-2 rounded-xl border border-white/5 bg-slate-950/40 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all"
-                          >
-                            <div
-                              className="w-full aspect-video rounded-lg shadow-sm flex flex-col gap-1 p-1.5"
-                              style={{ backgroundColor: tpl.theme.backgroundColor }}
-                            >
-                              <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
-                              <div className="w-2/3 h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{tpl.name}</span>
-                            {JSON.stringify(profile.theme) === JSON.stringify(tpl.theme) && (
-                              <div className="absolute top-1.5 right-1.5 w-4.5 h-4.5 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-md">
-                                <Check size={10} />
-                              </div>
-                            )}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </section>
-
-                <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                      <User size={20} />
-                    </div>
-                    <h2 className="text-lg font-extrabold text-white tracking-tight">Profile Info</h2>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
-                      <div className="relative group shrink-0">
-                        <input
-                          type="file"
-                          id="avatar-upload"
-                          className="hidden"
-                          accept="image/*"
-                          onChange={handleImageUpload}
-                        />
-                        <label
-                          htmlFor="avatar-upload"
-                          className={`block cursor-pointer relative ${isImageUploading ? 'pointer-events-none opacity-70' : ''}`}
-                        >
-                          <img
-                            src={profile.avatarUrl}
-                            alt="Avatar"
-                            className="w-20 h-20 rounded-2xl object-cover border-2 border-white/10 hover:border-indigo-500/40 transition-all shadow-md"
-                            referrerPolicy="no-referrer"
-                          />
-                          <div className={`absolute inset-0 rounded-2xl flex items-center justify-center transition-all ${isImageUploading ? 'opacity-100 bg-black/40' : 'opacity-0 bg-black/40 hover:opacity-100'}`}>
-                            {isImageUploading ? (
-                              <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                            ) : (
-                              <span className="text-[10px] text-white font-bold uppercase tracking-wider">Upload</span>
-                            )}
-                          </div>
-                        </label>
-                      </div>
-                      <div className="flex-1 space-y-4 w-full">
-                        <div>
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Display Name</label>
-                          <input
-                            type="text"
-                            value={profile.displayName}
-                            onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-                            className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-700 font-medium"
-                            placeholder="Your Name"
-                          />
-                        </div>
-                        <div>
-                          <p className="text-xs text-slate-400 font-semibold tracking-wide">
-                            Your Public Link: <span className="font-bold text-indigo-400">link-flow-program.vercel.app/{profile.username}</span>
-                          </p>
-                        </div>
-
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Bio</label>
-                      </div>
-                      <textarea
-                        value={profile.bio}
-                        onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                        className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all h-28 resize-none placeholder:text-slate-700 text-sm leading-relaxed"
-                        placeholder="Tell the world about yourself..."
-                      />
-                    </div>
-                  </div>
-                </section>
-
-                <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                        <Layout size={20} />
-                      </div>
-                      <h2 className="text-lg font-extrabold text-white tracking-tight">Links</h2>
-                    </div>
-                    <button
-                      onClick={() => setProfile({ ...profile, links: [...profile.links, { id: `link-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`, title: 'New Link', url: '', icon: 'globe', isActive: true, display: 'card' }] })}
-                      className="text-indigo-400 hover:bg-indigo-500/10 p-2.5 rounded-xl border border-white/5 transition-all"
-                      title="Add New Link"
-                    >
-                      <Plus size={20} />
-                    </button>
-                  </div>
-                  <div className="space-y-4">
-                    {/* Real-time Link Preview (Icon-only) */}
-                    {profile.links.length > 0 && (
-                      <div className="flex flex-wrap gap-2 p-3 bg-slate-950/40 rounded-2xl border border-dashed border-white/10 mb-2">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest w-full mb-1">Quick Preview</span>
-                        {profile.links.map((link, idx) => {
-                          const Icon = ICON_MAP[link.icon] || Globe;
-                          return (
-                            <div
-                              key={idx}
-                              className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
-                              style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
-                              title={link.title}
-                            >
-                              <Icon size={16} />
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    <AnimatePresence initial={false}>
-                      {profile.links.map((link, idx) => (
-                        <motion.div
-                          layout
-                          key={link.id || `link-${idx}`}
-                          initial={{ opacity: 0, y: 20 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -20 }}
-                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                          className="p-4 sm:p-5 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative select-none"
-                        >
-                          <div className="flex items-start gap-2.5 sm:gap-4">
-                            {/* Up & Down Reorder Buttons */}
-                            <div className="flex flex-col items-center gap-1 shrink-0 self-center">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  if (idx > 0) {
-                                    const newLinks = [...profile.links];
-                                    const temp = newLinks[idx];
-                                    newLinks[idx] = newLinks[idx - 1];
-                                    newLinks[idx - 1] = temp;
-                                    setProfile({ ...profile, links: newLinks });
-                                  }
-                                }}
-                                disabled={idx === 0}
-                                className={`p-1 rounded-md transition-colors ${idx === 0
-                                    ? 'text-slate-800 cursor-not-allowed opacity-20'
-                                    : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
-                                  }`}
-                                title="Move Up"
-                              >
-                                <ChevronUp size={16} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  if (idx < profile.links.length - 1) {
-                                    const newLinks = [...profile.links];
-                                    const temp = newLinks[idx];
-                                    newLinks[idx] = newLinks[idx + 1];
-                                    newLinks[idx + 1] = temp;
-                                    setProfile({ ...profile, links: newLinks });
-                                  }
-                                }}
-                                disabled={idx === profile.links.length - 1}
-                                className={`p-1 rounded-md transition-colors ${idx === profile.links.length - 1
-                                    ? 'text-slate-800 cursor-not-allowed opacity-20'
-                                    : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
-                                  }`}
-                                title="Move Down"
-                              >
-                                <ChevronDown size={16} />
-                              </button>
-                            </div>
-
-                            {/* Icon Selector Button & Dropdown Container */}
-                            <div className="relative shrink-0 mt-1">
-                              <button
-                                onClick={() => {
-                                  const currentOpen = activeIconPickerIdx === idx ? null : idx;
-                                  setActiveIconPickerIdx(currentOpen);
-                                }}
-                                className="w-12 h-12 rounded-xl bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md group/iconbtn active:scale-95"
-                                title="Choose Custom Icon"
-                              >
-                                {(() => {
-                                  const IconComp = ICON_MAP[link.icon] || Globe;
-                                  return <IconComp size={20} className="group-hover/iconbtn:scale-110 transition-transform" />;
-                                })()}
-                              </button>
-
-                              {/* Floating icon selector picker */}
-                              {activeIconPickerIdx === idx && (
-                                <>
-                                  <div
-                                    className="fixed inset-0 z-10"
-                                    onClick={() => setActiveIconPickerIdx(null)}
-                                  />
-                                  <div className="absolute left-0 mt-2 p-2 bg-slate-950 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl z-20 w-72 grid grid-cols-6 gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {Object.keys(ICON_MAP).map((iconName) => {
-                                      const PickerIcon = ICON_MAP[iconName];
-                                      return (
-                                        <button
-                                          key={iconName}
-                                          onClick={() => {
-                                            const newLinks = [...profile.links];
-                                            newLinks[idx].icon = iconName;
-                                            setProfile({ ...profile, links: newLinks });
-                                            setActiveIconPickerIdx(null);
-                                          }}
-                                          className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${link.icon === iconName
-                                              ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-md'
-                                              : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                            }`}
-                                          title={iconName}
-                                        >
-                                          <PickerIcon size={16} />
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                </>
-                              )}
-                            </div>
-
-                            <div className="flex-1 space-y-3 pr-8 sm:pr-0">
-                              <input
-                                type="text"
-                                value={link.title}
-                                placeholder="Link Title (e.g. My Website)"
-                                onChange={(e) => {
-                                  const newLinks = [...profile.links];
-                                  newLinks[idx].title = e.target.value;
-                                  setProfile({ ...profile, links: newLinks });
-                                }}
-                                className="w-full bg-transparent font-bold text-white focus:outline-none placeholder:text-slate-700 text-base"
-                              />
-                              <textarea
-                                value={link.description || ''}
-                                placeholder="Short description (optional)"
-                                onChange={(e) => {
-                                  const newLinks = [...profile.links];
-                                  newLinks[idx].description = e.target.value;
-                                  setProfile({ ...profile, links: newLinks });
-                                }}
-                                rows={2}
-                                className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all shadow-inner mt-1 block resize-none min-h-[3rem]"
-                              />
-                              <div className="relative">
-                                <input
-                                  type="text"
-                                  value={link.url}
-                                  placeholder="URL (https://...)"
-                                  onChange={(e) => {
-                                    const newUrl = e.target.value;
-                                    const newLinks = [...profile.links];
-                                    newLinks[idx].url = newUrl;
-                                    // Auto-detect icon
-                                    newLinks[idx].icon = detectIcon(newUrl);
-                                    setProfile({ ...profile, links: newLinks });
-                                  }}
-                                  onBlur={(e) => {
-                                    const val = e.target.value.trim();
-                                    if (val && !/^(https?:\/\/|mailto:|tel:)/.test(val) && !val.startsWith('/')) {
-                                      const formatted = `https://${val}`;
-                                      const newLinks = [...profile.links];
-                                      newLinks[idx].url = formatted;
-                                      newLinks[idx].icon = detectIcon(formatted);
-                                      setProfile({ ...profile, links: newLinks });
-                                    }
-                                  }}
-                                  className={`w-full bg-transparent text-sm focus:outline-none transition-colors placeholder:text-slate-700 font-semibold ${link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url)
-                                    ? 'text-red-400 placeholder:text-red-300'
-                                    : 'text-indigo-400/90'
-                                    }`}
-                                />
-                                {link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) && (
-                                  <p className="text-[10px] text-red-400 mt-1 font-medium animate-pulse">
-                                    URL must start with http://, https://, or mailto:
-                                  </p>
-                                )}
-                              </div>
-                              {/* Secondary Features Control Row */}
-                              <div className="flex flex-wrap items-center gap-2.5 pt-2.5 border-t border-white/5 text-[10px]">
-                                {/* 1. Toggle Switch (Visibility) */}
-                                <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
-                                  <span className="font-bold text-slate-500 uppercase tracking-wider">Show Link</span>
-                                  <button
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      const newLinks = [...profile.links];
-                                      newLinks[idx] = { 
-                                        ...newLinks[idx], 
-                                        isActive: newLinks[idx].isActive !== false ? false : true 
-                                      };
-                                      setProfile({ ...profile, links: newLinks });
-                                    }}
-                                    className={`relative w-8 h-4 rounded-full transition-colors duration-150 focus:outline-none ${link.isActive !== false ? 'bg-green-500' : 'bg-slate-800'
-                                      }`}
-                                  >
-                                    <span
-                                      className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transition-transform duration-150 ${link.isActive !== false ? 'translate-x-4' : 'translate-x-0'
-                                        }`}
-                                    />
-                                  </button>
-                                </div>
-
-                                {/* 2. Display Mode Selector (Wide Card vs Top Icon) */}
-                                <div className="flex items-center gap-1.5 bg-slate-950/40 px-2 py-1 rounded-lg border border-white/5">
-                                  <span className="font-bold text-slate-500 uppercase tracking-wider">Display</span>
-                                  <div className="flex items-center bg-slate-900 rounded-md p-0.5 border border-white/5">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        const newLinks = [...profile.links];
-                                        newLinks[idx] = { ...newLinks[idx], display: 'card' };
-                                        setProfile({ ...profile, links: newLinks });
-                                      }}
-                                      className={`px-2 py-0.5 rounded-md font-bold transition-all ${
-                                        link.display !== 'icon'
-                                          ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
-                                          : 'text-slate-400 hover:text-white'
-                                      }`}
-                                    >
-                                      Card
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        const newLinks = [...profile.links];
-                                        newLinks[idx] = { ...newLinks[idx], display: 'icon' };
-                                        setProfile({ ...profile, links: newLinks });
-                                      }}
-                                      className={`px-2 py-0.5 rounded-md font-bold transition-all ${
-                                        link.display === 'icon'
-                                          ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
-                                          : 'text-slate-400 hover:text-white'
-                                      }`}
-                                    >
-                                      Icon
-                                    </button>
-                                  </div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Absolutely positioned Delete Button */}
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.preventDefault();
-                              const newLinks = profile.links.filter((_, i) => i !== idx);
-                              setProfile({ ...profile, links: newLinks });
-                            }}
-                            className="absolute top-4 right-4 text-slate-500 hover:text-red-400 hover:bg-red-500/10 p-2 rounded-xl border border-white/5 transition-all active:scale-90 z-20"
-                            title="Delete Link"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </motion.div>
-                      ))}
-                    </AnimatePresence>
-                  </div>
-                </section>
-
-                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
-                  <div className="flex items-center gap-3 mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                      <Palette size={20} />
-                    </div>
-                    <h2 className="text-lg font-extrabold text-white tracking-tight">Appearance</h2>
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Background</label>
-                      <input
-                        type="color"
-                        value={profile.theme.backgroundColor}
-                        onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, backgroundColor: e.target.value } })}
-                        className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Text Color</label>
-                      <input
-                        type="color"
-                        value={profile.theme.textColor}
-                        onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, textColor: e.target.value } })}
-                        className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Button Color</label>
-                      <input
-                        type="color"
-                        value={profile.theme.buttonColor}
-                        onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonColor: e.target.value } })}
-                        className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Button Text</label>
-                      <input
-                        type="color"
-                        value={profile.theme.buttonTextColor}
-                        onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonTextColor: e.target.value } })}
-                        className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
-                      />
-                    </div>
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        handleGenerateAITheme();
-                      }}
-                      className="col-span-2 mt-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 border border-white/10 group"
-                    >
-                      <Sparkles size={14} className="group-hover:animate-spin-slow" />
-                      <span>Inspire Me (AI Theme)</span>
-                    </button>
-                  </div>
-                </section>
-
-                {/* Dedicated Real-time Analytics Section */}
-                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
-                  {/* Neon Glow Effects */}
-                  <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-indigo-500/10 blur-[80px] group-hover:bg-indigo-500/15 transition-all duration-300 pointer-events-none" />
-
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                        <TrendingUp size={20} />
-                      </div>
-                      <div>
-                        <h2 className="text-lg font-extrabold text-white tracking-tight">Real-time Analytics</h2>
-                        <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-0.5 animate-pulse">● Live Tracking Active</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={handleRefreshAnalytics}
-                      disabled={isRefreshingAnalytics}
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 active:scale-95 transition-all disabled:opacity-50"
-                      title="Refresh Analytics"
-                    >
-                      <RotateCw size={12} className={isRefreshingAnalytics ? 'animate-spin' : ''} />
-                      <span>{isRefreshingAnalytics ? 'Syncing...' : 'Refresh'}</span>
-                    </button>
-                  </div>
-
-                  {(() => {
-                    const totalClicks = profile.links.reduce((sum, l) => sum + (l.clicks || 0), 0);
-                    const topLink = [...profile.links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0))[0];
-
+              <div className={`space-y-6 transition-all duration-300 ${isFetching ? 'opacity-20 pointer-events-none scale-[0.98] blur-[2px]' : 'opacity-100'}`}>
+                {/* Editor Tab Navigation */}
+                <div className="flex items-center justify-between overflow-x-auto scrollbar-hide bg-slate-950/40 border border-white/5 p-1.5 rounded-2xl gap-1 mb-6">
+                  {[
+                    { id: 'links', label: 'Links', icon: Link },
+                    { id: 'profile', label: 'Profile', icon: User },
+                    { id: 'appearance', label: 'Appearance', icon: Palette },
+                    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+                    { id: 'settings', label: 'Settings', icon: Settings },
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const isActive = editorTab === tab.id;
                     return (
-                      <div className="space-y-6">
-                        {/* Summary Grid */}
-                        <div className="grid grid-cols-2 gap-4">
-                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
-                            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Clicks</span>
-                            <span className="text-3xl font-black text-white tracking-tight">
-                              {totalClicks}
-                            </span>
+                      <button
+                        key={tab.id}
+                        onClick={() => setEditorTab(tab.id as any)}
+                        className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-xs font-bold transition-all duration-200 min-w-[90px] sm:min-w-0 ${
+                          isActive
+                            ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md text-white scale-100 border border-indigo-500/25'
+                            : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+                        }`}
+                      >
+                        <Icon size={14} className="shrink-0" />
+                        <span>{tab.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={editorTab}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-6"
+                  >
+                    {editorTab === 'links' && (
+                      <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                              <Link size={20} />
+                            </div>
+                            <h2 className="text-lg font-extrabold text-white tracking-tight font-sans">Manage Links</h2>
                           </div>
-                          <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
-                            <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Top Performing Link</span>
-                            <span className="text-xs font-bold text-indigo-400 truncate block mt-2">
-                              {topLink && topLink.clicks ? `${topLink.title} (${topLink.clicks} clicks)` : 'No clicks yet'}
-                            </span>
-                          </div>
+                          <button
+                            onClick={() => {
+                              const newId = `link-${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 5)}`;
+                              setProfile({
+                                ...profile,
+                                links: [
+                                  ...profile.links,
+                                  { id: newId, title: 'New Link', url: '', icon: 'globe', isActive: true, display: 'card' }
+                                ]
+                              });
+                              setExpandedLinkId(newId);
+                            }}
+                            className="text-indigo-400 hover:bg-indigo-500/10 p-2.5 rounded-xl border border-white/5 transition-all"
+                            title="Add New Link"
+                          >
+                            <Plus size={20} />
+                          </button>
                         </div>
-
-                        {/* Detailed Link Clicks Breakdown List */}
-                        <div className="space-y-3.5">
-                          <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Clicks Breakdown</label>
-                          {profile.links.length === 0 ? (
-                            <p className="text-xs text-slate-400 italic">No links added to your profile yet.</p>
-                          ) : (
-                            <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-                              {profile.links.map((link, i) => {
-                                const clicks = link.clicks || 0;
-                                const LinkIcon = ICON_MAP[link.icon] || Globe;
-
+                        <div className="space-y-4">
+                          {/* Real-time Link Preview (Icon-only) */}
+                          {profile.links.length > 0 && (
+                            <div className="flex flex-wrap gap-2 p-3 bg-slate-950/40 rounded-2xl border border-dashed border-white/10 mb-2">
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest w-full mb-1">Quick Preview</span>
+                              {profile.links.map((link, idx) => {
+                                const Icon = ICON_MAP[link.icon] || Globe;
                                 return (
-                                  <div key={link.id || i} className="flex items-center justify-between bg-slate-950/20 px-3.5 py-3 rounded-xl border border-white/5 hover:bg-slate-950/40 transition-colors">
-                                    <div className="flex items-center gap-2 text-slate-300">
-                                      <LinkIcon size={14} className="text-indigo-400 shrink-0" />
-                                      <span className="truncate max-w-[150px] sm:max-w-[200px] font-bold text-slate-200">{link.title || 'Untitled Link'}</span>
-                                    </div>
-                                    <div className="flex items-center gap-1.5 shrink-0">
-                                      <span className="text-white font-extrabold bg-indigo-500/10 px-2.5 py-0.5 rounded-md border border-indigo-500/25 text-[11px] min-w-[20px] text-center">{clicks} clicks</span>
-                                    </div>
+                                  <div
+                                    key={idx}
+                                    className="w-8 h-8 rounded-lg flex items-center justify-center shadow-sm"
+                                    style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
+                                    title={link.title}
+                                  >
+                                    <Icon size={16} />
                                   </div>
                                 );
                               })}
                             </div>
                           )}
+
+                          <AnimatePresence initial={false}>
+                            {profile.links.map((link, idx) => {
+                              const isExpanded = expandedLinkId === (link.id || String(idx));
+                              return (
+                                <motion.div
+                                  layout
+                                  key={link.id || `link-${idx}`}
+                                  initial={{ opacity: 0, y: 20 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: -20 }}
+                                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                  className="p-4 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative"
+                                >
+                                  <div 
+                                    className="flex items-center justify-between gap-4 cursor-pointer select-none"
+                                    onClick={() => setExpandedLinkId(isExpanded ? null : (link.id || String(idx)))}
+                                  >
+                                    <div className="flex items-center gap-3 min-w-0">
+                                      {/* Up & Down Reorder Buttons */}
+                                      <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            if (idx > 0) {
+                                              const newLinks = [...profile.links];
+                                              const temp = newLinks[idx];
+                                              newLinks[idx] = newLinks[idx - 1];
+                                              newLinks[idx - 1] = temp;
+                                              setProfile({ ...profile, links: newLinks });
+                                            }
+                                          }}
+                                          disabled={idx === 0}
+                                          className={`p-1.5 rounded-lg transition-colors ${idx === 0
+                                              ? 'text-slate-800 cursor-not-allowed opacity-20'
+                                              : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
+                                            }`}
+                                          title="Move Up"
+                                        >
+                                          <ChevronUp size={15} />
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.preventDefault();
+                                            if (idx < profile.links.length - 1) {
+                                              const newLinks = [...profile.links];
+                                              const temp = newLinks[idx];
+                                              newLinks[idx] = newLinks[idx + 1];
+                                              newLinks[idx + 1] = temp;
+                                              setProfile({ ...profile, links: newLinks });
+                                            }
+                                          }}
+                                          disabled={idx === profile.links.length - 1}
+                                          className={`p-1.5 rounded-lg transition-colors ${idx === profile.links.length - 1
+                                              ? 'text-slate-800 cursor-not-allowed opacity-20'
+                                              : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
+                                            }`}
+                                          title="Move Down"
+                                        >
+                                          <ChevronDown size={15} />
+                                        </button>
+                                      </div>
+
+                                      {/* Icon Selector Button */}
+                                      <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
+                                        <button
+                                          onClick={() => {
+                                            const currentOpen = activeIconPickerIdx === idx ? null : idx;
+                                            setActiveIconPickerIdx(currentOpen);
+                                          }}
+                                          className="w-9 h-9 rounded-lg bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md active:scale-95"
+                                          title="Choose Icon"
+                                        >
+                                          {(() => {
+                                            const IconComp = ICON_MAP[link.icon] || Globe;
+                                            return <IconComp size={16} />;
+                                          })()}
+                                        </button>
+
+                                        {/* Floating icon selector picker */}
+                                        {activeIconPickerIdx === idx && (
+                                          <>
+                                            <div
+                                              className="fixed inset-0 z-10"
+                                              onClick={() => setActiveIconPickerIdx(null)}
+                                            />
+                                            <div className="absolute left-0 mt-2 p-2 bg-slate-950 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl z-20 w-72 grid grid-cols-6 gap-1.5">
+                                              {Object.keys(ICON_MAP).map((iconName) => {
+                                                const PickerIcon = ICON_MAP[iconName];
+                                                return (
+                                                  <button
+                                                    key={iconName}
+                                                    onClick={() => {
+                                                      const newLinks = [...profile.links];
+                                                      newLinks[idx].icon = iconName;
+                                                      setProfile({ ...profile, links: newLinks });
+                                                      setActiveIconPickerIdx(null);
+                                                    }}
+                                                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${link.icon === iconName
+                                                        ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-md'
+                                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
+                                                      }`}
+                                                    title={iconName}
+                                                  >
+                                                    <PickerIcon size={16} />
+                                                  </button>
+                                                );
+                                              })}
+                                            </div>
+                                          </>
+                                        )}
+                                      </div>
+
+                                      {/* Title */}
+                                      <span className="font-extrabold text-sm text-slate-200 truncate">
+                                        {link.title || 'Untitled Link'}
+                                      </span>
+                                    </div>
+
+                                    {/* Action items on header */}
+                                    <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+                                      {/* Show/Hide Switch */}
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.preventDefault();
+                                          const newLinks = [...profile.links];
+                                          newLinks[idx] = { 
+                                            ...newLinks[idx], 
+                                            isActive: newLinks[idx].isActive !== false ? false : true 
+                                          };
+                                          setProfile({ ...profile, links: newLinks });
+                                        }}
+                                        className={`relative w-8 h-4 rounded-full transition-colors duration-150 focus:outline-none ${link.isActive !== false ? 'bg-green-500' : 'bg-slate-800'
+                                          }`}
+                                      >
+                                        <span
+                                          className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transition-transform duration-150 ${link.isActive !== false ? 'translate-x-4' : 'translate-x-0'
+                                            }`}
+                                        />
+                                      </button>
+
+                                      {/* Expand indicator */}
+                                      <div
+                                        onClick={() => setExpandedLinkId(isExpanded ? null : (link.id || String(idx)))}
+                                        className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
+                                      >
+                                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  {/* Expanded Content Details */}
+                                  <AnimatePresence initial={false}>
+                                    {isExpanded && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: 'auto', opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2 }}
+                                        className="overflow-hidden mt-4 pt-4 border-t border-white/5 space-y-4"
+                                      >
+                                        <div>
+                                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Link Title</label>
+                                          <input
+                                            type="text"
+                                            value={link.title}
+                                            placeholder="e.g. My Website"
+                                            onChange={(e) => {
+                                              const newLinks = [...profile.links];
+                                              newLinks[idx].title = e.target.value;
+                                              setProfile({ ...profile, links: newLinks });
+                                            }}
+                                            className="w-full px-4 py-2.5 bg-slate-950/60 border border-white/10 text-white rounded-xl focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none text-sm font-semibold"
+                                          />
+                                        </div>
+
+                                        <div>
+                                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Link URL</label>
+                                          <div className="relative">
+                                            <input
+                                              type="text"
+                                              value={link.url}
+                                              placeholder="https://..."
+                                              onChange={(e) => {
+                                                const newUrl = e.target.value;
+                                                const newLinks = [...profile.links];
+                                                newLinks[idx].url = newUrl;
+                                                newLinks[idx].icon = detectIcon(newUrl);
+                                                setProfile({ ...profile, links: newLinks });
+                                              }}
+                                              onBlur={(e) => {
+                                                const val = e.target.value.trim();
+                                                if (val && !/^(https?:\/\/|mailto:|tel:)/.test(val) && !val.startsWith('/')) {
+                                                  const formatted = `https://${val}`;
+                                                  const newLinks = [...profile.links];
+                                                  newLinks[idx].url = formatted;
+                                                  newLinks[idx].icon = detectIcon(formatted);
+                                                  setProfile({ ...profile, links: newLinks });
+                                                }
+                                              }}
+                                              className={`w-full px-4 py-2.5 bg-slate-950/60 border border-white/10 text-white rounded-xl focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none text-sm font-semibold ${link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url)
+                                                ? 'text-red-400 border-red-500/30'
+                                                : 'text-indigo-400'
+                                                }`}
+                                            />
+                                            {link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) && (
+                                              <p className="text-[10px] text-red-400 mt-1.5 font-medium animate-pulse">
+                                                URL must start with http://, https://, or mailto:
+                                              </p>
+                                            )}
+                                          </div>
+                                        </div>
+
+                                        <div>
+                                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Description (Optional)</label>
+                                          <textarea
+                                            value={link.description || ''}
+                                            placeholder="Short description..."
+                                            onChange={(e) => {
+                                              const newLinks = [...profile.links];
+                                              newLinks[idx].description = e.target.value;
+                                              setProfile({ ...profile, links: newLinks });
+                                            }}
+                                            rows={2}
+                                            className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all resize-none min-h-[3rem]"
+                                          />
+                                        </div>
+
+                                        <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                          <div className="flex items-center gap-2">
+                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Display Mode:</span>
+                                            <div className="flex bg-slate-900 rounded-lg p-0.5 border border-white/5 text-[10px]">
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  const newLinks = [...profile.links];
+                                                  newLinks[idx] = { ...newLinks[idx], display: 'card' };
+                                                  setProfile({ ...profile, links: newLinks });
+                                                }}
+                                                className={`px-2 py-0.5 rounded-md font-bold transition-all ${
+                                                  link.display !== 'icon'
+                                                    ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
+                                                    : 'text-slate-400 hover:text-white'
+                                                }`}
+                                              >
+                                                Card
+                                              </button>
+                                              <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  const newLinks = [...profile.links];
+                                                  newLinks[idx] = { ...newLinks[idx], display: 'icon' };
+                                                  setProfile({ ...profile, links: newLinks });
+                                                }}
+                                                className={`px-2 py-0.5 rounded-md font-bold transition-all ${
+                                                  link.display === 'icon'
+                                                    ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
+                                                    : 'text-slate-400 hover:text-white'
+                                                }`}
+                                              >
+                                                Icon
+                                              </button>
+                                            </div>
+                                          </div>
+
+                                          <button
+                                            type="button"
+                                            onClick={(e) => {
+                                              e.preventDefault();
+                                              const newLinks = profile.links.filter((_, i) => i !== idx);
+                                              setProfile({ ...profile, links: newLinks });
+                                            }}
+                                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/10 transition-all text-[11px] font-bold flex items-center gap-1.5"
+                                          >
+                                            <Trash2 size={13} />
+                                            Delete Link
+                                          </button>
+                                        </div>
+                                      </motion.div>
+                                    )}
+                                  </AnimatePresence>
+                                </motion.div>
+                              );
+                            })}
+                          </AnimatePresence>
                         </div>
+                      </section>
+                    )}
+
+                    {editorTab === 'profile' && (
+                      <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                            <User size={20} />
+                          </div>
+                          <h2 className="text-lg font-extrabold text-white tracking-tight font-sans">Profile Info</h2>
+                        </div>
+
+                        <div className="space-y-6">
+                          <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+                            <div className="relative group shrink-0">
+                              <input
+                                type="file"
+                                id="avatar-upload"
+                                className="hidden"
+                                accept="image/*"
+                                onChange={handleImageUpload}
+                              />
+                              <label
+                                htmlFor="avatar-upload"
+                                className={`block cursor-pointer relative ${isImageUploading ? 'pointer-events-none opacity-70' : ''}`}
+                              >
+                                <img
+                                  src={profile.avatarUrl}
+                                  alt="Avatar"
+                                  className="w-20 h-20 rounded-2xl object-cover border-2 border-white/10 hover:border-indigo-500/40 transition-all shadow-md"
+                                  referrerPolicy="no-referrer"
+                                />
+                                <div className={`absolute inset-0 rounded-2xl flex items-center justify-center transition-all ${isImageUploading ? 'opacity-100 bg-black/40' : 'opacity-0 bg-black/40 hover:opacity-100'}`}>
+                                  {isImageUploading ? (
+                                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                                  ) : (
+                                    <span className="text-[10px] text-white font-bold uppercase tracking-wider">Upload</span>
+                                  )}
+                                </div>
+                              </label>
+                            </div>
+                            <div className="flex-1 space-y-4 w-full">
+                              <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Display Name</label>
+                                <input
+                                  type="text"
+                                  value={profile.displayName}
+                                  onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
+                                  className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-700 font-medium"
+                                  placeholder="Your Name"
+                                />
+                              </div>
+                              <div>
+                                <p className="text-xs text-slate-400 font-semibold tracking-wide">
+                                  Your Public Link: <span className="font-bold text-indigo-400">link-flow-program.vercel.app/{profile.username}</span>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div>
+                            <div className="flex items-center justify-between mb-1.5">
+                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Bio</label>
+                            </div>
+                            <textarea
+                              value={profile.bio}
+                              onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
+                              className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all h-28 resize-none placeholder:text-slate-700 text-sm leading-relaxed"
+                              placeholder="Tell the world about yourself..."
+                            />
+                          </div>
+                        </div>
+                      </section>
+                    )}
+
+                    {editorTab === 'appearance' && (
+                      <div className="space-y-6">
+                        {/* 1. Preset Templates */}
+                        <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                                <Palette size={20} />
+                              </div>
+                              <h2 className="text-lg font-extrabold text-white tracking-tight">Templates</h2>
+                            </div>
+                            <button
+                              onClick={() => setShowTemplateModal(true)}
+                              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                            >
+                              More Templates <Sparkles size={12} />
+                            </button>
+                          </div>
+                          
+                          <div>
+                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Top Templates</label>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                              {TEMPLATES.slice(0, 3).map((tpl) => (
+                                <button
+                                  key={tpl.name}
+                                  onClick={() => setProfile({ ...profile, theme: tpl.theme })}
+                                  className="group relative flex flex-col items-center gap-2 p-2 rounded-xl border border-white/5 bg-slate-950/40 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all"
+                                >
+                                  <div
+                                    className="w-full aspect-video rounded-lg shadow-sm flex flex-col gap-1 p-1.5"
+                                    style={{ backgroundColor: tpl.theme.backgroundColor }}
+                                  >
+                                    <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
+                                    <div className="w-2/3 h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
+                                  </div>
+                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{tpl.name}</span>
+                                  {JSON.stringify(profile.theme) === JSON.stringify(tpl.theme) && (
+                                    <div className="absolute top-1.5 right-1.5 w-4.5 h-4.5 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-md">
+                                      <Check size={10} />
+                                    </div>
+                                  )}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </section>
+
+                        {/* 2. Custom Colors */}
+                        <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                          <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                              <Palette size={20} />
+                            </div>
+                            <h2 className="text-lg font-extrabold text-white tracking-tight">Custom Colors</h2>
+                          </div>
+                          
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Background</label>
+                              <input
+                                type="color"
+                                value={profile.theme.backgroundColor}
+                                onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, backgroundColor: e.target.value } })}
+                                className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Text Color</label>
+                              <input
+                                type="color"
+                                value={profile.theme.textColor}
+                                onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, textColor: e.target.value } })}
+                                className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Button Color</label>
+                              <input
+                                type="color"
+                                value={profile.theme.buttonColor}
+                                onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonColor: e.target.value } })}
+                                className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Button Text</label>
+                              <input
+                                type="color"
+                                value={profile.theme.buttonTextColor}
+                                onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonTextColor: e.target.value } })}
+                                className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
+                              />
+                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.preventDefault();
+                                handleGenerateAITheme();
+                              }}
+                              className="col-span-2 mt-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 border border-white/10 group"
+                            >
+                              <Sparkles size={14} className="group-hover:animate-spin-slow" />
+                              <span>Inspire Me (AI Theme)</span>
+                            </button>
+                          </div>
+                        </section>
                       </div>
-                    );
-                  })()}
-                </section>
+                    )}
 
-                {/* Account Settings Card: Public Link Toggle & Danger Zone */}
-                <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300 space-y-6">
-                  <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
-                      <Settings size={20} />
-                    </div>
-                    <h2 className="text-lg font-extrabold text-white tracking-tight">Account Settings</h2>
-                  </div>
+                    {editorTab === 'analytics' && (
+                      <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                        {/* Neon Glow Effects */}
+                        <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-indigo-500/10 blur-[80px] group-hover:bg-indigo-500/15 transition-all duration-300 pointer-events-none" />
 
-                  <div className="divide-y divide-white/5">
-                    {/* Public Status Toggle */}
-                    <div className="py-4 flex items-center justify-between">
-                      <div>
-                        <h3 className="text-sm font-bold text-slate-200">Public Link Status</h3>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {profile.isActive !== false
-                            ? 'Your profile is online and searchable.'
-                            : 'Your profile is offline and hidden.'}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          const updated = { ...profile, isActive: profile.isActive === false ? true : false };
-                          setProfile(updated);
-                        }}
-                        className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
-                          }`}
-                      >
-                        <span
-                          className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full shadow-sm transition-transform duration-200 ${profile.isActive !== false ? 'translate-x-6' : 'translate-x-0'
-                            }`}
-                        />
-                      </button>
-                    </div>
+                        <div className="flex items-center justify-between mb-6">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                              <TrendingUp size={20} />
+                            </div>
+                            <div>
+                              <h2 className="text-lg font-extrabold text-white tracking-tight">Real-time Analytics</h2>
+                              <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-0.5 animate-pulse">● Live Tracking Active</p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={handleRefreshAnalytics}
+                            disabled={isRefreshingAnalytics}
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 active:scale-95 transition-all disabled:opacity-50"
+                            title="Refresh Analytics"
+                          >
+                            <RotateCw size={12} className={isRefreshingAnalytics ? 'animate-spin' : ''} />
+                            <span>{isRefreshingAnalytics ? 'Syncing...' : 'Refresh'}</span>
+                          </button>
+                        </div>
 
-                    {/* Danger Zone: Delete Account */}
-                    <div className="py-4">
-                      <h3 className="text-sm font-bold text-red-400 mb-1">Danger Zone</h3>
-                      <p className="text-xs text-slate-400 mb-3">
-                        Permanently delete your profile and all associated links. This action is irreversible.
-                      </p>
-                      <button
-                        onClick={handleDeleteAccount}
-                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 animate-pulse hover:animate-none"
-                      >
-                        <Trash2 size={14} />
-                        Delete My Account
-                      </button>
-                    </div>
-                  </div>
-                </section>
+                        {(() => {
+                          const totalClicks = profile.links.reduce((sum, l) => sum + (l.clicks || 0), 0);
+                          const topLink = [...profile.links].sort((a, b) => (b.clicks || 0) - (a.clicks || 0))[0];
+
+                          return (
+                            <div className="space-y-6">
+                              {/* Summary Grid */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
+                                  <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Clicks</span>
+                                  <span className="text-3xl font-black text-white tracking-tight">
+                                    {totalClicks}
+                                  </span>
+                                </div>
+                                <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
+                                  <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Top Performing Link</span>
+                                  <span className="text-xs font-bold text-indigo-400 truncate block mt-2">
+                                    {topLink && topLink.clicks ? `${topLink.title} (${topLink.clicks} clicks)` : 'No clicks yet'}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Detailed Link Clicks Breakdown List */}
+                              <div className="space-y-3.5">
+                                <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Clicks Breakdown</label>
+                                {profile.links.length === 0 ? (
+                                  <p className="text-xs text-slate-400 italic">No links added to your profile yet.</p>
+                                ) : (
+                                  <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                                    {profile.links.map((link, i) => {
+                                      const clicks = link.clicks || 0;
+                                      const LinkIcon = ICON_MAP[link.icon] || Globe;
+
+                                      return (
+                                        <div key={link.id || i} className="flex items-center justify-between bg-slate-950/20 px-3.5 py-3 rounded-xl border border-white/5 hover:bg-slate-950/40 transition-colors">
+                                          <div className="flex items-center gap-2 text-slate-300">
+                                            <LinkIcon size={14} className="text-indigo-400 shrink-0" />
+                                            <span className="truncate max-w-[150px] sm:max-w-[200px] font-bold text-slate-200">{link.title || 'Untitled Link'}</span>
+                                          </div>
+                                          <div className="flex items-center gap-1.5 shrink-0">
+                                            <span className="text-white font-extrabold bg-indigo-500/10 px-2.5 py-0.5 rounded-md border border-indigo-500/25 text-[11px] min-w-[20px] text-center">{clicks} clicks</span>
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })()}
+                      </section>
+                    )}
+
+                    {editorTab === 'settings' && (
+                      <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300 space-y-6">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                            <Settings size={20} />
+                          </div>
+                          <h2 className="text-lg font-extrabold text-white tracking-tight">Account Settings</h2>
+                        </div>
+
+                        <div className="divide-y divide-white/5">
+                          {/* Public Status Toggle */}
+                          <div className="py-4 flex items-center justify-between">
+                            <div>
+                              <h3 className="text-sm font-bold text-slate-200">Public Link Status</h3>
+                              <p className="text-xs text-slate-400 mt-0.5">
+                                {profile.isActive !== false
+                                  ? 'Your profile is online and searchable.'
+                                  : 'Your profile is offline and hidden.'}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                const updated = { ...profile, isActive: profile.isActive === false ? true : false };
+                                  setProfile(updated);
+                              }}
+                              className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
+                                }`}
+                            >
+                              <span
+                                className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full shadow-sm transition-transform duration-200 ${profile.isActive !== false ? 'translate-x-6' : 'translate-x-0'
+                                  }`}
+                              />
+                            </button>
+                          </div>
+
+                          {/* Danger Zone: Delete Account */}
+                          <div className="py-4">
+                            <h3 className="text-sm font-bold text-red-400 mb-1">Danger Zone</h3>
+                            <p className="text-xs text-slate-400 mb-3">
+                              Permanently delete your profile and all associated links. This action is irreversible.
+                            </p>
+                            <button
+                              onClick={handleDeleteAccount}
+                              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 animate-pulse hover:animate-none"
+                            >
+                              <Trash2 size={14} />
+                              Delete My Account
+                            </button>
+                          </div>
+                        </div>
+                      </section>
+                    )}
+                  </motion.div>
+                </AnimatePresence>
               </div>
             </div>
           )}
