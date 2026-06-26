@@ -43,7 +43,7 @@ import {
   Coffee,
   Music
 } from 'lucide-react';
-import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged } from './firebase';
+import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, getRedirectResult } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
 import LandingPage from './components/LandingPage';
 
@@ -310,6 +310,7 @@ export default function App() {
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [loginError, setLoginError] = useState<string | null>(null);
   const [isCopying, setIsCopying] = useState(false);
   const [user, setUser] = useState<FirebaseUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -672,6 +673,26 @@ export default function App() {
 
 
   useEffect(() => {
+    // Check for redirect sign-in results and capture errors
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          console.log("Successfully logged in via redirect:", result.user);
+        }
+      })
+      .catch((err: any) => {
+        console.error("Firebase redirect login error:", err);
+        let msg = "Google Sign-In failed.";
+        if (err?.code === 'auth/web-storage-unsupported' || err?.message?.includes('storage') || err?.message?.includes('cookie')) {
+          msg = "Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.";
+        } else if (err?.code === 'auth/unauthorized-domain') {
+          msg = "This domain is not authorized in the Firebase Console. Please add it to your Firebase Authorized Domains list.";
+        } else if (err?.message) {
+          msg = `Sign-in failed: ${err.message}`;
+        }
+        setLoginError(msg);
+      });
+
     // Handle public profile routing
     const path = window.location.pathname;
     const parts = path.split('/').filter(Boolean);
@@ -758,6 +779,7 @@ export default function App() {
   }, [user, profile.displayName]);
 
   const handleLogin = async () => {
+    setLoginError(null);
     try {
       const result = await signInWithPopup(auth, googleProvider);
       if (result.user) {
@@ -773,12 +795,36 @@ export default function App() {
           };
         });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.warn('Popup login failed, attempting redirect login:', err);
+      
+      const isStorageUnsupported = err?.code === 'auth/web-storage-unsupported' || 
+                                   err?.message?.includes('storage') || 
+                                   err?.message?.includes('cookie');
+      
+      if (isStorageUnsupported) {
+        setLoginError("Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.");
+        return;
+      }
+      
+      if (err?.code === 'auth/unauthorized-domain') {
+        setLoginError("This domain is not authorized in the Firebase Console. Please add it to your Firebase Authorized Domains list.");
+        return;
+      }
+
       try {
         await signInWithRedirect(auth, googleProvider);
-      } catch (redirErr) {
+      } catch (redirErr: any) {
         console.error('Redirect login failed as well:', redirErr);
+        let msg = "Google Sign-In failed.";
+        if (redirErr?.code === 'auth/web-storage-unsupported' || redirErr?.message?.includes('storage') || redirErr?.message?.includes('cookie')) {
+          msg = "Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.";
+        } else if (redirErr?.code === 'auth/unauthorized-domain') {
+          msg = "This domain is not authorized in the Firebase Console. Please add it to your Firebase Authorized Domains list.";
+        } else if (redirErr?.message) {
+          msg = `Sign-in failed: ${redirErr.message}`;
+        }
+        setLoginError(msg);
       }
     }
   };
@@ -1279,7 +1325,13 @@ export default function App() {
   }
 
   if (!user) {
-    return <LandingPage onLogin={handleLogin} />;
+    return (
+      <LandingPage 
+        onLogin={handleLogin} 
+        loginError={loginError || undefined} 
+        clearLoginError={() => setLoginError(null)} 
+      />
+    );
   }
 
   return (

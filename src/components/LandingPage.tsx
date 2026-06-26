@@ -15,11 +15,15 @@ import {
   ExternalLink,
   Shield,
   ArrowRight,
-  MousePointerClick
+  MousePointerClick,
+  AlertCircle,
+  X
 } from 'lucide-react';
 
 interface LandingPageProps {
   onLogin: () => void;
+  loginError?: string;
+  clearLoginError?: () => void;
 }
 
 const PRESET_THEMES = [
@@ -128,7 +132,7 @@ const FAQS = [
   }
 ];
 
-export default function LandingPage({ onLogin }: LandingPageProps) {
+export default function LandingPage({ onLogin, loginError, clearLoginError }: LandingPageProps) {
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [isChecking, setIsChecking] = useState(false);
@@ -648,6 +652,35 @@ export default function LandingPage({ onLogin }: LandingPageProps) {
           </div>
         </div>
       </footer>
+
+      {/* Login Error Toast */}
+      <AnimatePresence>
+        {loginError && (
+          <motion.div
+            initial={{ opacity: 0, y: 50, x: '-50%' }}
+            animate={{ opacity: 1, y: 0, x: '-50%' }}
+            exit={{ opacity: 0, y: 50, x: '-50%' }}
+            className="fixed bottom-8 left-1/2 z-[100] bg-red-950/90 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-red-500/30 backdrop-blur-md max-w-md w-[calc(100%-2rem)] md:w-full mx-auto"
+          >
+            <div className="w-8 h-8 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center shrink-0">
+              <AlertCircle size={18} />
+            </div>
+            <div className="flex flex-col flex-1 text-left">
+              <span className="text-sm font-bold text-red-200 font-sans">Sign In Failed</span>
+              <span className="text-xs text-slate-300 mt-0.5 leading-normal font-sans">{loginError}</span>
+            </div>
+            {clearLoginError && (
+              <button 
+                onClick={clearLoginError}
+                className="text-slate-400 hover:text-white p-1 hover:bg-white/5 rounded-lg transition-colors shrink-0"
+                title="Dismiss"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
