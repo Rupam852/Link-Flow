@@ -708,6 +708,7 @@ export default function App() {
       setUser(currentUser);
       setLoading(false);
       if (currentUser) {
+        sessionStorage.removeItem('auth_in_progress');
         if (!isPublicProfile) {
           fetchProfile(currentUser.uid, true, currentUser);
         } else {
@@ -717,6 +718,10 @@ export default function App() {
         setProfile(prev => ({ ...prev, uid: currentUser.uid }));
       } else {
         setIsFetching(false);
+        if (sessionStorage.getItem('auth_in_progress') === 'true') {
+          sessionStorage.removeItem('auth_in_progress');
+          setLoginError("Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.");
+        }
       }
     });
     return () => unsubscribe();
@@ -780,9 +785,11 @@ export default function App() {
 
   const handleLogin = async () => {
     setLoginError(null);
+    sessionStorage.setItem('auth_in_progress', 'true');
     try {
       const result = await signInWithPopup(auth, googleProvider);
       if (result.user) {
+        sessionStorage.removeItem('auth_in_progress');
         setProfile(prev => {
           return {
             ...prev,
@@ -803,11 +810,13 @@ export default function App() {
                                    err?.message?.includes('cookie');
       
       if (isStorageUnsupported) {
+        sessionStorage.removeItem('auth_in_progress');
         setLoginError("Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.");
         return;
       }
       
       if (err?.code === 'auth/unauthorized-domain') {
+        sessionStorage.removeItem('auth_in_progress');
         setLoginError("This domain is not authorized in the Firebase Console. Please add it to your Firebase Authorized Domains list.");
         return;
       }
@@ -816,6 +825,7 @@ export default function App() {
         await signInWithRedirect(auth, googleProvider);
       } catch (redirErr: any) {
         console.error('Redirect login failed as well:', redirErr);
+        sessionStorage.removeItem('auth_in_progress');
         let msg = "Google Sign-In failed.";
         if (redirErr?.code === 'auth/web-storage-unsupported' || redirErr?.message?.includes('storage') || redirErr?.message?.includes('cookie')) {
           msg = "Sign-in failed. Third-party cookies or web storage are blocked by your browser. Please enable third-party cookies / site data or disable Brave Shields / adblockers and try again.";
