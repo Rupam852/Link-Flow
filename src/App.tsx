@@ -1614,12 +1614,11 @@ export default function App() {
                               const isExpanded = expandedLinkId === (link.id || String(idx));
                               return (
                                 <motion.div
-                                  layout
                                   key={link.id || `link-${idx}`}
                                   initial={{ opacity: 0, y: 20 }}
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: -20 }}
-                                  transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                  transition={{ duration: 0.2 }}
                                   className="p-4 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative"
                                 >
                                   <div 
