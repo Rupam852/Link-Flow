@@ -227,7 +227,15 @@ async function verifyFirebaseToken(req: any, expectedUid: string): Promise<{ isV
       return { isValid: false, reason: "Failed to parse JWT Payload" };
     }
     
-    // 4. Verify expiration
+    // 4. Verify audience and issuer to ensure the token belongs to our project
+    if (payload.aud !== "fiem-484607") {
+      return { isValid: false, reason: `Audience mismatch: expected 'fiem-484607' but got '${payload.aud}'` };
+    }
+    if (payload.iss !== "https://securetoken.google.com/fiem-484607") {
+      return { isValid: false, reason: `Issuer mismatch: expected issuer for 'fiem-484607' but got '${payload.iss}'` };
+    }
+
+    // 5. Verify expiration
     const now = Math.floor(Date.now() / 1000);
     if (payload.exp < now) {
       return { isValid: false, reason: `Token expired at ${payload.exp} (current time ${now})` };
@@ -238,7 +246,7 @@ async function verifyFirebaseToken(req: any, expectedUid: string): Promise<{ isV
       return { isValid: false, reason: `UID mismatch: token sub '${payload.sub}' does not match expected '${expectedUid}'` };
     }
 
-    // 5. Fetch Google certificates and verify signature
+    // 6. Fetch Google certificates and verify signature
     const publicKeys = await fetchGooglePublicKeys();
     const cert = publicKeys[kid];
     if (!cert) {
@@ -318,31 +326,6 @@ app.delete("/api/profiles/uid/:uid", async (req, res) => {
   } catch (err: any) {
     console.error("API DELETE Error:", err);
     res.status(500).json({ error: "Internal Server Error", details: err.message });
-  }
-});
-
-// ⚠️ TEMPORARY: One-time admin cleanup endpoint — REMOVE AFTER USE
-app.get("/api/admin/clean-avatars", async (req: any, res: any) => {
-  if (req.query.secret !== "linkflow-clean-2024") {
-    return res.status(403).json({ error: "Forbidden" });
-  }
-  try {
-    await connectToDatabase();
-    const DEFAULT_AVATAR = "data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Crect width='200' height='200' fill='%23111827'/%3E%3Ccircle cx='100' cy='75' r='35' fill='%2338BDF8'/%3E%3Cpath d='M45 190 C45 110, 155 110, 155 190 Z' fill='%2338BDF8'/%3E%3C/svg%3E";
-    const bloated = await Profile.find({
-      $and: [
-        { avatarUrl: { $regex: /^data:image/ } },
-        { $expr: { $gt: [{ $strLenCP: "$avatarUrl" }, 1000] } }
-      ]
-    });
-    let cleaned = 0;
-    for (const p of bloated) {
-      await Profile.findByIdAndUpdate(p._id, { avatarUrl: DEFAULT_AVATAR });
-      cleaned++;
-    }
-    res.json({ success: true, cleaned, total: bloated.length });
-  } catch (err: any) {
-    res.status(500).json({ error: "Cleanup failed", details: err.message });
   }
 });
 
