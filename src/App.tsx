@@ -331,6 +331,15 @@ export default function App() {
   const [claimedTakenAlert, setClaimedTakenAlert] = useState<string | null>(null);
   const [profileNotFound, setProfileNotFound] = useState(false);
   const [isRefreshingAnalytics, setIsRefreshingAnalytics] = useState(false);
+  const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsLargeScreen(window.innerWidth >= 1024);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   const handleRefreshAnalytics = async () => {
     if (!user) return;
@@ -2221,7 +2230,8 @@ export default function App() {
         </div>
 
         {/* Right Column: Live Preview */}
-        <div className={`lg:sticky lg:top-20 lg:self-start flex items-start justify-center pt-4 ${view === 'edit' ? 'hidden lg:flex' : 'flex w-full'}`}>
+        {(isLargeScreen || view === 'preview') && (
+          <div className={`lg:sticky lg:top-20 lg:self-start flex items-start justify-center pt-4 ${view === 'edit' ? 'hidden lg:flex' : 'flex w-full'}`}>
           {(() => {
             const previewProfile = debouncedProfile;
             return (
@@ -2381,7 +2391,8 @@ export default function App() {
               </div>
             );
           })()}
-        </div>
+          </div>
+        )}
       </main>
 
       {/* Template Selection Modal */}
