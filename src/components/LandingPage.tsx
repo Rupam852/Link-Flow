@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   Sparkles, 
@@ -136,10 +136,47 @@ export default function LandingPage({ onLogin, loginError, clearLoginError }: La
   const [username, setUsername] = useState('');
   const [error, setError] = useState('');
   const [isChecking, setIsChecking] = useState(false);
+  const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
   const [activeThemeIdx, setActiveThemeIdx] = useState(0);
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(null);
+  const debounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeTheme = PRESET_THEMES[activeThemeIdx];
+
+  // Real-time username availability check with 600ms debounce
+  useEffect(() => {
+    const trimmed = username.trim();
+
+    // Reset if too short or invalid
+    if (!trimmed || trimmed.length < 3 || !/^[a-z0-9-]+$/.test(trimmed)) {
+      setUsernameStatus('idle');
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+      return;
+    }
+
+    setUsernameStatus('checking');
+
+    if (debounceTimer.current) clearTimeout(debounceTimer.current);
+
+    debounceTimer.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/profiles/${trimmed}`);
+        if (res.status === 404) {
+          setUsernameStatus('available');
+        } else if (res.ok) {
+          setUsernameStatus('taken');
+        } else {
+          setUsernameStatus('idle');
+        }
+      } catch {
+        setUsernameStatus('idle');
+      }
+    }, 600);
+
+    return () => {
+      if (debounceTimer.current) clearTimeout(debounceTimer.current);
+    };
+  }, [username]);
 
   const handleClaim = (e: React.FormEvent) => {
     e.preventDefault();
@@ -151,7 +188,6 @@ export default function LandingPage({ onLogin, loginError, clearLoginError }: La
       return;
     }
 
-    // Explicitly validate for uppercase letters as requested
     if (/[A-Z]/.test(username)) {
       setError('Username can only contain lowercase letters.');
       return;
@@ -164,6 +200,16 @@ export default function LandingPage({ onLogin, loginError, clearLoginError }: La
 
     if (!/^[a-z0-9-]+$/.test(trimmedUsername)) {
       setError('Username can only contain letters, numbers, and hyphens.');
+      return;
+    }
+
+    if (usernameStatus === 'taken') {
+      setError('This username is already taken. Please choose another.');
+      return;
+    }
+
+    if (usernameStatus === 'checking') {
+      setError('Please wait while we check username availability...');
       return;
     }
 
@@ -236,8 +282,12 @@ export default function LandingPage({ onLogin, loginError, clearLoginError }: La
 
           {/* Claim Username Form */}
           <div className="max-w-md mx-auto pt-6">
-            <form onSubmit={handleClaim} className="flex flex-col sm:flex-row gap-2.5 sm:gap-3 bg-transparent sm:bg-slate-900/50 p-0 sm:p-2 rounded-2xl sm:border sm:border-white/10 backdrop-blur-md focus-within:border-indigo-500/50 transition-all sm:shadow-2xl">
-              <div className="flex items-center px-4 py-3 sm:py-1 bg-slate-900/60 sm:bg-transparent rounded-xl sm:rounded-none border border-white/10 sm:border-none focus-within:border-indigo-500/50 flex-1">
+            <form onSubmit={handleClaim} className={`flex flex-col sm:flex-row gap-2.5 sm:gap-3 bg-transparent sm:bg-slate-900/50 p-0 sm:p-2 rounded-2xl sm:border backdrop-blur-md transition-all sm:shadow-2xl ${
+              usernameStatus === 'available' ? 'sm:border-emerald-500/50' :
+              usernameStatus === 'taken'     ? 'sm:border-red-500/50' :
+              'sm:border-white/10 focus-within:border-indigo-500/50'
+            }`}>
+              <div className="flex items-center px-4 py-3 sm:py-1 bg-slate-900/60 sm:bg-transparent rounded-xl sm:rounded-none border border-white/10 sm:border-none focus-within:border-indigo-500/50 flex-1 gap-2">
                 <input 
                   type="text" 
                   value={username}
@@ -248,24 +298,68 @@ export default function LandingPage({ onLogin, loginError, clearLoginError }: La
                   placeholder="Enter your username"
                   className="bg-transparent border-0 outline-none w-full text-white font-bold placeholder:text-slate-600 focus:ring-0 px-0 text-base"
                 />
+                {/* Availability indicator */}
+                {usernameStatus === 'checking' && (
+                  <div className="w-4 h-4 border-2 border-slate-400 border-t-transparent rounded-full animate-spin shrink-0" />
+                )}
+                {usernameStatus === 'available' && (
+                  <span className="text-emerald-400 shrink-0" title="Available">✓</span>
+                )}
+                {usernameStatus === 'taken' && (
+                  <span className="text-red-400 shrink-0" title="Already taken">✗</span>
+                )}
               </div>
               <button 
                 type="submit" 
-                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg shadow-indigo-600/30 transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+                disabled={usernameStatus === 'taken' || usernameStatus === 'checking'}
+                className={`text-white font-bold py-3.5 px-6 rounded-xl flex items-center justify-center gap-2 shadow-lg transition-all shrink-0 ${
+                  usernameStatus === 'taken'
+                    ? 'bg-red-600/60 cursor-not-allowed opacity-60'
+                    : usernameStatus === 'checking'
+                    ? 'bg-slate-600/60 cursor-wait opacity-60'
+                    : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 shadow-indigo-600/30 hover:scale-[1.02] active:scale-[0.98]'
+                }`}
               >
                 <span>Claim for Free</span>
                 <ArrowRight size={16} />
               </button>
             </form>
-            {error && (
-              <motion.p 
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-red-400 font-semibold text-sm mt-3 text-left pl-4"
-              >
-                ⚠️ {error}
-              </motion.p>
-            )}
+            {/* Status message below form */}
+            <AnimatePresence mode="wait">
+              {usernameStatus === 'available' && username.trim().length >= 3 && (
+                <motion.p
+                  key="available"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-emerald-400 font-semibold text-sm mt-3 text-left pl-4"
+                >
+                  ✓ <strong>@{username.trim()}</strong> is available! Click Claim for Free.
+                </motion.p>
+              )}
+              {usernameStatus === 'taken' && (
+                <motion.p
+                  key="taken"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-red-400 font-semibold text-sm mt-3 text-left pl-4"
+                >
+                  ✗ <strong>@{username.trim()}</strong> is already taken. Try another.
+                </motion.p>
+              )}
+              {error && (
+                <motion.p
+                  key="error"
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="text-red-400 font-semibold text-sm mt-3 text-left pl-4"
+                >
+                  ⚠️ {error}
+                </motion.p>
+              )}
+            </AnimatePresence>
             <p className="text-slate-500 text-xs font-bold mt-4 flex items-center justify-center gap-2">
               <Check size={12} className="text-emerald-500" /> Instant Custom Link
               <span className="text-slate-700">•</span>
