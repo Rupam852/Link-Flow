@@ -22,7 +22,11 @@ async function connectToDatabase() {
   }
 
   try {
-    await mongoose.connect(MONGODB_URI);
+    await mongoose.connect(MONGODB_URI, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+      socketTimeoutMS: 45000,
+    });
     console.log("Connected to MongoDB (Serverless Mode)");
   } catch (err) {
     console.error("MongoDB connection error:", err);
@@ -84,7 +88,7 @@ app.get("/api/cron/keep-alive", async (req, res) => {
 app.get("/api/profiles/uid/:uid", async (req, res) => {
   try {
     await connectToDatabase();
-    const profile = await Profile.findOne({ uid: req.params.uid });
+    const profile = await Profile.findOne({ uid: req.params.uid }).lean();
     if (profile) {
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
       res.json(profile);
@@ -104,9 +108,14 @@ app.get("/api/profiles/uid/:uid", async (req, res) => {
 app.get("/api/profiles/:username", async (req, res) => {
   try {
     await connectToDatabase();
-    const profile = await Profile.findOne({ username: req.params.username });
+    const profile = await Profile.findOne({ username: req.params.username }).lean();
     if (profile) {
-      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+      if (req.query.poll === 'true') {
+        res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
+      } else {
+        // Cache on CDN for 10 seconds, stale-while-revalidate for 10 minutes
+        res.setHeader('Cache-Control', 'public, max-age=2, s-maxage=10, stale-while-revalidate=600');
+      }
       res.json(profile);
     } else {
       res.status(404).json({ error: "Profile not found" });

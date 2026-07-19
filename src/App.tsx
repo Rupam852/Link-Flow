@@ -805,7 +805,7 @@ export default function App() {
     // Periodically poll for updates every 4 seconds
     const interval = setInterval(async () => {
       try {
-        const endpoint = `/api/profiles/${profile.username}`;
+        const endpoint = `/api/profiles/${profile.username}?poll=true`;
         const res = await fetch(endpoint);
         if (res.ok) {
           const freshData = await res.json();
