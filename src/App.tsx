@@ -36,6 +36,7 @@ import {
   GripVertical,
   TrendingUp,
   RotateCw,
+  RotateCcw,
   HardDrive,
   Link,
   Phone,
@@ -350,6 +351,65 @@ export default function App() {
       console.error("Failed to refresh analytics:", err);
     } finally {
       setIsRefreshingAnalytics(false);
+    }
+  };
+
+  const [isResettingAnalytics, setIsResettingAnalytics] = useState(false);
+
+  const handleResetAnalytics = async () => {
+    if (!user) return;
+    const confirmReset = window.confirm("Are you sure you want to reset all click counts to zero?");
+    if (!confirmReset) return;
+
+    setIsResettingAnalytics(true);
+    try {
+      const token = await user.getIdToken();
+      const updatedLinks = profile.links.map(link => ({
+        ...link,
+        clicks: 0
+      }));
+
+      // Sanitize profile like handleSave does
+      const { _id, __v, ...pureProfileData } = profile as any;
+      const sanitizedLinks = updatedLinks.map((link: any) => {
+        const trimmedUrl = link.url ? link.url.trim() : '';
+        if (trimmedUrl && !/^(https?:\/\/|mailto:|tel:)/.test(trimmedUrl) && !trimmedUrl.startsWith('/')) {
+          return { ...link, url: `https://${trimmedUrl}` };
+        }
+        return { ...link, url: trimmedUrl };
+      });
+
+      const updatedProfile = {
+        ...pureProfileData,
+        uid: user.uid,
+        username: profile.username,
+        links: sanitizedLinks
+      };
+
+      const res = await fetch(`/api/profiles/uid/${user.uid}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(updatedProfile),
+      });
+
+      if (res.ok) {
+        setProfile(updatedProfile);
+        const cacheKey = `linkflow_profile_cache_uid_${user.uid}`;
+        const usernameCacheKey = `linkflow_profile_cache_${profile.username}`;
+        localStorage.setItem(cacheKey, JSON.stringify(updatedProfile));
+        localStorage.setItem(usernameCacheKey, JSON.stringify(updatedProfile));
+      } else {
+        console.error('Failed to reset analytics');
+        alert("Failed to reset analytics. Please try again.");
+      }
+    } catch (err) {
+      console.error("Failed to reset analytics:", err);
+      alert("Failed to reset analytics. Please try again.");
+    } finally {
+      setIsResettingAnalytics(false);
     }
   };
 
@@ -2105,15 +2165,26 @@ export default function App() {
                               <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-0.5 animate-pulse">● Live Tracking Active</p>
                             </div>
                           </div>
-                          <button
-                            onClick={handleRefreshAnalytics}
-                            disabled={isRefreshingAnalytics}
-                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 active:scale-95 transition-all disabled:opacity-50"
-                            title="Refresh Analytics"
-                          >
-                            <RotateCw size={12} className={isRefreshingAnalytics ? 'animate-spin' : ''} />
-                            <span>{isRefreshingAnalytics ? 'Syncing...' : 'Refresh'}</span>
-                          </button>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={handleRefreshAnalytics}
+                              disabled={isRefreshingAnalytics}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-indigo-400 bg-indigo-500/5 hover:bg-indigo-500/10 border border-indigo-500/10 active:scale-95 transition-all disabled:opacity-50"
+                              title="Refresh Analytics"
+                            >
+                              <RotateCw size={12} className={isRefreshingAnalytics ? 'animate-spin' : ''} />
+                              <span>{isRefreshingAnalytics ? 'Syncing...' : 'Refresh'}</span>
+                            </button>
+                            <button
+                              onClick={handleResetAnalytics}
+                              disabled={isResettingAnalytics}
+                              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 active:scale-95 transition-all disabled:opacity-50"
+                              title="Reset Analytics"
+                            >
+                              <RotateCcw size={12} className={isResettingAnalytics ? 'animate-spin' : ''} />
+                              <span>{isResettingAnalytics ? 'Resetting...' : 'Reset'}</span>
+                            </button>
+                          </div>
                         </div>
 
                         {(() => {
