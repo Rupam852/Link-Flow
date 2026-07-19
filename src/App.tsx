@@ -332,6 +332,7 @@ export default function App() {
   const [claimedTakenAlert, setClaimedTakenAlert] = useState<string | null>(null);
   const [profileNotFound, setProfileNotFound] = useState(false);
   const [isRefreshingAnalytics, setIsRefreshingAnalytics] = useState(false);
+  const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
 
   useEffect(() => {
@@ -358,8 +359,6 @@ export default function App() {
 
   const handleResetAnalytics = async () => {
     if (!user) return;
-    const confirmReset = window.confirm("Are you sure you want to reset all click counts to zero?");
-    if (!confirmReset) return;
 
     setIsResettingAnalytics(true);
     try {
@@ -2176,7 +2175,7 @@ export default function App() {
                               <span>{isRefreshingAnalytics ? 'Syncing...' : 'Refresh'}</span>
                             </button>
                             <button
-                              onClick={handleResetAnalytics}
+                              onClick={() => setShowResetConfirmModal(true)}
                               disabled={isResettingAnalytics}
                               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold text-rose-400 bg-rose-500/5 hover:bg-rose-500/10 border border-rose-500/10 active:scale-95 transition-all disabled:opacity-50"
                               title="Reset Analytics"
@@ -2702,6 +2701,54 @@ export default function App() {
                   className="flex-1 bg-red-600 hover:bg-red-500 disabled:opacity-30 text-white font-bold py-3.5 px-6 rounded-2xl transition-all active:scale-95 shadow-lg shadow-red-600/20 disabled:pointer-events-none text-sm"
                 >
                   Wipe Data
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Custom Reset Analytics Confirmation Modal */}
+      <AnimatePresence>
+        {showResetConfirmModal && (
+          <div className="fixed inset-0 z-[120] bg-slate-950/60 backdrop-blur-md flex items-center justify-center p-4 overflow-hidden">
+            {/* Radial Mesh Glows */}
+            <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-rose-900/10 blur-[120px]" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/10 blur-[120px]" />
+
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-slate-900/40 border border-rose-500/20 backdrop-blur-xl p-8 rounded-3xl shadow-2xl text-center"
+            >
+              <div className="w-16 h-16 mx-auto mb-6 bg-rose-500/10 rounded-2xl flex items-center justify-center text-rose-400 shadow-lg shadow-rose-500/10">
+                <RotateCcw size={32} className={isResettingAnalytics ? "animate-spin" : "animate-pulse"} />
+              </div>
+
+              <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight font-sans">Reset Click Counts?</h2>
+              <p className="text-sm text-slate-400 mb-6 leading-relaxed font-sans">
+                This will permanently reset all click analytics for your links to zero. <strong>This cannot be undone.</strong>
+              </p>
+
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowResetConfirmModal(false)}
+                  className="flex-1 bg-slate-800/50 hover:bg-slate-800 text-slate-300 font-bold py-3.5 px-6 rounded-2xl border border-white/5 transition-all active:scale-95 text-sm font-sans"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    await handleResetAnalytics();
+                    setShowResetConfirmModal(false);
+                  }}
+                  disabled={isResettingAnalytics}
+                  className="flex-1 bg-rose-600 hover:bg-rose-500 disabled:opacity-30 text-white font-bold py-3.5 px-6 rounded-2xl transition-all active:scale-95 shadow-lg shadow-rose-600/20 disabled:pointer-events-none text-sm font-sans"
+                >
+                  {isResettingAnalytics ? 'Resetting...' : 'Reset All'}
                 </button>
               </div>
             </motion.div>
