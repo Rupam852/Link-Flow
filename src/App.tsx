@@ -2223,21 +2223,6 @@ export default function App() {
                                     const newLinks = profile.links.filter((_, i) => i !== idx);
                                     setProfile({ ...profile, links: newLinks });
                                   }}
-                                  onMove={(fromIndex, toIndex) => {
-                                    if (
-                                      fromIndex === toIndex ||
-                                      toIndex < 0 ||
-                                      toIndex >= profile.links.length
-                                    )
-                                      return;
-                                    const newLinks = [...profile.links];
-                                    const [moved] = newLinks.splice(fromIndex, 1);
-                                    newLinks.splice(toIndex, 0, moved);
-                                    setProfile({ ...profile, links: newLinks });
-                                    if (typeof navigator !== 'undefined' && navigator.vibrate) {
-                                      navigator.vibrate(30);
-                                    }
-                                  }}
                                   activeIconPickerIdx={activeIconPickerIdx}
                                   setActiveIconPickerIdx={setActiveIconPickerIdx}
                                 />

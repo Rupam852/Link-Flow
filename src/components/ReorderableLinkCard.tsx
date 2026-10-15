@@ -4,8 +4,6 @@ import {
   GripVertical,
   ChevronUp,
   ChevronDown,
-  ChevronsUp,
-  ChevronsDown,
   Trash2,
   ExternalLink,
   Youtube,
@@ -26,7 +24,7 @@ interface ReorderableLinkCardProps {
   onToggleExpand: () => void;
   onUpdate: (updatedLink: Link) => void;
   onDelete: () => void;
-  onMove: (fromIndex: number, toIndex: number) => void;
+  onMove?: (fromIndex: number, toIndex: number) => void;
   activeIconPickerIdx: number | null;
   setActiveIconPickerIdx: (idx: number | null) => void;
 }
@@ -165,75 +163,6 @@ export default function ReorderableLinkCard({
             title="Press and drag to reorder"
           >
             <GripVertical size={18} />
-          </div>
-
-          {/* Smart Quick Move Controls */}
-          <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-            {/* Move to Top (when multiple links & not at top) */}
-            {totalLinks > 2 && idx > 0 && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onMove(idx, 0);
-                }}
-                className="p-1 rounded-md text-slate-500 hover:text-indigo-300 hover:bg-white/5 transition-colors hidden sm:flex items-center justify-center"
-                title="Move to Top"
-              >
-                <ChevronsUp size={13} />
-              </button>
-            )}
-
-            {/* Move Up */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                if (idx > 0) onMove(idx, idx - 1);
-              }}
-              disabled={idx === 0}
-              className={`p-1.5 rounded-lg transition-colors ${
-                idx === 0
-                  ? 'text-slate-800 cursor-not-allowed opacity-20'
-                  : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
-              }`}
-              title="Move Up"
-            >
-              <ChevronUp size={15} />
-            </button>
-
-            {/* Move Down */}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.preventDefault();
-                if (idx < totalLinks - 1) onMove(idx, idx + 1);
-              }}
-              disabled={idx === totalLinks - 1}
-              className={`p-1.5 rounded-lg transition-colors ${
-                idx === totalLinks - 1
-                  ? 'text-slate-800 cursor-not-allowed opacity-20'
-                  : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
-              }`}
-              title="Move Down"
-            >
-              <ChevronDown size={15} />
-            </button>
-
-            {/* Move to Bottom (when multiple links & not at bottom) */}
-            {totalLinks > 2 && idx < totalLinks - 1 && (
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.preventDefault();
-                  onMove(idx, totalLinks - 1);
-                }}
-                className="p-1 rounded-md text-slate-500 hover:text-indigo-300 hover:bg-white/5 transition-colors hidden sm:flex items-center justify-center"
-                title="Move to Bottom"
-              >
-                <ChevronsDown size={13} />
-              </button>
-            )}
           </div>
 
           {/* Icon Selector Button */}
