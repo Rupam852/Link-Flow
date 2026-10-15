@@ -57,7 +57,7 @@ export function getYouTubeEmbedUrl(url: string, autoplay: boolean = false): stri
   return embedBase;
 }
 
-// Minimal Audio Player Card for YouTube
+// Minimal Audio Player Card for YouTube (Instagram in-app browser & iOS WebView optimized)
 function YouTubeMinimalMusicCard({
   videoId,
   title,
@@ -79,8 +79,8 @@ function YouTubeMinimalMusicCard({
 
       try {
         playerRef.current = new (window as any).YT.Player(containerId, {
-          height: '1',
-          width: '1',
+          height: '100%',
+          width: '100%',
           videoId: videoId,
           playerVars: {
             autoplay: autoplay ? 1 : 0,
@@ -89,12 +89,27 @@ function YouTubeMinimalMusicCard({
             fs: 0,
             playsinline: 1,
             rel: 0,
+            enablejsapi: 1,
+            origin: typeof window !== 'undefined' ? window.location.origin : undefined,
+            widget_referrer: typeof window !== 'undefined' ? window.location.href : undefined,
           },
           events: {
             onReady: (event: any) => {
               if (!isMounted) return;
+
+              // Crucial for Instagram/Facebook/iOS in-app browser permissions
+              try {
+                const iframe = event.target.getIframe?.();
+                if (iframe) {
+                  iframe.setAttribute('allow', 'autoplay; encrypted-media; accelerometer; gyroscope; picture-in-picture');
+                  iframe.setAttribute('playsinline', '1');
+                  iframe.setAttribute('webkit-playsinline', '1');
+                }
+              } catch {}
+
               if (autoplay) {
                 try {
+                  event.target.unMute();
                   event.target.playVideo();
                 } catch {}
               }
@@ -103,7 +118,7 @@ function YouTubeMinimalMusicCard({
               if (!isMounted) return;
               if (event.data === 1) {
                 setIsPlaying(true);
-              } else {
+              } else if (event.data === 2 || event.data === 0) {
                 setIsPlaying(false);
               }
             },
@@ -142,7 +157,7 @@ function YouTubeMinimalMusicCard({
     };
   }, [videoId, autoplay]);
 
-  const togglePlay = (e: React.MouseEvent) => {
+  const togglePlay = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
     if (!playerRef.current) return;
@@ -151,6 +166,10 @@ function YouTubeMinimalMusicCard({
       if (isPlaying) {
         playerRef.current.pauseVideo();
       } else {
+        // Direct user touch/click gesture: unmute and play for Instagram WebView
+        try {
+          playerRef.current.unMute();
+        } catch {}
         playerRef.current.playVideo();
       }
     } catch (err) {
@@ -161,6 +180,7 @@ function YouTubeMinimalMusicCard({
   return (
     <div
       onClick={togglePlay}
+      onTouchEnd={togglePlay}
       className={`w-full rounded-2xl p-3 my-2 transition-all duration-300 cursor-pointer border shadow-lg backdrop-blur-xl flex items-center justify-between gap-3 group relative overflow-hidden select-none ${
         isPlaying
           ? 'bg-rose-950/40 border-rose-500/40 shadow-rose-950/30 ring-1 ring-rose-500/20'
@@ -217,9 +237,18 @@ function YouTubeMinimalMusicCard({
         {isPlaying ? <Pause size={17} /> : <Play size={17} className="translate-x-0.5" />}
       </button>
 
-      {/* Hidden YouTube Iframe Mount (0x0 offscreen) */}
-      <div style={{ position: 'absolute', width: 0, height: 0, opacity: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-        <div id={containerId} />
+      {/* Active Non-Zero Iframe Container for Instagram/Mobile Browser compatibility */}
+      <div
+        className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl"
+        style={{
+          opacity: 0.001,
+          zIndex: -1,
+          width: '100%',
+          height: '100%',
+        }}
+        aria-hidden="true"
+      >
+        <div id={containerId} style={{ width: '100%', height: '100%' }} />
       </div>
     </div>
   );
@@ -308,7 +337,9 @@ export default function MediaEmbed({ url, title, autoplay = false, embedType = '
   const spotifyInfo = getSpotifyEmbedInfo(url);
   if (spotifyInfo) {
     const isFullPlayer = ['album', 'playlist', 'artist', 'show'].includes(spotifyInfo.type);
-    const height = isFullPlayer ? 352 : 152;
+    const height = embedType === 'music'
+      ? (isFullPlayer ? 152 : 80)
+      : (isFullPlayer ? 352 : 152);
     const elementRef = useRef<HTMLDivElement>(null);
     const controllerRef = useRef<any>(null);
 

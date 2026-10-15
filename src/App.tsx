@@ -2417,18 +2417,22 @@ export default function App() {
                                               </div>
                                             )}
 
-                                            {/* Style Selector for YouTube: Full Video vs Minimal Music Card */}
-                                            {link.embed && isYouTubeUrl(link.url) && (
+                                            {/* Style Selector for YouTube & Spotify: Full Player vs Minimal Card */}
+                                            {link.embed && (
                                               <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-white/10 space-y-2.5">
                                                 <div className="flex items-center justify-between">
                                                   <div>
                                                     <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                                                      <span>🎵</span> YouTube Player Style
+                                                      <span>🎧</span> {isYouTubeUrl(link.url) ? 'YouTube Player Style' : 'Spotify Player Style'}
                                                     </p>
                                                     <p className="text-[10px] text-slate-400">
-                                                      {(link.embedType || 'video') === 'music'
-                                                        ? 'Minimal music card with soundwave & thumbnail (no large video box)'
-                                                        : 'Full 16:9 interactive YouTube video player'}
+                                                      {isYouTubeUrl(link.url)
+                                                        ? ((link.embedType || 'video') === 'music'
+                                                            ? 'Minimal music card with soundwave & thumbnail (no large video box)'
+                                                            : 'Full 16:9 interactive YouTube video player')
+                                                        : (link.embedType === 'music'
+                                                            ? 'Compact 80px minimal audio bar'
+                                                            : 'Standard Spotify interactive music player')}
                                                     </p>
                                                   </div>
                                                 </div>
@@ -2448,8 +2452,12 @@ export default function App() {
                                                         : 'bg-slate-950/50 text-slate-400 border-white/5 hover:border-white/10 hover:text-white'
                                                     }`}
                                                   >
-                                                    <Youtube size={15} className={(link.embedType || 'video') === 'video' ? 'text-rose-400' : ''} />
-                                                    Video Player
+                                                    {isYouTubeUrl(link.url) ? (
+                                                      <Youtube size={15} className={(link.embedType || 'video') === 'video' ? 'text-rose-400' : ''} />
+                                                    ) : (
+                                                      <Sliders size={15} className={(link.embedType || 'video') === 'video' ? 'text-rose-400' : ''} />
+                                                    )}
+                                                    {isYouTubeUrl(link.url) ? 'Video Player' : 'Standard Player'}
                                                   </button>
 
                                                   <button
@@ -2467,7 +2475,7 @@ export default function App() {
                                                     }`}
                                                   >
                                                     <Music size={15} className={link.embedType === 'music' ? 'text-emerald-400' : ''} />
-                                                    Minimal Music Card
+                                                    {isYouTubeUrl(link.url) ? 'Minimal Music Card' : 'Compact Mini Bar'}
                                                   </button>
                                                 </div>
                                               </div>
