@@ -5,13 +5,78 @@ import dotenv from "dotenv";
 import path from "path";
 import crypto from "crypto";
 
+import rateLimit from "express-rate-limit";
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
+// Security 1: Hardened CORS (Only allow trusted frontend domains & local development)
+const allowedOrigins = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+  'https://link-flow-iota.vercel.app',
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow non-browser calls (serverless functions, mobile clients, curl, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Allow localhost with any dev port, official Vercel app, and Vercel preview URLs
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith('.vercel.app') ||
+      /^https?:\/\/localhost(:\d+)?$/.test(origin)
+    ) {
+      return callback(null, true);
+    }
+    return callback(new Error(`CORS policy blocked access from origin: ${origin}`));
+  },
+  credentials: true,
+}));
+
+// Security 2: Payload limit to protect against Denial-of-Service / Memory exhaustion
+app.use(express.json({ limit: "1mb" }));
+
+// Security 3: Tiered Rate Limiters
+// General API Rate Limiter: max 300 requests per 15 minutes per IP
+const generalApiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many requests from this IP, please try again after 15 minutes." },
+});
+app.use("/api/", generalApiLimiter);
+
+// Public Email Subscription Limiter: max 10 subscriptions per hour per IP (anti-bot / anti-spam)
+const subscribeRateLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many subscription attempts from this IP, please try again in an hour." },
+});
+
+// Link Click Counter Limiter: max 60 clicks per minute per IP (prevents artificial count manipulation)
+const clickRateLimiter = rateLimit({
+  windowMs: 60 * 1000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Click rate limit exceeded, please slow down." },
+});
+
+// Cloudinary Asset Deletion Limiter: max 30 image deletes per 15 min per IP
+const cloudinaryDeleteLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: "Too many image delete requests, please try again later." },
+});
 
 async function connectToDatabase() {
   if (mongoose.connection.readyState === 1) return;
@@ -164,7 +229,7 @@ app.get("/api/profiles/:username", async (req, res) => {
   }
 });
 
-app.post("/api/profiles/:username/links/click", async (req, res) => {
+app.post("/api/profiles/:username/links/click", clickRateLimiter, async (req, res) => {
   try {
     await connectToDatabase();
     const { url, linkId } = req.body;
@@ -334,6 +399,20 @@ app.put("/api/profiles/uid/:uid", async (req, res) => {
     }
 
     const { _id, __v, ...updateData } = req.body;
+
+    // Security: Sanitize all link URLs to prevent Stored XSS via javascript: or data: URIs
+    if (Array.isArray(updateData.links)) {
+      updateData.links = updateData.links.map((link: any) => {
+        if (link && typeof link.url === "string") {
+          const trimmed = link.url.trim().toLowerCase();
+          if (trimmed.startsWith("javascript:") || trimmed.startsWith("data:text/html") || trimmed.startsWith("vbscript:")) {
+            link.url = "#";
+          }
+        }
+        return link;
+      });
+    }
+
     const profile = await Profile.findOneAndUpdate(
       { uid: req.params.uid },
       updateData,
@@ -376,8 +455,8 @@ app.delete("/api/profiles/uid/:uid", async (req, res) => {
 });
 
 // Email Subscribers Routes
-// 1. Public Subscribe Endpoint
-app.post("/api/profiles/:username/subscribers", async (req, res) => {
+// 1. Public Subscribe Endpoint (Rate limited to prevent bot spam)
+app.post("/api/profiles/:username/subscribers", subscribeRateLimiter, async (req, res) => {
   try {
     await connectToDatabase();
     const { email } = req.body;
@@ -457,8 +536,8 @@ app.delete("/api/profiles/:username/subscribers/:email", async (req, res) => {
   }
 });
 
-// Cloudinary: Delete old background image by URL
-app.post("/api/cloudinary/delete", async (req, res) => {
+// Cloudinary: Delete old background image by URL (Rate limited)
+app.post("/api/cloudinary/delete", cloudinaryDeleteLimiter, async (req, res) => {
   try {
     const { imageUrl } = req.body;
 

@@ -19,6 +19,7 @@
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.7.1",
     "firebase": "^12.11.0",
     "lucide-react": "^0.546.0",
     "mongoose": "^9.4.1",
