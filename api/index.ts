@@ -48,6 +48,7 @@ const linkSchema = new mongoose.Schema({
   animation: { type: String, default: 'none' },
   embed: { type: Boolean, default: false },
   autoplay: { type: Boolean, default: false },
+  embedType: { type: String, default: 'video' },
 }, { _id: false, strict: false });
 
 // Profile Schema
@@ -119,12 +120,32 @@ app.get("/api/profiles/uid/:uid", async (req, res) => {
   }
 });
 
+// In-memory caching for ultrafast public profile responses (sub-5ms)
+const profileMemoryCache = new Map<string, { data: any; expiry: number }>();
+
 app.get("/api/profiles/:username", async (req, res) => {
   try {
+    const rawUsername = req.params.username;
+    const username = rawUsername.toLowerCase();
+    const isPoll = req.query.poll === 'true';
+    const now = Date.now();
+
+    // Serve from ultrafast memory cache for instant public loading
+    if (!isPoll) {
+      const cached = profileMemoryCache.get(username);
+      if (cached && cached.expiry > now) {
+        res.setHeader('Cache-Control', 'public, max-age=2, s-maxage=10, stale-while-revalidate=600');
+        return res.json(cached.data);
+      }
+    }
+
     await connectToDatabase();
-    const profile = await Profile.findOne({ username: req.params.username }).lean();
+    const profile = await Profile.findOne({ username: rawUsername }).lean();
     if (profile) {
-      if (req.query.poll === 'true') {
+      if (!isPoll) {
+        profileMemoryCache.set(username, { data: profile, expiry: now + 30000 }); // 30s cache
+      }
+      if (isPoll) {
         res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0');
       } else {
         // Cache on CDN for 10 seconds, stale-while-revalidate for 10 minutes
@@ -318,6 +339,7 @@ app.put("/api/profiles/uid/:uid", async (req, res) => {
       updateData,
       { new: true, upsert: true, runValidators: true }
     );
+    profileMemoryCache.clear();
     res.json(profile);
   } catch (err: any) {
     if (err.code === 11000) {
@@ -341,6 +363,7 @@ app.delete("/api/profiles/uid/:uid", async (req, res) => {
     }
 
     const result = await Profile.deleteOne({ uid: req.params.uid });
+    profileMemoryCache.clear();
     if (result.deletedCount > 0) {
       res.json({ success: true, message: "Profile permanently deleted" });
     } else {

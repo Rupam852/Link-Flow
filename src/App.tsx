@@ -59,8 +59,9 @@ import LandingPage from './components/LandingPage';
 import BackgroundCropModal from './components/BackgroundCropModal';
 import QRCodeModal from './components/QRCodeModal';
 import BioGeneratorModal from './components/BioGeneratorModal';
-import MediaEmbed, { isEmbeddableUrl } from './components/MediaEmbed';
+import MediaEmbed, { isEmbeddableUrl, isYouTubeUrl } from './components/MediaEmbed';
 import { EmailCaptureWidget, EmailEditorPanel } from './components/EmailCapture';
+import PublicProfileSkeleton from './components/PublicProfileSkeleton';
 
 interface Link {
   id?: string; // Stable ID for Reorder tracking key
@@ -75,6 +76,7 @@ interface Link {
   display?: 'card' | 'icon';
   embed?: boolean; // Feature 4: Interactive Media Embed (YouTube / Spotify)
   autoplay?: boolean; // Autoplay on profile open
+  embedType?: 'video' | 'music'; // 'video' for 16:9 iframe, 'music' for minimal soundwave card
 }
 
 interface QuickSocial {
@@ -563,8 +565,16 @@ const isTemplateActive = (tplTheme: any, currentTheme: any) => {
   );
 };
 
+const checkIsPublicPath = () => {
+  if (typeof window === 'undefined') return false;
+  const parts = window.location.pathname.split('/').filter(Boolean);
+  return parts.length === 1 && !['api', 'admin', 'assets', 'static', 'edit', 'preview', 'index.html'].includes(parts[0]);
+};
+
 export default function App() {
-  const [view, setView] = useState<'preview' | 'edit' | 'public'>('edit');
+  const isInitialPublic = checkIsPublicPath();
+  const [view, setView] = useState<'preview' | 'edit' | 'public'>(isInitialPublic ? 'public' : 'edit');
+  const [isPublicLoading, setIsPublicLoading] = useState(isInitialPublic);
   const [profile, setProfile] = useState<Profile>(DEFAULT_PROFILE);
   const [debouncedProfile, setDebouncedProfile] = useState<Profile>(DEFAULT_PROFILE);
 
@@ -787,6 +797,7 @@ export default function App() {
         }
         setProfile(parsed);
         setLoading(false);
+        setIsPublicLoading(false);
       } catch (e) {
         console.error('Failed to parse cached profile', e);
       }
@@ -805,6 +816,7 @@ export default function App() {
         }
         setProfile(data);
         setProfileNotFound(false);
+        setIsPublicLoading(false);
         // 2. Save fresh version to cache
         localStorage.setItem(cacheKey, JSON.stringify(data));
       } else if (res.status === 404) {
@@ -813,6 +825,7 @@ export default function App() {
 
         if (!isUid) {
           setProfileNotFound(true);
+          setIsPublicLoading(false);
         } else if (autoSaveUserData) {
           // AUTOSAVE: The profile wasn't found in DB (new user or DB deleted), auto-create it now
           const claimedName = sessionStorage.getItem('claimedUsername');
@@ -1510,6 +1523,10 @@ export default function App() {
 
 
   if (view === 'public') {
+    if (isPublicLoading) {
+      return <PublicProfileSkeleton />;
+    }
+
     if (profileNotFound) {
       return (
         <div
@@ -1583,7 +1600,11 @@ export default function App() {
     }
 
     return (
-      <div
+      <motion.div
+        key={profile.username || 'public-profile'}
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.45, ease: 'easeOut' }}
         className="min-h-screen w-full overflow-y-auto px-3 sm:px-4 py-8 sm:py-16 flex flex-col items-center justify-start relative overflow-x-hidden"
         style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
       >
@@ -1695,7 +1716,7 @@ export default function App() {
                   if (link.embed && isEmbeddableUrl(link.url)) {
                     return (
                       <div key={link.id || idx} className="w-full my-1">
-                        <MediaEmbed url={link.url} title={link.title} autoplay={link.autoplay} />
+                        <MediaEmbed url={link.url} title={link.title} autoplay={link.autoplay} embedType={link.embedType} />
                       </div>
                     );
                   }
@@ -1774,7 +1795,7 @@ export default function App() {
             </a>
           </div>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
@@ -2261,11 +2282,13 @@ export default function App() {
                                         className="overflow-hidden mt-4 pt-4 border-t border-white/5 space-y-4"
                                       >
                                         <div>
-                                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Link Title</label>
+                                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                                            {link.embed ? (link.embedType === 'music' ? 'Music / Song Title' : 'Video Title') : 'Link Title'}
+                                          </label>
                                           <input
                                             type="text"
                                             value={link.title}
-                                            placeholder="e.g. My Website"
+                                            placeholder={link.embed ? (link.embedType === 'music' ? "e.g. Song Name (defaults to 'YouTube Audio Track')" : "e.g. Video Title") : "e.g. My Website"}
                                             onChange={(e) => {
                                               const newLinks = [...profile.links];
                                               newLinks[idx].title = e.target.value;
@@ -2312,20 +2335,23 @@ export default function App() {
                                           </div>
                                         </div>
 
-                                        <div>
-                                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Description (Optional)</label>
-                                          <textarea
-                                            value={link.description || ''}
-                                            placeholder="Short description..."
-                                            onChange={(e) => {
-                                              const newLinks = [...profile.links];
-                                              newLinks[idx].description = e.target.value;
-                                              setProfile({ ...profile, links: newLinks });
-                                            }}
-                                            rows={2}
-                                            className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all resize-none min-h-[3rem]"
-                                          />
-                                        </div>
+                                        {/* Description (Hidden when interactive embed player is active) */}
+                                        {!link.embed && (
+                                          <div>
+                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Description (Optional)</label>
+                                            <textarea
+                                              value={link.description || ''}
+                                              placeholder="Short description..."
+                                              onChange={(e) => {
+                                                const newLinks = [...profile.links];
+                                                newLinks[idx].description = e.target.value;
+                                                setProfile({ ...profile, links: newLinks });
+                                              }}
+                                              rows={2}
+                                              className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all resize-none min-h-[3rem]"
+                                            />
+                                          </div>
+                                        )}
 
                                         {/* Media Embed Toggle for YouTube & Spotify */}
                                         {isEmbeddableUrl(link.url) && (
@@ -2388,6 +2414,62 @@ export default function App() {
                                                     }`}
                                                   />
                                                 </button>
+                                              </div>
+                                            )}
+
+                                            {/* Style Selector for YouTube: Full Video vs Minimal Music Card */}
+                                            {link.embed && isYouTubeUrl(link.url) && (
+                                              <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-white/10 space-y-2.5">
+                                                <div className="flex items-center justify-between">
+                                                  <div>
+                                                    <p className="text-xs font-bold text-white flex items-center gap-1.5">
+                                                      <span>🎵</span> YouTube Player Style
+                                                    </p>
+                                                    <p className="text-[10px] text-slate-400">
+                                                      {(link.embedType || 'video') === 'music'
+                                                        ? 'Minimal music card with soundwave & thumbnail (no large video box)'
+                                                        : 'Full 16:9 interactive YouTube video player'}
+                                                    </p>
+                                                  </div>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-2 pt-1">
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.preventDefault();
+                                                      const newLinks = [...profile.links];
+                                                      newLinks[idx] = { ...newLinks[idx], embedType: 'video' };
+                                                      setProfile({ ...profile, links: newLinks });
+                                                    }}
+                                                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${
+                                                      (link.embedType || 'video') === 'video'
+                                                        ? 'bg-rose-600/20 text-rose-300 border-rose-500/50 shadow-sm shadow-rose-950/40 ring-1 ring-rose-500/30'
+                                                        : 'bg-slate-950/50 text-slate-400 border-white/5 hover:border-white/10 hover:text-white'
+                                                    }`}
+                                                  >
+                                                    <Youtube size={15} className={(link.embedType || 'video') === 'video' ? 'text-rose-400' : ''} />
+                                                    Video Player
+                                                  </button>
+
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.preventDefault();
+                                                      const newLinks = [...profile.links];
+                                                      newLinks[idx] = { ...newLinks[idx], embedType: 'music' };
+                                                      setProfile({ ...profile, links: newLinks });
+                                                    }}
+                                                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${
+                                                      link.embedType === 'music'
+                                                        ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/50 shadow-sm shadow-emerald-950/40 ring-1 ring-emerald-500/30'
+                                                        : 'bg-slate-950/50 text-slate-400 border-white/5 hover:border-white/10 hover:text-white'
+                                                    }`}
+                                                  >
+                                                    <Music size={15} className={link.embedType === 'music' ? 'text-emerald-400' : ''} />
+                                                    Minimal Music Card
+                                                  </button>
+                                                </div>
                                               </div>
                                             )}
                                           </div>
@@ -3288,7 +3370,7 @@ export default function App() {
                             if (link.embed && isEmbeddableUrl(link.url)) {
                               return (
                                 <div key={link.id || idx} className="w-full my-1">
-                                  <MediaEmbed url={link.url} title={link.title} autoplay={link.autoplay} />
+                                  <MediaEmbed url={link.url} title={link.title} autoplay={link.autoplay} embedType={link.embedType} />
                                 </div>
                               );
                             }
