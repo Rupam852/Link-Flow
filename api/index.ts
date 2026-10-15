@@ -12,27 +12,39 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Security 1: Hardened CORS (Only allow trusted frontend domains & local development)
-const allowedOrigins = [
-  'http://localhost:3000',
-  'http://localhost:5173',
-  'https://link-flow-iota.vercel.app',
+// Security 1: Hardened CORS (Environment-aware: Strictly NO localhost in Production)
+const isProduction = process.env.NODE_ENV === "production";
+const productionAllowedOrigins = [
+  "https://link-flow-iota.vercel.app",
 ];
 
 app.use(cors({
   origin: (origin, callback) => {
-    // Allow non-browser calls (serverless functions, mobile clients, curl, etc.)
+    // Non-browser / same-origin calls (server-side fetches, curl, mobile native)
     if (!origin) return callback(null, true);
     
-    // Allow localhost with any dev port, official Vercel app, and Vercel preview URLs
-    if (
-      allowedOrigins.includes(origin) ||
-      origin.endsWith('.vercel.app') ||
-      /^https?:\/\/localhost(:\d+)?$/.test(origin)
-    ) {
-      return callback(null, true);
+    if (isProduction) {
+      // In Production: Strictly allow ONLY official production domain and Vercel branch previews.
+      // NEVER allow localhost in production!
+      const isAllowedProd =
+        productionAllowedOrigins.includes(origin) ||
+        origin.endsWith(".vercel.app");
+
+      if (isAllowedProd) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked in production for origin: ${origin}`));
+    } else {
+      // In Development: Allow localhost on any port for local coding & testing
+      const isAllowedDev =
+        /^https?:\/\/localhost(:\d+)?$/.test(origin) ||
+        /^https?:\/\/127\.0\.0\.1(:\d+)?$/.test(origin);
+
+      if (isAllowedDev) {
+        return callback(null, true);
+      }
+      return callback(new Error(`CORS blocked in dev for origin: ${origin}`));
     }
-    return callback(new Error(`CORS policy blocked access from origin: ${origin}`));
   },
   credentials: true,
 }));
