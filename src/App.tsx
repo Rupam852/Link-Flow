@@ -1,5 +1,5 @@
 // Vercel Fresh Clean Trigger
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence, Reorder } from 'motion/react';
 import {
   Plus,
@@ -42,11 +42,20 @@ import {
   Phone,
   ShoppingBag,
   Coffee,
-  Music
+  Music,
+  Search,
+  Sliders,
+  Layers,
+  Image as ImageIcon,
+  ZoomIn,
+  ZoomOut,
+  Crop,
+  Upload
 } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, getRedirectResult } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
 import LandingPage from './components/LandingPage';
+import BackgroundCropModal from './components/BackgroundCropModal';
 
 interface Link {
   id?: string; // Stable ID for Reorder tracking key
@@ -82,6 +91,11 @@ interface Profile {
     textColor: string;
     buttonColor: string;
     buttonTextColor: string;
+    buttonStyle?: 'rounded' | 'pill' | 'sharp' | 'glass' | 'shadow';
+    themeId?: string;
+    backgroundImageUrl?: string;
+    backgroundBlur?: number;
+    backgroundOverlay?: number;
   };
   socialLinksStyle: 'grid' | 'list';
   isActive?: boolean;
@@ -111,6 +125,11 @@ const DEFAULT_PROFILE: Profile = {
     textColor: '#f8fafc',
     buttonColor: '#334155',
     buttonTextColor: '#f8fafc',
+    buttonStyle: 'rounded',
+    themeId: 'classic',
+    backgroundImageUrl: '',
+    backgroundBlur: 0,
+    backgroundOverlay: 0.35,
   },
   socialLinksStyle: 'grid',
   isActive: true
@@ -168,134 +187,370 @@ const detectIcon = (url: string): string => {
   return 'globe';
 };
 
-const TEMPLATES = [
+export interface TemplatePreset {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  badge?: string;
+  theme: {
+    backgroundColor: string;
+    textColor: string;
+    buttonColor: string;
+    buttonTextColor: string;
+    buttonStyle: 'rounded' | 'pill' | 'sharp' | 'glass' | 'shadow';
+    themeId: string;
+  };
+}
+
+const TEMPLATE_CATEGORIES = [
+  'All',
+  'Featured',
+  'Creator',
+  'Fashion & Beauty',
+  'Music & Audio',
+  'Business & Tech',
+  'Minimal & Luxe',
+  'Bold & Pop',
+  'Nature & Wellness'
+];
+
+const TEMPLATES: TemplatePreset[] = [
   {
-    name: 'Midnight',
+    id: 'classic',
+    name: 'LinkFlow Classic',
+    category: 'Featured',
+    badge: 'Default',
+    description: 'Our signature dark slate with radiant avatar glow ring and sleek cards.',
     theme: {
       backgroundColor: '#0f172a',
       textColor: '#f8fafc',
       buttonColor: '#334155',
       buttonTextColor: '#f8fafc',
+      buttonStyle: 'rounded',
+      themeId: 'classic',
     }
   },
   {
-    name: 'Sunset',
+    id: 'glassmorphism',
+    name: 'Frosted Glass',
+    category: 'Featured',
+    badge: 'Modern',
+    description: 'Translucent floating frosted glass cards with outer glow.',
     theme: {
-      backgroundColor: '#fff7ed',
-      textColor: '#9a3412',
-      buttonColor: '#f97316',
+      backgroundColor: '#111827',
+      textColor: '#f9fafb',
+      buttonColor: '#1f2937',
       buttonTextColor: '#ffffff',
+      buttonStyle: 'glass',
+      themeId: 'glassmorphism',
     }
   },
   {
-    name: 'Forest',
+    id: 'artemis',
+    name: 'Artemis',
+    category: 'Creator',
+    badge: 'Popular',
+    description: 'Warm cream & amber aesthetic, refined editorial elegance for creators.',
     theme: {
-      backgroundColor: '#f0fdf4',
-      textColor: '#166534',
-      buttonColor: '#22c55e',
+      backgroundColor: '#fdfbf7',
+      textColor: '#292524',
+      buttonColor: '#78350f',
       buttonTextColor: '#ffffff',
+      buttonStyle: 'pill',
+      themeId: 'artemis',
     }
   },
   {
-    name: 'Cyberpunk',
+    id: 'balcombe',
+    name: 'Balcombe',
+    category: 'Nature & Wellness',
+    badge: 'Trending',
+    description: 'Sage green & organic earthy wellness vibe for healthy lifestyle.',
     theme: {
-      backgroundColor: '#000000',
-      textColor: '#00ff00',
-      buttonColor: '#ff00ff',
+      backgroundColor: '#f4f7f4',
+      textColor: '#14532d',
+      buttonColor: '#15803d',
       buttonTextColor: '#ffffff',
+      buttonStyle: 'pill',
+      themeId: 'balcombe',
     }
   },
   {
-    name: 'Minimal',
+    id: 'boultont',
+    name: 'Boultont',
+    category: 'Bold & Pop',
+    badge: 'Gen-Z',
+    description: 'Punchy neo-brutalist yellow/black contrast with retro hard shadow.',
+    theme: {
+      backgroundColor: '#fef08a',
+      textColor: '#000000',
+      buttonColor: '#000000',
+      buttonTextColor: '#fef08a',
+      buttonStyle: 'shadow',
+      themeId: 'boultont',
+    }
+  },
+  {
+    id: 'bourke',
+    name: 'Bourke',
+    category: 'Minimal & Luxe',
+    badge: 'Clean',
+    description: 'Ultra-crisp Apple-inspired monochrome simplicity and airy spacing.',
     theme: {
       backgroundColor: '#ffffff',
       textColor: '#18181b',
       buttonColor: '#18181b',
       buttonTextColor: '#ffffff',
+      buttonStyle: 'pill',
+      themeId: 'bourke',
     }
   },
   {
-    name: 'Lavender',
-    theme: {
-      backgroundColor: '#faf5ff',
-      textColor: '#6b21a8',
-      buttonColor: '#a855f7',
-      buttonTextColor: '#ffffff',
-    }
-  },
-  {
-    name: 'Ocean',
-    theme: {
-      backgroundColor: '#075985',
-      textColor: '#f0f9ff',
-      buttonColor: '#0ea5e9',
-      buttonTextColor: '#ffffff',
-    }
-  },
-  {
-    name: 'Solarized',
-    theme: {
-      backgroundColor: '#002b36',
-      textColor: '#839496',
-      buttonColor: '#268bd2',
-      buttonTextColor: '#ffffff',
-    }
-  },
-  {
-    name: 'Rose Gold',
+    id: 'constance',
+    name: 'Constance',
+    category: 'Fashion & Beauty',
+    badge: 'Aesthetic',
+    description: 'Blush pastel pink & delicate fashion styling for beauty influencers.',
     theme: {
       backgroundColor: '#fff1f2',
       textColor: '#881337',
       buttonColor: '#fb7185',
       buttonTextColor: '#ffffff',
+      buttonStyle: 'pill',
+      themeId: 'constance',
     }
   },
   {
-    name: 'Nord',
+    id: 'coromandel',
+    name: 'Coromandel',
+    category: 'Nature & Wellness',
+    description: 'Coastal turquoise and crisp oceanic vibes for travel & outdoors.',
+    theme: {
+      backgroundColor: '#f0fdfa',
+      textColor: '#134e4a',
+      buttonColor: '#0d9488',
+      buttonTextColor: '#ffffff',
+      buttonStyle: 'rounded',
+      themeId: 'coromandel',
+    }
+  },
+  {
+    id: 'crombie',
+    name: 'Crombie',
+    category: 'Music & Audio',
+    badge: 'Trending',
+    description: 'Deep midnight purple designed for musicians, bands & producers.',
+    theme: {
+      backgroundColor: '#1e112a',
+      textColor: '#f3e8ff',
+      buttonColor: '#9333ea',
+      buttonTextColor: '#ffffff',
+      buttonStyle: 'pill',
+      themeId: 'crombie',
+    }
+  },
+  {
+    id: 'sunset-aura',
+    name: 'Sunset Aura',
+    category: 'Creator',
+    badge: 'Warm',
+    description: 'Golden hour sunset warmth with smooth vibrant capsule buttons.',
+    theme: {
+      backgroundColor: '#fff7ed',
+      textColor: '#9a3412',
+      buttonColor: '#f97316',
+      buttonTextColor: '#ffffff',
+      buttonStyle: 'pill',
+      themeId: 'sunset-aura',
+    }
+  },
+  {
+    id: 'cyberpunk',
+    name: 'Cyberpunk Matrix',
+    category: 'Business & Tech',
+    badge: 'Gamer',
+    description: 'Deep black with laser neon matrix accents and high-tech styling.',
+    theme: {
+      backgroundColor: '#050505',
+      textColor: '#4ade80',
+      buttonColor: '#16a34a',
+      buttonTextColor: '#ffffff',
+      buttonStyle: 'sharp',
+      themeId: 'cyberpunk',
+    }
+  },
+  {
+    id: 'neon-synth',
+    name: 'Neon Synthwave',
+    category: 'Music & Audio',
+    description: 'Electric cyan energy with dark violet background and retro pulse.',
+    theme: {
+      backgroundColor: '#090514',
+      textColor: '#38bdf8',
+      buttonColor: '#06b6d4',
+      buttonTextColor: '#090514',
+      buttonStyle: 'rounded',
+      themeId: 'neon-synth',
+    }
+  },
+  {
+    id: 'executive-navy',
+    name: 'Executive Navy',
+    category: 'Business & Tech',
+    badge: 'Pro',
+    description: 'Cobalt and deep navy for founders, devs, and digital agencies.',
+    theme: {
+      backgroundColor: '#0a192f',
+      textColor: '#e2e8f0',
+      buttonColor: '#2563eb',
+      buttonTextColor: '#ffffff',
+      buttonStyle: 'rounded',
+      themeId: 'executive-navy',
+    }
+  },
+  {
+    id: 'nordic',
+    name: 'Nordic Frost',
+    category: 'Minimal & Luxe',
+    description: 'Scandinavian Arctic slate with icy slate highlights.',
     theme: {
       backgroundColor: '#2e3440',
       textColor: '#eceff4',
       buttonColor: '#5e81ac',
       buttonTextColor: '#eceff4',
+      buttonStyle: 'rounded',
+      themeId: 'nordic',
     }
   },
   {
-    name: 'Emerald',
+    id: 'lavender-mist',
+    name: 'Lavender Mist',
+    category: 'Fashion & Beauty',
+    description: 'Dreamy lilac and purple tones for beauty, skincare & lifestyle.',
     theme: {
-      backgroundColor: '#064e3b',
-      textColor: '#ecfdf5',
-      buttonColor: '#10b981',
+      backgroundColor: '#faf5ff',
+      textColor: '#581c87',
+      buttonColor: '#a855f7',
       buttonTextColor: '#ffffff',
+      buttonStyle: 'pill',
+      themeId: 'lavender-mist',
     }
   },
   {
-    name: 'Dracula',
+    id: 'brutal-orange',
+    name: 'Brutal Tangerine',
+    category: 'Bold & Pop',
+    description: 'Bold orange pop with heavy solid retro drop shadows.',
+    theme: {
+      backgroundColor: '#ffedd5',
+      textColor: '#000000',
+      buttonColor: '#ea580c',
+      buttonTextColor: '#ffffff',
+      buttonStyle: 'shadow',
+      themeId: 'brutal-orange',
+    }
+  },
+  {
+    id: 'matcha',
+    name: 'Matcha Zen',
+    category: 'Nature & Wellness',
+    description: 'Soothing botanical matcha tones and warm beige buttons.',
+    theme: {
+      backgroundColor: '#f2efe9',
+      textColor: '#283618',
+      buttonColor: '#606c38',
+      buttonTextColor: '#fefae0',
+      buttonStyle: 'pill',
+      themeId: 'matcha',
+    }
+  },
+  {
+    id: 'midnight-gold',
+    name: 'Midnight Gold',
+    category: 'Creator',
+    badge: 'Luxury',
+    description: 'Onyx black and burnished gold for luxury brands and creators.',
+    theme: {
+      backgroundColor: '#121212',
+      textColor: '#fbbf24',
+      buttonColor: '#d97706',
+      buttonTextColor: '#121212',
+      buttonStyle: 'rounded',
+      themeId: 'midnight-gold',
+    }
+  },
+  {
+    id: 'dracula',
+    name: 'Dracula Dark',
+    category: 'Business & Tech',
+    description: 'Famous dark theme palette with purple and coral accents.',
     theme: {
       backgroundColor: '#282a36',
       textColor: '#f8f8f2',
       buttonColor: '#bd93f9',
       buttonTextColor: '#282a36',
+      buttonStyle: 'rounded',
+      themeId: 'dracula',
     }
   },
   {
-    name: 'Royal',
+    id: 'emerald',
+    name: 'Deep Emerald',
+    category: 'Nature & Wellness',
+    description: 'Deep botanical emerald forest for sustainable ventures.',
     theme: {
-      backgroundColor: '#2e1065',
-      textColor: '#f5f3ff',
-      buttonColor: '#fbbf24',
-      buttonTextColor: '#2e1065',
-    }
-  },
-  {
-    name: 'Coffee',
-    theme: {
-      backgroundColor: '#27272a',
-      textColor: '#fdfcfb',
-      buttonColor: '#8a5e3c',
+      backgroundColor: '#064e3b',
+      textColor: '#ecfdf5',
+      buttonColor: '#10b981',
       buttonTextColor: '#ffffff',
+      buttonStyle: 'rounded',
+      themeId: 'emerald',
     }
   }
 ];
+
+const getButtonStyleClasses = (style?: string) => {
+  switch (style) {
+    case 'pill':
+      return 'rounded-full border border-white/15 px-5 shadow-md';
+    case 'sharp':
+      return 'rounded-none border border-white/20 shadow-md';
+    case 'glass':
+      return 'rounded-2xl border border-white/30 backdrop-blur-md shadow-lg';
+    case 'shadow':
+      return 'rounded-xl border-2 border-black/80 shadow-[4px_4px_0px_rgba(0,0,0,0.9)] hover:shadow-[2px_2px_0px_rgba(0,0,0,0.9)] active:translate-x-1 active:translate-y-1';
+    case 'rounded':
+    default:
+      return 'rounded-xl border border-white/10 shadow-md';
+  }
+};
+
+const getSocialIconStyleClasses = (style?: string) => {
+  switch (style) {
+    case 'sharp':
+      return 'rounded-none border border-white/20 shadow-md';
+    case 'shadow':
+      return 'rounded-xl border-2 border-black/80 shadow-[3px_3px_0px_rgba(0,0,0,0.9)] active:translate-x-0.5 active:translate-y-0.5';
+    case 'glass':
+      return 'rounded-full border border-white/30 backdrop-blur-md shadow-lg';
+    case 'pill':
+    case 'rounded':
+    default:
+      return 'rounded-full border border-white/10 shadow-md';
+  }
+};
+
+const isTemplateActive = (tplTheme: any, currentTheme: any) => {
+  if (!currentTheme) return false;
+  if (currentTheme.themeId && tplTheme.themeId) {
+    return currentTheme.themeId === tplTheme.themeId;
+  }
+  return (
+    currentTheme.backgroundColor?.toLowerCase() === tplTheme.backgroundColor?.toLowerCase() &&
+    currentTheme.buttonColor?.toLowerCase() === tplTheme.buttonColor?.toLowerCase()
+  );
+};
 
 export default function App() {
   const [view, setView] = useState<'preview' | 'edit' | 'public'>('edit');
@@ -321,6 +576,8 @@ export default function App() {
   const [newUsername, setNewUsername] = useState('');
   const [usernameStatus, setUsernameStatus] = useState<'idle' | 'checking' | 'available' | 'taken' | 'invalid'>('idle');
   const [showTemplateModal, setShowTemplateModal] = useState(false);
+  const [selectedTemplateCategory, setSelectedTemplateCategory] = useState('All');
+  const [templateSearchQuery, setTemplateSearchQuery] = useState('');
   const [isSavedSuccessfully, setIsSavedSuccessfully] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
   const [showErrorToast, setShowErrorToast] = useState(false);
@@ -334,6 +591,25 @@ export default function App() {
   const [isRefreshingAnalytics, setIsRefreshingAnalytics] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
+  const [showCropModal, setShowCropModal] = useState(false);
+  const [rawCropImage, setRawCropImage] = useState<string | null>(null);
+  const backgroundFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleBackgroundFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file (PNG, JPG, WEBP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setRawCropImage(reader.result as string);
+      setShowCropModal(true);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = '';
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -601,6 +877,9 @@ export default function App() {
       return;
     }
 
+    // Purana avatar URL save kar lo (delete ke liye)
+    const oldAvatarUrl = profile.avatarUrl;
+
     setIsImageUploading(true);
     const formData = new FormData();
     formData.append("file", file);
@@ -615,6 +894,20 @@ export default function App() {
       const data = await response.json();
       if (data.secure_url) {
         setProfile(prev => ({ ...prev, avatarUrl: data.secure_url }));
+
+        // Naya avatar set hone ke baad purana Cloudinary se delete karo (silently)
+        if (oldAvatarUrl && oldAvatarUrl.includes('cloudinary.com')) {
+          try {
+            await fetch('/api/cloudinary/delete', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ imageUrl: oldAvatarUrl }),
+            });
+          } catch (deleteErr) {
+            // Delete fail hone pe upload cancel mat karo — silently ignore
+            console.warn('Old avatar delete failed (non-critical):', deleteErr);
+          }
+        }
       } else {
         throw new Error(data.error?.message || "Upload failed");
       }
@@ -627,6 +920,7 @@ export default function App() {
       setIsImageUploading(false);
     }
   };
+
 
   const handleGenerateAITheme = () => {
     const hue = Math.floor(Math.random() * 360);
@@ -1265,9 +1559,30 @@ export default function App() {
 
     return (
       <div
-        className="min-h-screen w-full overflow-y-auto px-3 sm:px-4 py-8 sm:py-16 flex flex-col items-center justify-start"
+        className="min-h-screen w-full overflow-y-auto px-3 sm:px-4 py-8 sm:py-16 flex flex-col items-center justify-start relative overflow-x-hidden"
         style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
       >
+        {/* Background Image Layer if present */}
+        {profile.theme.backgroundImageUrl && (
+          <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+            <div
+              className="absolute inset-0 bg-cover bg-center transition-all duration-300"
+              style={{
+                backgroundImage: `url(${profile.theme.backgroundImageUrl})`,
+                filter: profile.theme.backgroundBlur ? `blur(${profile.theme.backgroundBlur}px)` : 'none',
+                transform: profile.theme.backgroundBlur ? 'scale(1.08)' : 'none',
+              }}
+            />
+            {/* Dimmer overlay for text contrast */}
+            <div
+              className="absolute inset-0 transition-opacity duration-300"
+              style={{
+                backgroundColor: '#000000',
+                opacity: typeof profile.theme.backgroundOverlay === 'number' ? profile.theme.backgroundOverlay : 0.35,
+              }}
+            />
+          </div>
+        )}
         <div className="w-full max-w-md text-center relative z-10">
           <div className="relative w-24 h-24 mx-auto mb-4">
             <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-md"></div>
@@ -1327,7 +1642,7 @@ export default function App() {
                         onClick={() => handleLinkClick(link)}
                         target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                         rel="noopener noreferrer"
-                        className="w-10 h-10 rounded-full flex items-center justify-center shadow-lg backdrop-blur-md border border-white/10 transition-all relative group overflow-hidden"
+                        className={`w-10 h-10 flex items-center justify-center transition-all relative group overflow-hidden ${getSocialIconStyleClasses(profile.theme.buttonStyle)}`}
                         style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                         title={link.title}
                       >
@@ -1368,7 +1683,7 @@ export default function App() {
                       onClick={() => handleLinkClick(link)}
                       target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                       rel="noopener noreferrer"
-                      className="block w-full px-3.5 py-4 rounded-xl transition-all flex items-center justify-between group shadow-xl backdrop-blur-md border border-white/10 overflow-hidden relative"
+                      className={`block w-full px-3.5 py-4 transition-all flex items-center justify-between group overflow-hidden relative ${getButtonStyleClasses(profile.theme.buttonStyle)}`}
                       style={{ backgroundColor: profile.theme.buttonColor, color: profile.theme.buttonTextColor }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -2050,91 +2365,190 @@ export default function App() {
                               <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
                                 <Palette size={20} />
                               </div>
-                              <h2 className="text-lg font-extrabold text-white tracking-tight">Templates</h2>
+                              <div>
+                                <h2 className="text-lg font-extrabold text-white tracking-tight">Templates</h2>
+                                <p className="text-xs text-slate-400">Curated premium profile themes</p>
+                              </div>
                             </div>
                             <button
                               onClick={() => setShowTemplateModal(true)}
-                              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors"
+                              className="px-3.5 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 text-xs font-bold text-indigo-300 hover:text-white flex items-center gap-1.5 transition-all shadow-sm active:scale-95"
                             >
-                              More Templates <Sparkles size={12} />
+                              <span>Explore All (20+)</span>
+                              <Sparkles size={13} className="text-indigo-400" />
                             </button>
                           </div>
                           
                           <div>
-                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">Top Templates</label>
-                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                              {TEMPLATES.slice(0, 3).map((tpl) => (
-                                <button
-                                  key={tpl.name}
-                                  onClick={() => setProfile({ ...profile, theme: tpl.theme })}
-                                  className="group relative flex flex-col items-center gap-2 p-2 rounded-xl border border-white/5 bg-slate-950/40 hover:border-indigo-500/40 hover:bg-indigo-500/5 transition-all"
-                                >
-                                  <div
-                                    className="w-full aspect-video rounded-lg shadow-sm flex flex-col gap-1 p-1.5"
-                                    style={{ backgroundColor: tpl.theme.backgroundColor }}
+                            <div className="flex items-center justify-between mb-3.5">
+                              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Featured Quick Select</label>
+                              <span className="text-[11px] text-slate-500">Tap to apply instantly</span>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                              {TEMPLATES.slice(0, 4).map((tpl) => {
+                                const active = isTemplateActive(tpl.theme, profile.theme);
+                                return (
+                                  <button
+                                    key={tpl.id}
+                                    type="button"
+                                    onClick={() => setProfile({ ...profile, theme: { ...tpl.theme } })}
+                                    className={`group relative flex flex-col items-center gap-2 p-2.5 rounded-2xl border transition-all text-left overflow-hidden ${
+                                      active
+                                        ? 'border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/40 shadow-lg'
+                                        : 'border-white/10 bg-slate-950/40 hover:border-indigo-500/40 hover:bg-white/5'
+                                    }`}
                                   >
-                                    <div className="w-full h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
-                                    <div className="w-2/3 h-1.5 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
-                                  </div>
-                                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-tight">{tpl.name}</span>
-                                  {JSON.stringify(profile.theme) === JSON.stringify(tpl.theme) && (
-                                    <div className="absolute top-1.5 right-1.5 w-4.5 h-4.5 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-md">
-                                      <Check size={10} />
+                                    <div
+                                      className="w-full aspect-[4/3] rounded-xl shadow-inner flex flex-col justify-center items-center gap-1.5 p-2 relative overflow-hidden border border-white/5"
+                                      style={{ backgroundColor: tpl.theme.backgroundColor }}
+                                    >
+                                      {/* Floating Badge on top-left of preview */}
+                                      {tpl.badge && (
+                                        <div className="absolute top-1.5 left-1.5 z-10 pointer-events-none">
+                                          <span className={`text-[8.5px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tight shadow-sm ${
+                                            tpl.badge === 'Default'
+                                              ? 'bg-emerald-500 text-white shadow-emerald-500/30'
+                                              : 'bg-indigo-600 text-white shadow-indigo-600/30'
+                                          }`}>
+                                            {tpl.badge}
+                                          </span>
+                                        </div>
+                                      )}
+                                      {/* Mini Avatar dot */}
+                                      <div className="w-4 h-4 rounded-full bg-gradient-to-tr from-indigo-500 to-pink-500 shadow-sm" />
+                                      {/* Mini Link button bars */}
+                                      <div
+                                        className={`w-full h-2 shadow-sm ${getButtonStyleClasses(tpl.theme.buttonStyle)}`}
+                                        style={{ backgroundColor: tpl.theme.buttonColor }}
+                                      />
+                                      <div
+                                        className={`w-3/4 h-2 opacity-80 ${getButtonStyleClasses(tpl.theme.buttonStyle)}`}
+                                        style={{ backgroundColor: tpl.theme.buttonColor }}
+                                      />
                                     </div>
-                                  )}
-                                </button>
-                              ))}
+                                    <div className="w-full px-1 pt-0.5 text-center sm:text-left">
+                                      <span className="text-xs font-bold text-white block truncate leading-tight" title={tpl.name}>
+                                        {tpl.name}
+                                      </span>
+                                    </div>
+                                    {active && (
+                                      <div className="absolute top-2 right-2 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white shadow-md ring-2 ring-slate-900 z-10">
+                                        <Check size={11} />
+                                      </div>
+                                    )}
+                                  </button>
+                                );
+                              })}
                             </div>
                           </div>
                         </section>
 
-                        {/* 2. Custom Colors */}
+                        {/* 2. Card & Button Shape */}
+                        <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                          <div className="flex items-center gap-3 mb-6">
+                            <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0 shadow-inner">
+                              <Sliders size={20} />
+                            </div>
+                            <div>
+                              <h2 className="text-lg font-extrabold text-white tracking-tight">Card & Button Shape</h2>
+                              <p className="text-xs text-slate-400">Geometry and outline for links & social icons</p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                            {[
+                              { id: 'rounded', name: 'Rounded', desc: 'Classic 12px', preview: 'rounded-xl' },
+                              { id: 'pill', name: 'Pill', desc: 'Capsule Round', preview: 'rounded-full' },
+                              { id: 'sharp', name: 'Sharp', desc: 'Modern Box', preview: 'rounded-none' },
+                              { id: 'glass', name: 'Glass', desc: 'Frosted Outline', preview: 'rounded-2xl border-white/40' },
+                              { id: 'shadow', name: 'Brutal', desc: '3D Pop Shadow', preview: 'rounded-xl shadow-[3px_3px_0px_#6366f1]' },
+                            ].map((shape) => {
+                              const isSelected = (profile.theme.buttonStyle || 'rounded') === shape.id;
+                              return (
+                                <button
+                                  key={shape.id}
+                                  type="button"
+                                  onClick={() => setProfile({ ...profile, theme: { ...profile.theme, buttonStyle: shape.id as any } })}
+                                  className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all text-center group ${
+                                    isSelected
+                                      ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/10 ring-1 ring-indigo-500/40'
+                                      : 'border-white/5 bg-slate-950/40 hover:border-white/20 hover:bg-white/5'
+                                  }`}
+                                >
+                                  <div className="w-full h-8 flex items-center justify-center">
+                                    <div className={`w-14 h-6 border-2 ${isSelected ? 'border-indigo-400 bg-indigo-500/30' : 'border-slate-500 bg-slate-800/60'} ${shape.preview} transition-all`} />
+                                  </div>
+                                  <span className={`text-xs font-bold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>{shape.name}</span>
+                                  <span className="text-[10px] text-slate-500 font-medium">{shape.desc}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </section>
+
+                        {/* 3. Custom Colors */}
                         <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
                           <div className="flex items-center gap-3 mb-6">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
+                            <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 shrink-0 shadow-inner">
                               <Palette size={20} />
                             </div>
-                            <h2 className="text-lg font-extrabold text-white tracking-tight">Custom Colors</h2>
+                            <div>
+                              <h2 className="text-lg font-extrabold text-white tracking-tight">Custom Colors</h2>
+                              <p className="text-xs text-slate-400">Fine-tune individual colors for your profile</p>
+                            </div>
                           </div>
                           
                           <div className="grid grid-cols-2 gap-4">
                             <div>
-                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Background</label>
-                              <input
-                                type="color"
-                                value={profile.theme.backgroundColor}
-                                onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, backgroundColor: e.target.value } })}
-                                className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
-                              />
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Background</label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="color"
+                                  value={profile.theme.backgroundColor}
+                                  onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, backgroundColor: e.target.value } })}
+                                  className="w-12 h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all shrink-0"
+                                />
+                                <span className="text-xs font-mono text-slate-400 uppercase">{profile.theme.backgroundColor}</span>
+                              </div>
                             </div>
                             <div>
-                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Text Color</label>
-                              <input
-                                type="color"
-                                value={profile.theme.textColor}
-                                onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, textColor: e.target.value } })}
-                                className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
-                              />
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Text Color</label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="color"
+                                  value={profile.theme.textColor}
+                                  onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, textColor: e.target.value } })}
+                                  className="w-12 h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all shrink-0"
+                                />
+                                <span className="text-xs font-mono text-slate-400 uppercase">{profile.theme.textColor}</span>
+                              </div>
                             </div>
                             <div>
-                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Button Color</label>
-                              <input
-                                type="color"
-                                value={profile.theme.buttonColor}
-                                onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonColor: e.target.value } })}
-                                className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
-                              />
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Button Color</label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="color"
+                                  value={profile.theme.buttonColor}
+                                  onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonColor: e.target.value } })}
+                                  className="w-12 h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all shrink-0"
+                                />
+                                <span className="text-xs font-mono text-slate-400 uppercase">{profile.theme.buttonColor}</span>
+                              </div>
                             </div>
                             <div>
-                              <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-1.5">Button Text</label>
-                              <input
-                                type="color"
-                                value={profile.theme.buttonTextColor}
-                                onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonTextColor: e.target.value } })}
-                                className="w-full h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all"
-                              />
+                              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-1.5">Button Text</label>
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="color"
+                                  value={profile.theme.buttonTextColor}
+                                  onChange={(e) => setProfile({ ...profile, theme: { ...profile.theme, buttonTextColor: e.target.value } })}
+                                  className="w-12 h-12 bg-slate-950/60 border border-white/10 p-1.5 rounded-2xl cursor-pointer hover:border-white/20 transition-all shrink-0"
+                                />
+                                <span className="text-xs font-mono text-slate-400 uppercase">{profile.theme.buttonTextColor}</span>
+                              </div>
                             </div>
                             <button
+                              type="button"
                               onClick={(e) => {
                                 e.preventDefault();
                                 handleGenerateAITheme();
@@ -2142,9 +2556,198 @@ export default function App() {
                               className="col-span-2 mt-2 bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white py-3.5 rounded-2xl text-xs font-black uppercase tracking-widest transition-all hover:shadow-lg hover:shadow-indigo-500/20 active:scale-95 flex items-center justify-center gap-2 border border-white/10 group"
                             >
                               <Sparkles size={14} className="group-hover:animate-spin-slow" />
-                              <span>Inspire Me (AI Theme)</span>
+                              <span>Inspire Me (AI Theme Generator)</span>
                             </button>
                           </div>
+                        </section>
+
+                        {/* 4. Custom Background Image & Backdrop Filters */}
+                        <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                          {/* Hidden file input */}
+                          <input
+                            type="file"
+                            ref={backgroundFileInputRef}
+                            onChange={handleBackgroundFileSelect}
+                            accept="image/*"
+                            className="hidden"
+                          />
+
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 shrink-0 shadow-inner">
+                                <ImageIcon size={20} />
+                              </div>
+                              <div>
+                                <h2 className="text-lg font-extrabold text-white tracking-tight">Background Photo</h2>
+                                <p className="text-xs text-slate-400">Upload, crop, and adjust your custom backdrop</p>
+                              </div>
+                            </div>
+                            {profile.theme.backgroundImageUrl && (
+                              <span className="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-black text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                                Active
+                              </span>
+                            )}
+                          </div>
+
+                          {profile.theme.backgroundImageUrl ? (
+                            <div className="space-y-6">
+                              {/* Current Image Card */}
+                              <div className="relative rounded-2xl overflow-hidden border border-white/15 bg-slate-950/60 p-4 flex flex-col sm:flex-row items-center gap-4">
+                                <div className="relative w-28 h-40 rounded-xl overflow-hidden border border-white/10 shrink-0 shadow-lg bg-slate-900">
+                                  <img
+                                    src={profile.theme.backgroundImageUrl}
+                                    alt="Background Preview"
+                                    className="w-full h-full object-cover transition-all"
+                                    style={{
+                                      filter: profile.theme.backgroundBlur ? `blur(${profile.theme.backgroundBlur}px)` : 'none',
+                                      transform: profile.theme.backgroundBlur ? 'scale(1.08)' : 'none',
+                                    }}
+                                  />
+                                  <div
+                                    className="absolute inset-0 pointer-events-none"
+                                    style={{
+                                      backgroundColor: '#000000',
+                                      opacity: typeof profile.theme.backgroundOverlay === 'number' ? profile.theme.backgroundOverlay : 0.35,
+                                    }}
+                                  />
+                                  <div className="absolute top-2 left-2 z-10 px-1.5 py-0.5 rounded bg-black/60 backdrop-blur-sm text-[9px] font-mono text-white/80">
+                                    9:16
+                                  </div>
+                                </div>
+
+                                <div className="flex-1 w-full space-y-3">
+                                  <div>
+                                    <h4 className="text-sm font-bold text-white">Custom Backdrop Active</h4>
+                                    <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                                      High-res mobile crop saved. Visible on live preview and shared public link.
+                                    </p>
+                                  </div>
+
+                                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                                    <button
+                                      type="button"
+                                      onClick={() => backgroundFileInputRef.current?.click()}
+                                      className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-md shadow-indigo-600/20 active:scale-95"
+                                    >
+                                      <Upload size={13} />
+                                      <span>Change Photo</span>
+                                    </button>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setProfile({
+                                          ...profile,
+                                          theme: {
+                                            ...profile.theme,
+                                            backgroundImageUrl: '',
+                                          },
+                                        });
+                                      }}
+                                      className="px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-400 hover:text-red-300 text-xs font-bold transition-all flex items-center gap-1.5 active:scale-95"
+                                    >
+                                      <Trash2 size={13} />
+                                      <span>Remove Photo</span>
+                                    </button>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Sliders for Backdrop Blur and Dimmer */}
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                                {/* Dimmer Overlay Slider */}
+                                <div className="p-4 rounded-2xl bg-slate-950/40 border border-white/5 space-y-2.5">
+                                  <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                                      Dimmer / Overlay
+                                    </label>
+                                    <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-lg border border-indigo-500/20">
+                                      {Math.round((profile.theme.backgroundOverlay ?? 0.35) * 100)}%
+                                    </span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="0.85"
+                                    step="0.05"
+                                    value={profile.theme.backgroundOverlay ?? 0.35}
+                                    onChange={(e) =>
+                                      setProfile({
+                                        ...profile,
+                                        theme: {
+                                          ...profile.theme,
+                                          backgroundOverlay: parseFloat(e.target.value),
+                                        },
+                                      })
+                                    }
+                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                                  />
+                                  <p className="text-[11px] text-slate-500 leading-tight">
+                                    Darkens background so white text and buttons remain easy to read.
+                                  </p>
+                                </div>
+
+                                {/* Blur Slider */}
+                                <div className="p-4 rounded-2xl bg-slate-950/40 border border-white/5 space-y-2.5">
+                                  <div className="flex items-center justify-between">
+                                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                                      Backdrop Blur
+                                    </label>
+                                    <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-lg border border-cyan-500/20">
+                                      {profile.theme.backgroundBlur ?? 0}px
+                                    </span>
+                                  </div>
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="16"
+                                    step="1"
+                                    value={profile.theme.backgroundBlur ?? 0}
+                                    onChange={(e) =>
+                                      setProfile({
+                                        ...profile,
+                                        theme: {
+                                          ...profile.theme,
+                                          backgroundBlur: parseInt(e.target.value, 10),
+                                        },
+                                      })
+                                    }
+                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500"
+                                  />
+                                  <p className="text-[11px] text-slate-500 leading-tight">
+                                    Adds smooth frosted glass blur to soften busy background details.
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          ) : (
+                            /* Empty Upload Dropzone */
+                            <div
+                              onClick={() => backgroundFileInputRef.current?.click()}
+                              className="group cursor-pointer rounded-2xl border-2 border-dashed border-white/15 hover:border-indigo-500/50 bg-slate-950/30 hover:bg-indigo-500/5 p-8 transition-all flex flex-col items-center justify-center text-center gap-3"
+                            >
+                              <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-500/20 transition-all shadow-inner">
+                                <Crop size={24} />
+                              </div>
+                              <div>
+                                <span className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors block">
+                                  Upload & Crop Background Photo
+                                </span>
+                                <span className="text-xs text-slate-400 mt-1 block max-w-sm">
+                                  Choose any photo. Our interactive 9:16 mobile cropper lets you pan, zoom, and frame the perfect shot.
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest bg-white/5 px-2.5 py-1 rounded-full border border-white/5">
+                                  JPG • PNG • WEBP
+                                </span>
+                                <span className="text-[10px] font-bold text-indigo-400 bg-indigo-500/10 px-2.5 py-1 rounded-full border border-indigo-500/20">
+                                  HD 1080×1920
+                                </span>
+                              </div>
+                            </div>
+                          )}
                         </section>
                       </div>
                     )}
@@ -2316,7 +2919,30 @@ export default function App() {
                   className="w-full h-full overflow-y-auto px-3 sm:px-8 pt-8 lg:pt-16 text-center scrollbar-hide relative"
                   style={{ backgroundColor: previewProfile.theme.backgroundColor, color: previewProfile.theme.textColor }}
                 >
-                  <div className="relative w-24 h-24 mx-auto mb-4">
+                  {/* Background Image Layer if present */}
+                  {previewProfile.theme.backgroundImageUrl && (
+                    <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+                      <div
+                        className="absolute inset-0 bg-cover bg-center transition-all duration-300"
+                        style={{
+                          backgroundImage: `url(${previewProfile.theme.backgroundImageUrl})`,
+                          filter: previewProfile.theme.backgroundBlur ? `blur(${previewProfile.theme.backgroundBlur}px)` : 'none',
+                          transform: previewProfile.theme.backgroundBlur ? 'scale(1.08)' : 'none',
+                        }}
+                      />
+                      {/* Dimmer overlay */}
+                      <div
+                        className="absolute inset-0 transition-opacity duration-300"
+                        style={{
+                          backgroundColor: '#000000',
+                          opacity: typeof previewProfile.theme.backgroundOverlay === 'number' ? previewProfile.theme.backgroundOverlay : 0.35,
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  <div className="relative z-10">
+                    <div className="relative w-24 h-24 mx-auto mb-4">
                     <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow opacity-30 blur-md"></div>
                     <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500 via-purple-500 to-pink-500 rounded-full animate-spin-slow"></div>
                     <motion.img
@@ -2375,7 +3001,7 @@ export default function App() {
                                 href={link.url}
                                 target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                                 rel="noopener noreferrer"
-                                className="w-10 h-10 rounded-full flex items-center justify-center shadow-md backdrop-blur-sm border border-white/10 relative overflow-hidden group"
+                                className={`w-10 h-10 flex items-center justify-center relative overflow-hidden group transition-all ${getSocialIconStyleClasses(previewProfile.theme.buttonStyle)}`}
                                 style={{ backgroundColor: previewProfile.theme.buttonColor, color: previewProfile.theme.buttonTextColor }}
                               >
                                 <div className="absolute inset-0 bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -2416,7 +3042,7 @@ export default function App() {
                                 href={link.url}
                                 target={/^(mailto:|tel:)/.test(link.url) ? '_self' : '_blank'}
                                 rel="noopener noreferrer"
-                                className="block w-full px-3.5 py-4 rounded-xl transition-all flex items-center justify-between group shadow-md backdrop-blur-sm border border-white/10 overflow-hidden relative"
+                                className={`block w-full px-3.5 py-4 transition-all flex items-center justify-between group overflow-hidden relative ${getButtonStyleClasses(previewProfile.theme.buttonStyle)}`}
                                 style={{ backgroundColor: previewProfile.theme.buttonColor, color: previewProfile.theme.buttonTextColor }}
                               >
                                 <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000"></div>
@@ -2457,6 +3083,7 @@ export default function App() {
                       Powered by LinkFlow
                     </a>
                   </div>
+                  </div>
                 </div>
               </div>
             );
@@ -2468,69 +3095,241 @@ export default function App() {
       {/* Template Selection Modal */}
       <AnimatePresence>
         {showTemplateModal && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowTemplateModal(false)}
-              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/80 backdrop-blur-md"
             />
             <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              initial={{ opacity: 0, scale: 0.93, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden"
+              exit={{ opacity: 0, scale: 0.93, y: 20 }}
+              className="relative w-full max-w-4xl bg-slate-900 border border-white/10 rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[88vh]"
             >
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                <div>
-                  <h2 className="text-xl font-bold text-slate-900">Choose a Template</h2>
-                  <p className="text-sm text-slate-500">Select a pre-designed theme for your profile</p>
+              {/* Modal Top Header */}
+              <div className="p-5 sm:p-6 border-b border-white/10 flex items-center justify-between bg-slate-950/40">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20">
+                    <Sparkles size={20} />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-extrabold text-white tracking-tight">
+                      Template Gallery
+                    </h2>
+                    <p className="text-xs text-slate-400">Choose from 20+ aesthetic themes or keep your default classic</p>
+                  </div>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setShowTemplateModal(false)}
-                  className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+                  className="p-2 hover:bg-white/10 rounded-full transition-colors text-slate-400 hover:text-white"
                 >
-                  <Plus size={24} className="rotate-45 text-slate-400" />
+                  <Plus size={22} className="rotate-45" />
                 </button>
               </div>
-              <div className="p-6 max-h-[70vh] overflow-y-auto">
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                  {TEMPLATES.map((tpl) => (
+
+              {/* Controls Bar: Search & Category Pills */}
+              <div className="p-4 sm:px-6 bg-slate-950/60 border-b border-white/5 space-y-3 shrink-0">
+                {/* Search Bar */}
+                <div className="relative">
+                  <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                  <input
+                    type="text"
+                    value={templateSearchQuery}
+                    onChange={(e) => setTemplateSearchQuery(e.target.value)}
+                    placeholder="Search templates by name, vibe (e.g., dark, minimal, pink)..."
+                    className="w-full pl-10 pr-4 py-2 bg-slate-900/80 border border-white/10 rounded-xl text-sm text-white placeholder:text-slate-500 focus:outline-none focus:border-indigo-500/60 transition-all"
+                  />
+                  {templateSearchQuery && (
                     <button
-                      key={tpl.name}
-                      onClick={() => {
-                        setProfile({ ...profile, theme: tpl.theme });
-                        setShowTemplateModal(false);
-                      }}
-                      className="group relative flex flex-col items-center gap-3 p-3 rounded-2xl border-2 border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/50 transition-all text-left"
+                      type="button"
+                      onClick={() => setTemplateSearchQuery('')}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-white"
                     >
-                      <div
-                        className="w-full aspect-[4/3] rounded-xl shadow-sm flex flex-col gap-2 p-3"
-                        style={{ backgroundColor: tpl.theme.backgroundColor }}
-                      >
-                        <div className="w-1/2 h-2 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
-                        <div className="w-full h-2 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
-                        <div className="w-3/4 h-2 rounded-full" style={{ backgroundColor: tpl.theme.buttonColor }} />
-                      </div>
-                      <div className="w-full flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-700 uppercase tracking-tight">{tpl.name}</span>
-                        {JSON.stringify(profile.theme) === JSON.stringify(tpl.theme) && (
-                          <div className="w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center text-white">
-                            <Check size={12} />
-                          </div>
-                        )}
-                      </div>
+                      Clear
                     </button>
-                  ))}
+                  )}
+                </div>
+
+                {/* Category Pills */}
+                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-hide text-xs">
+                  {TEMPLATE_CATEGORIES.map((cat) => {
+                    const isSelected = selectedTemplateCategory === cat;
+                    const count = cat === 'All' ? TEMPLATES.length : TEMPLATES.filter(t => t.category === cat).length;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        onClick={() => setSelectedTemplateCategory(cat)}
+                        className={`px-3 py-1.5 rounded-full whitespace-nowrap transition-all flex items-center gap-1.5 text-xs font-semibold ${
+                          isSelected
+                            ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
+                            : 'bg-slate-800/80 text-slate-300 hover:bg-slate-700/80 hover:text-white'
+                        }`}
+                      >
+                        <span>{cat}</span>
+                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full ${isSelected ? 'bg-indigo-700 text-indigo-100' : 'bg-slate-900 text-slate-400'}`}>
+                          {count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
-              <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end">
+
+              {/* Templates Grid Content */}
+              <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+                {(() => {
+                  const filtered = TEMPLATES.filter((tpl) => {
+                    const matchCategory = selectedTemplateCategory === 'All' || tpl.category === selectedTemplateCategory;
+                    const query = templateSearchQuery.trim().toLowerCase();
+                    const matchQuery =
+                      !query ||
+                      tpl.name.toLowerCase().includes(query) ||
+                      tpl.description.toLowerCase().includes(query) ||
+                      tpl.category.toLowerCase().includes(query);
+                    return matchCategory && matchQuery;
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div className="py-16 text-center">
+                        <Palette size={32} className="mx-auto text-slate-600 mb-2" />
+                        <p className="text-sm font-bold text-slate-300">No templates found</p>
+                        <p className="text-xs text-slate-500 mt-1">Try another search term or select another category</p>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedTemplateCategory('All');
+                            setTemplateSearchQuery('');
+                          }}
+                          className="mt-4 px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-indigo-400 rounded-xl"
+                        >
+                          Reset Filters
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                      {filtered.map((tpl) => {
+                        const active = isTemplateActive(tpl.theme, profile.theme);
+                        return (
+                          <div
+                            key={tpl.id}
+                            className={`group relative rounded-2xl border transition-all flex flex-col justify-between overflow-hidden p-3.5 ${
+                              active
+                                ? 'border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/50 shadow-xl'
+                                : 'border-white/10 bg-slate-950/50 hover:border-indigo-500/40 hover:bg-slate-950/80 hover:shadow-lg'
+                            }`}
+                          >
+                            <div>
+                              {/* Realistic Mini Preview Phone */}
+                              <div
+                                className="w-full aspect-[16/10] rounded-xl p-3 flex flex-col items-center justify-center gap-1.5 shadow-inner border border-white/5 relative overflow-hidden mb-3"
+                                style={{ backgroundColor: tpl.theme.backgroundColor }}
+                              >
+                                {/* Mini Avatar dot with gradient border */}
+                                <div className="w-5 h-5 rounded-full p-[1px] bg-gradient-to-tr from-indigo-500 to-pink-500 shadow-sm">
+                                  <div className="w-full h-full rounded-full bg-slate-900/60" />
+                                </div>
+                                {/* Mini username bar */}
+                                <div
+                                  className="w-16 h-1.5 rounded-full opacity-70 mb-0.5"
+                                  style={{ backgroundColor: tpl.theme.textColor }}
+                                />
+                                {/* 3 Mini Link button bars */}
+                                <div
+                                  className={`w-full h-2.5 shadow-sm flex items-center px-1.5 ${getButtonStyleClasses(tpl.theme.buttonStyle)}`}
+                                  style={{ backgroundColor: tpl.theme.buttonColor }}
+                                >
+                                  <div className="w-8 h-1 rounded-full opacity-60" style={{ backgroundColor: tpl.theme.buttonTextColor }} />
+                                </div>
+                                <div
+                                  className={`w-full h-2.5 shadow-sm flex items-center px-1.5 opacity-90 ${getButtonStyleClasses(tpl.theme.buttonStyle)}`}
+                                  style={{ backgroundColor: tpl.theme.buttonColor }}
+                                >
+                                  <div className="w-12 h-1 rounded-full opacity-60" style={{ backgroundColor: tpl.theme.buttonTextColor }} />
+                                </div>
+                                <div
+                                  className={`w-3/4 h-2.5 shadow-sm flex items-center px-1.5 opacity-80 ${getButtonStyleClasses(tpl.theme.buttonStyle)}`}
+                                  style={{ backgroundColor: tpl.theme.buttonColor }}
+                                >
+                                  <div className="w-10 h-1 rounded-full opacity-60" style={{ backgroundColor: tpl.theme.buttonTextColor }} />
+                                </div>
+                              </div>
+
+                              {/* Template Info */}
+                              <div className="space-y-1 mb-3">
+                                <div className="flex items-center justify-between gap-1">
+                                  <h3 className="text-sm font-extrabold text-white truncate">{tpl.name}</h3>
+                                  {tpl.badge && (
+                                    <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-tight shrink-0 ${
+                                      tpl.badge === 'Default'
+                                        ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-bold'
+                                        : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+                                    }`}>
+                                      {tpl.badge}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                                  <span className="font-semibold text-indigo-400">{tpl.category}</span>
+                                  <span>•</span>
+                                  <span className="capitalize">{tpl.theme.buttonStyle || 'rounded'} shape</span>
+                                </div>
+                                <p className="text-[11px] text-slate-400 line-clamp-2 leading-relaxed">
+                                  {tpl.description}
+                                </p>
+                              </div>
+                            </div>
+
+                            {/* Action Button */}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProfile({ ...profile, theme: { ...tpl.theme } });
+                                setShowTemplateModal(false);
+                              }}
+                              className={`w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 ${
+                                active
+                                  ? 'bg-indigo-600 text-white shadow-md'
+                                  : 'bg-white/5 hover:bg-indigo-600 hover:text-white text-slate-300 border border-white/10'
+                              }`}
+                            >
+                              {active ? (
+                                <>
+                                  <Check size={13} />
+                                  <span>Active Theme</span>
+                                </>
+                              ) : (
+                                <>
+                                  <Sparkles size={13} />
+                                  <span>Apply Theme</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* Modal Footer */}
+              <div className="p-4 sm:px-6 bg-slate-950/60 border-t border-white/10 flex items-center justify-between text-xs text-slate-400">
+                <span>{TEMPLATES.length} pre-designed aesthetic themes available</span>
                 <button
+                  type="button"
                   onClick={() => setShowTemplateModal(false)}
-                  className="px-6 py-2 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-600 hover:bg-slate-100 transition-all"
+                  className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
                 >
-                  Close
+                  Done
                 </button>
               </div>
             </motion.div>
@@ -2795,6 +3594,30 @@ export default function App() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Background Interactive Crop & Frame Modal */}
+      <BackgroundCropModal
+        isOpen={showCropModal}
+        onClose={() => {
+          setShowCropModal(false);
+          setRawCropImage(null);
+        }}
+        rawImage={rawCropImage}
+        onUploadSuccess={(url) => {
+          setProfile((prev) => ({
+            ...prev,
+            theme: {
+              ...prev.theme,
+              backgroundImageUrl: url,
+            },
+          }));
+          setShowCropModal(false);
+          setRawCropImage(null);
+        }}
+        cloudName={import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dg41yztls'}
+        uploadPreset={import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'linkflow_avatars'}
+        oldImageUrl={profile.theme.backgroundImageUrl}
+      />
     </div>
   );
 }

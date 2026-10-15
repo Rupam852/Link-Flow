@@ -48,6 +48,11 @@ const profileSchema = new mongoose.Schema({
     textColor: String,
     buttonColor: String,
     buttonTextColor: String,
+    buttonStyle: { type: String, default: 'rounded' },
+    themeId: { type: String, default: 'classic' },
+    backgroundImageUrl: { type: String, default: '' },
+    backgroundBlur: { type: Number, default: 0 },
+    backgroundOverlay: { type: Number, default: 0.35 },
   },
   isActive: { type: Boolean, default: true },
   links: [
@@ -337,6 +342,75 @@ app.delete("/api/profiles/uid/:uid", async (req, res) => {
     res.status(500).json({ error: "Internal Server Error", details: err.message });
   }
 });
+
+// Cloudinary: Delete old background image by URL
+app.post("/api/cloudinary/delete", async (req, res) => {
+  try {
+    const { imageUrl } = req.body;
+
+    if (!imageUrl || typeof imageUrl !== "string") {
+      return res.status(400).json({ error: "imageUrl is required" });
+    }
+
+    // Extract public_id from Cloudinary URL
+    // Example URL: https://res.cloudinary.com/dg41yztls/image/upload/v1234567890/abcdef123.jpg
+    const urlParts = imageUrl.split("/upload/");
+    if (urlParts.length < 2) {
+      return res.status(400).json({ error: "Invalid Cloudinary URL format" });
+    }
+
+    // Remove version prefix (e.g. "v1234567890/") if present, then strip extension
+    const afterUpload = urlParts[1];
+    const withoutVersion = afterUpload.replace(/^v\d+\//, "");
+    const publicId = withoutVersion.replace(/\.[^/.]+$/, ""); // remove file extension
+
+    if (!publicId) {
+      return res.status(400).json({ error: "Could not extract public_id from URL" });
+    }
+
+    const cloudName = process.env.VITE_CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    if (!cloudName || !apiKey || !apiSecret) {
+      return res.status(500).json({ error: "Cloudinary credentials not configured on server" });
+    }
+
+    // Generate SHA1 signature: timestamp + public_id + api_secret
+    const timestamp = Math.floor(Date.now() / 1000);
+    const signaturePayload = `public_id=${publicId}&timestamp=${timestamp}${apiSecret}`;
+    const signature = crypto.createHash("sha1").update(signaturePayload).digest("hex");
+
+    // Call Cloudinary destroy API
+    const formData = new URLSearchParams();
+    formData.append("public_id", publicId);
+    formData.append("timestamp", timestamp.toString());
+    formData.append("api_key", apiKey);
+    formData.append("signature", signature);
+
+    const cloudinaryRes = await fetch(
+      `https://api.cloudinary.com/v1_1/${cloudName}/image/destroy`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: formData.toString(),
+      }
+    );
+
+    const data = await cloudinaryRes.json();
+
+    if (data.result === "ok") {
+      res.json({ success: true, result: data.result });
+    } else {
+      // not_found is not a hard error — image may have been manually deleted
+      res.json({ success: true, result: data.result, note: "Image may not exist on Cloudinary" });
+    }
+  } catch (err: any) {
+    console.error("Cloudinary delete error:", err);
+    res.status(500).json({ error: "Failed to delete image from Cloudinary", details: err.message });
+  }
+});
+
 
 // Environment Logic
 if (process.env.NODE_ENV !== "production") {
