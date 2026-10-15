@@ -3646,6 +3646,7 @@ export default function App() {
         onClose={() => setShowQRModal(false)}
         username={profile.username}
         profileUrl={`${window.location.origin}/${profile.username}`}
+        avatarUrl={profile.avatarUrl}
       />
 
       {/* AI Bio Generator Modal */}
