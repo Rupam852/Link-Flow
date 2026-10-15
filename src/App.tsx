@@ -50,12 +50,17 @@ import {
   ZoomIn,
   ZoomOut,
   Crop,
-  Upload
+  Upload,
+  QrCode
 } from 'lucide-react';
 import { auth, googleProvider, signInWithPopup, signInWithRedirect, signOut, onAuthStateChanged, getRedirectResult } from './firebase';
 import type { User as FirebaseUser } from 'firebase/auth';
 import LandingPage from './components/LandingPage';
 import BackgroundCropModal from './components/BackgroundCropModal';
+import QRCodeModal from './components/QRCodeModal';
+import BioGeneratorModal from './components/BioGeneratorModal';
+import MediaEmbed, { isEmbeddableUrl } from './components/MediaEmbed';
+import { EmailCaptureWidget, EmailEditorPanel } from './components/EmailCapture';
 
 interface Link {
   id?: string; // Stable ID for Reorder tracking key
@@ -68,6 +73,8 @@ interface Link {
   clicks?: number; // Feature 3: Analytics Badges
   thumbnailUrl?: string; // Feature 6: Custom Link Thumbnail Image
   display?: 'card' | 'icon';
+  embed?: boolean; // Feature 4: Interactive Media Embed (YouTube / Spotify)
+  autoplay?: boolean; // Autoplay on profile open
 }
 
 interface QuickSocial {
@@ -99,6 +106,8 @@ interface Profile {
   };
   socialLinksStyle: 'grid' | 'list';
   isActive?: boolean;
+  emailCaptureEnabled?: boolean;
+  subscribers?: string[];
 }
 
 const DEFAULT_PROFILE: Profile = {
@@ -132,7 +141,9 @@ const DEFAULT_PROFILE: Profile = {
     backgroundOverlay: 0.35,
   },
   socialLinksStyle: 'grid',
-  isActive: true
+  isActive: true,
+  emailCaptureEnabled: false,
+  subscribers: []
 };
 
 const GoogleDriveIcon = ({ size = 20, className = '' }: { size?: number, className?: string }) => (
@@ -588,11 +599,14 @@ export default function App() {
   const [showDeleteToast, setShowDeleteToast] = useState(false);
   const [claimedTakenAlert, setClaimedTakenAlert] = useState<string | null>(null);
   const [profileNotFound, setProfileNotFound] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isRefreshingAnalytics, setIsRefreshingAnalytics] = useState(false);
   const [showResetConfirmModal, setShowResetConfirmModal] = useState(false);
   const [isLargeScreen, setIsLargeScreen] = useState(window.innerWidth >= 1024);
   const [showCropModal, setShowCropModal] = useState(false);
   const [rawCropImage, setRawCropImage] = useState<string | null>(null);
+  const [showQRModal, setShowQRModal] = useState(false);
+  const [showBioModal, setShowBioModal] = useState(false);
   const backgroundFileInputRef = useRef<HTMLInputElement | null>(null);
 
   const handleBackgroundFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1218,10 +1232,21 @@ export default function App() {
   };
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     try {
+      // 1. Smooth delay for centered spinner display
+      await new Promise(resolve => setTimeout(resolve, 800));
+      // 2. Perform Firebase sign out
       await signOut(auth);
+      // 3. Reset profile state
+      setProfile(DEFAULT_PROFILE);
+      setView('edit');
+      // 4. Brief buffer for smooth exit to landing page
+      await new Promise(resolve => setTimeout(resolve, 350));
     } catch (err) {
       console.error('Logout failed:', err);
+    } finally {
+      setIsLoggingOut(false);
     }
   };
 
@@ -1625,10 +1650,10 @@ export default function App() {
           {/* Optimized Link Layout */}
           <div className="space-y-6">
             {/* Social Icons Row */}
-            {profile.links.filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe'))).length > 0 && (
+            {profile.links.filter(l => l.isActive !== false && !l.embed && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe'))).length > 0 && (
               <div className="flex flex-wrap justify-center gap-3 mb-6">
                 {profile.links
-                  .filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe')))
+                  .filter(l => l.isActive !== false && !l.embed && (l.display === 'icon' || (l.display !== 'card' && profile.socialLinksStyle === 'grid' && l.icon !== 'globe')))
                   .map((link, idx) => {
                     const Icon = ICON_MAP[link.icon] || Globe;
                     const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
@@ -1661,10 +1686,20 @@ export default function App() {
             {/* Primary Links & Bar Socials */}
             <div className="space-y-4">
               {profile.links
-                .filter(l => l.isActive !== false && (l.display === 'card' || (l.display !== 'icon' && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))))
+                .filter(l => l.isActive !== false && (l.embed || l.display === 'card' || (l.display !== 'icon' && (profile.socialLinksStyle === 'list' || l.icon === 'globe'))))
                 .map((link, idx) => {
                   const Icon = ICON_MAP[link.icon] || Globe;
                   const animProps = getAnimationProps(link.animation, profile.theme.buttonColor);
+
+                  // If interactive player is enabled, show ONLY the player without the card and icon
+                  if (link.embed && isEmbeddableUrl(link.url)) {
+                    return (
+                      <div key={link.id || idx} className="w-full my-1">
+                        <MediaEmbed url={link.url} title={link.title} autoplay={link.autoplay} />
+                      </div>
+                    );
+                  }
+
                   return (
                     <motion.a
                       key={idx}
@@ -1705,6 +1740,21 @@ export default function App() {
                   );
                 })}
             </div>
+
+            {/* Email Capture Widget in Public Profile */}
+            {profile.emailCaptureEnabled && (
+              <div className="mt-8 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                <p className="text-xs font-bold mb-2.5 text-center opacity-90">
+                  Join my newsletter & updates
+                </p>
+                <EmailCaptureWidget
+                  username={profile.username}
+                  buttonColor={profile.theme.buttonColor}
+                  buttonTextColor={profile.theme.buttonTextColor}
+                  buttonStyle={profile.theme.buttonStyle}
+                />
+              </div>
+            )}
           </div>
 
           <div className="mt-20 pt-12 border-t border-white/10">
@@ -1740,13 +1790,52 @@ export default function App() {
     );
   }
 
+  if (isLoggingOut) {
+    return (
+      <div className="min-h-screen bg-[#070a13] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+        {/* Ambient Radial Mesh Glows */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 rounded-full bg-gradient-to-tr from-indigo-600/20 via-purple-600/20 to-pink-600/10 blur-[130px] pointer-events-none" />
+
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 15 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: -15 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25 }}
+          className="relative flex flex-col items-center text-center p-8 sm:p-10 rounded-3xl bg-slate-900/40 border border-white/10 shadow-2xl backdrop-blur-2xl max-w-sm w-full z-10"
+        >
+          {/* Glowing Center Spinner */}
+          <div className="relative mb-6 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full border-4 border-indigo-500/20 border-t-indigo-500 border-r-purple-500 animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center text-indigo-400">
+              <LogOut size={20} className="animate-pulse" />
+            </div>
+          </div>
+
+          <h3 className="text-xl font-black text-white tracking-tight mb-1.5">
+            Signing Out...
+          </h3>
+          <p className="text-xs text-slate-400 font-medium">
+            Safely closing session and returning to home
+          </p>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (!user) {
     return (
-      <LandingPage 
-        onLogin={handleLogin} 
-        loginError={loginError || undefined} 
-        clearLoginError={() => setLoginError(null)} 
-      />
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4 }}
+        className="w-full min-h-screen"
+      >
+        <LandingPage 
+          onLogin={handleLogin} 
+          loginError={loginError || undefined} 
+          clearLoginError={() => setLoginError(null)} 
+        />
+      </motion.div>
     );
   }
 
@@ -1804,13 +1893,23 @@ export default function App() {
 
           <div className="hidden md:flex items-center gap-2">
             {user && (
-              <button
-                onClick={handleCopyLink}
-                className="bg-slate-900 border border-white/10 text-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
-              >
-                {isCopying ? <Check size={14} className="text-green-400" /> : <Share2 size={14} />}
-                <span>{isCopying ? 'Copied!' : 'Share'}</span>
-              </button>
+              <>
+                <button
+                  onClick={() => setShowQRModal(true)}
+                  className="bg-slate-900 border border-white/10 text-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
+                  title="Generate QR Code"
+                >
+                  <QrCode size={14} className="text-indigo-400" />
+                  <span>QR Code</span>
+                </button>
+                <button
+                  onClick={handleCopyLink}
+                  className="bg-slate-900 border border-white/10 text-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
+                >
+                  {isCopying ? <Check size={14} className="text-green-400" /> : <Share2 size={14} />}
+                  <span>{isCopying ? 'Copied!' : 'Share'}</span>
+                </button>
+              </>
             )}
             <button
               onClick={handleSave}
@@ -1856,6 +1955,13 @@ export default function App() {
           <div className="md:hidden flex items-center gap-1">
             {user && (
               <>
+                <button
+                  onClick={() => setShowQRModal(true)}
+                  className="p-2.5 text-slate-400 hover:text-white"
+                  title="QR Code"
+                >
+                  <QrCode size={18} className="text-indigo-400" />
+                </button>
                 <button
                   onClick={handleCopyLink}
                   className="p-2.5 text-slate-400 hover:text-white"
@@ -2221,44 +2327,150 @@ export default function App() {
                                           />
                                         </div>
 
-                                        <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                                          <div className="flex items-center gap-2">
-                                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Display Mode:</span>
-                                            <div className="flex bg-slate-900 rounded-lg p-0.5 border border-white/5 text-[10px]">
+                                        {/* Media Embed Toggle for YouTube & Spotify */}
+                                        {isEmbeddableUrl(link.url) && (
+                                          <div className="space-y-2">
+                                            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
+                                              <div>
+                                                <p className="text-xs font-bold text-indigo-300">Embed Interactive Player</p>
+                                                <p className="text-[10px] text-slate-400">
+                                                  {link.embed
+                                                    ? 'Player mode active — Card, icon & animations are hidden'
+                                                    : 'Play video/audio directly on your profile'}
+                                                </p>
+                                              </div>
                                               <button
                                                 type="button"
                                                 onClick={(e) => {
                                                   e.preventDefault();
                                                   const newLinks = [...profile.links];
-                                                  newLinks[idx] = { ...newLinks[idx], display: 'card' };
+                                                  newLinks[idx] = { ...newLinks[idx], embed: !newLinks[idx].embed };
                                                   setProfile({ ...profile, links: newLinks });
                                                 }}
-                                                className={`px-2 py-0.5 rounded-md font-bold transition-all ${
-                                                  link.display !== 'icon'
-                                                    ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
-                                                    : 'text-slate-400 hover:text-white'
+                                                className={`relative w-9 h-5 rounded-full transition-colors duration-200 focus:outline-none ${
+                                                  link.embed ? 'bg-indigo-600' : 'bg-slate-800'
                                                 }`}
                                               >
-                                                Card
-                                              </button>
-                                              <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                  e.preventDefault();
-                                                  const newLinks = [...profile.links];
-                                                  newLinks[idx] = { ...newLinks[idx], display: 'icon' };
-                                                  setProfile({ ...profile, links: newLinks });
-                                                }}
-                                                className={`px-2 py-0.5 rounded-md font-bold transition-all ${
-                                                  link.display === 'icon'
-                                                    ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
-                                                    : 'text-slate-400 hover:text-white'
-                                                }`}
-                                              >
-                                                Icon
+                                                <span
+                                                  className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform duration-200 ${
+                                                    link.embed ? 'translate-x-4' : 'translate-x-0'
+                                                  }`}
+                                                />
                                               </button>
                                             </div>
+
+                                            {/* Sub-toggle: Autoplay on page load (visible when embed is toggled ON) */}
+                                            {link.embed && (
+                                              <div className="flex items-center justify-between p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20">
+                                                <div>
+                                                  <p className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
+                                                    <span>⚡</span> Autoplay on Open
+                                                  </p>
+                                                  <p className="text-[10px] text-slate-400">
+                                                    Automatically start playing when visitor opens your profile
+                                                  </p>
+                                                </div>
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.preventDefault();
+                                                    const newLinks = [...profile.links];
+                                                    newLinks[idx] = { ...newLinks[idx], autoplay: !newLinks[idx].autoplay };
+                                                    setProfile({ ...profile, links: newLinks });
+                                                  }}
+                                                  className={`relative w-9 h-5 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${
+                                                    link.autoplay ? 'bg-purple-600' : 'bg-slate-800'
+                                                  }`}
+                                                >
+                                                  <span
+                                                    className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform duration-200 ${
+                                                      link.autoplay ? 'translate-x-4' : 'translate-x-0'
+                                                    }`}
+                                                  />
+                                                </button>
+                                              </div>
+                                            )}
                                           </div>
+                                        )}
+
+                                        {/* Highlight Animation (Hidden when embed is active) */}
+                                        {!link.embed && (
+                                          <div>
+                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
+                                              Highlight Animation
+                                            </label>
+                                            <div className="grid grid-cols-4 gap-1.5">
+                                              {(['none', 'pulse', 'wobble', 'glow'] as const).map((anim) => {
+                                                const isSelected = (link.animation || 'none') === anim;
+                                                return (
+                                                  <button
+                                                    key={anim}
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.preventDefault();
+                                                      const newLinks = [...profile.links];
+                                                      newLinks[idx] = { ...newLinks[idx], animation: anim };
+                                                      setProfile({ ...profile, links: newLinks });
+                                                    }}
+                                                    className={`py-1.5 px-2 rounded-xl text-xs font-bold capitalize transition-all border ${
+                                                      isSelected
+                                                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/30'
+                                                        : 'bg-slate-950/60 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
+                                                    }`}
+                                                  >
+                                                    {anim}
+                                                  </button>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        <div className="flex items-center justify-between pt-2 border-t border-white/5">
+                                          {!link.embed ? (
+                                            <div className="flex items-center gap-2">
+                                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Display Mode:</span>
+                                              <div className="flex bg-slate-900 rounded-lg p-0.5 border border-white/5 text-[10px]">
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.preventDefault();
+                                                    const newLinks = [...profile.links];
+                                                    newLinks[idx] = { ...newLinks[idx], display: 'card' };
+                                                    setProfile({ ...profile, links: newLinks });
+                                                  }}
+                                                  className={`px-2 py-0.5 rounded-md font-bold transition-all ${
+                                                    link.display !== 'icon'
+                                                      ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
+                                                      : 'text-slate-400 hover:text-white'
+                                                  }`}
+                                                >
+                                                  Card
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.preventDefault();
+                                                    const newLinks = [...profile.links];
+                                                    newLinks[idx] = { ...newLinks[idx], display: 'icon' };
+                                                    setProfile({ ...profile, links: newLinks });
+                                                  }}
+                                                  className={`px-2 py-0.5 rounded-md font-bold transition-all ${
+                                                    link.display === 'icon'
+                                                      ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
+                                                      : 'text-slate-400 hover:text-white'
+                                                  }`}
+                                                >
+                                                  Icon
+                                                </button>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1.5">
+                                              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
+                                              Player Mode (Card & Icon Hidden)
+                                            </span>
+                                          )}
 
                                           <button
                                             type="button"
@@ -2344,6 +2556,14 @@ export default function App() {
                           <div>
                             <div className="flex items-center justify-between mb-1.5">
                               <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest">Bio</label>
+                              <button
+                                type="button"
+                                onClick={() => setShowBioModal(true)}
+                                className="flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-bold text-indigo-400 hover:text-indigo-300 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 rounded-lg transition-all active:scale-95"
+                              >
+                                <Sparkles size={12} className="text-indigo-400" />
+                                <span>AI Bio Generator</span>
+                              </button>
                             </div>
                             <textarea
                               value={profile.bio}
@@ -2878,6 +3098,45 @@ export default function App() {
                             </button>
                           </div>
 
+                          {/* Email Capture & Newsletter Section */}
+                          <div className="py-4 space-y-4">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <h3 className="text-sm font-bold text-slate-200">Email Capture Widget</h3>
+                                <p className="text-xs text-slate-400 mt-0.5">
+                                  Allow visitors on your profile to subscribe with their email address.
+                                </p>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setProfile({
+                                    ...profile,
+                                    emailCaptureEnabled: !profile.emailCaptureEnabled,
+                                  });
+                                }}
+                                className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
+                                  profile.emailCaptureEnabled ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
+                                }`}
+                              >
+                                <span
+                                  className={`absolute top-1 left-1 bg-white w-4 h-4 rounded-full shadow-sm transition-transform duration-200 ${
+                                    profile.emailCaptureEnabled ? 'translate-x-6' : 'translate-x-0'
+                                  }`}
+                                />
+                              </button>
+                            </div>
+
+                            {profile.emailCaptureEnabled && (
+                              <div className="pt-2 p-4 rounded-2xl bg-slate-950/40 border border-white/5">
+                                <EmailEditorPanel
+                                  username={profile.username}
+                                  getAuthToken={async () => (await user?.getIdToken()) || ''}
+                                />
+                              </div>
+                            )}
+                          </div>
+
                           {/* Danger Zone: Delete Account */}
                           <div className="py-4">
                             <h3 className="text-sm font-bold text-red-400 mb-1">Danger Zone</h3>
@@ -2984,10 +3243,10 @@ export default function App() {
                   </motion.p>
                   <div className="space-y-4 relative z-10">
                     {/* Social Icons Row */}
-                    {previewProfile.links.filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && previewProfile.socialLinksStyle === 'grid' && l.icon !== 'globe'))).length > 0 && (
+                    {previewProfile.links.filter(l => l.isActive !== false && !l.embed && (l.display === 'icon' || (l.display !== 'card' && previewProfile.socialLinksStyle === 'grid' && l.icon !== 'globe'))).length > 0 && (
                       <div className="flex flex-wrap justify-center gap-3 mb-6">
                         {previewProfile.links
-                          .filter(l => l.isActive !== false && (l.display === 'icon' || (l.display !== 'card' && previewProfile.socialLinksStyle === 'grid' && l.icon !== 'globe')))
+                          .filter(l => l.isActive !== false && !l.embed && (l.display === 'icon' || (l.display !== 'card' && previewProfile.socialLinksStyle === 'grid' && l.icon !== 'globe')))
                           .map((link, idx) => {
                             const Icon = ICON_MAP[link.icon] || Globe;
                             const animProps = getAnimationProps(link.animation, previewProfile.theme.buttonColor);
@@ -3020,10 +3279,20 @@ export default function App() {
                     <div className="space-y-2.5">
                       <AnimatePresence mode="popLayout">
                         {previewProfile.links
-                          .filter(l => l.isActive !== false && (l.display === 'card' || (l.display !== 'icon' && (previewProfile.socialLinksStyle === 'list' || l.icon === 'globe'))))
+                          .filter(l => l.isActive !== false && (l.embed || l.display === 'card' || (l.display !== 'icon' && (previewProfile.socialLinksStyle === 'list' || l.icon === 'globe'))))
                           .map((link, idx) => {
                             const Icon = ICON_MAP[link.icon] || Globe;
                             const animProps = getAnimationProps(link.animation, previewProfile.theme.buttonColor);
+
+                            // If interactive player is enabled, show ONLY the player without the card and icon
+                            if (link.embed && isEmbeddableUrl(link.url)) {
+                              return (
+                                <div key={link.id || idx} className="w-full my-1">
+                                  <MediaEmbed url={link.url} title={link.title} autoplay={link.autoplay} />
+                                </div>
+                              );
+                            }
+
                             return (
                               <motion.a
                                 key={idx}
@@ -3065,6 +3334,21 @@ export default function App() {
                           })}
                       </AnimatePresence>
                     </div>
+
+                    {/* Email Capture Widget in Preview */}
+                    {previewProfile.emailCaptureEnabled && (
+                      <div className="mt-6 p-3.5 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-md">
+                        <p className="text-xs font-bold mb-2.5 text-center opacity-90">
+                          Join my newsletter & updates
+                        </p>
+                        <EmailCaptureWidget
+                          username={previewProfile.username}
+                          buttonColor={previewProfile.theme.buttonColor}
+                          buttonTextColor={previewProfile.theme.buttonTextColor}
+                          buttonStyle={previewProfile.theme.buttonStyle}
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-12 pt-8 border-t border-white/10">
@@ -3617,6 +3901,24 @@ export default function App() {
         cloudName={import.meta.env.VITE_CLOUDINARY_CLOUD_NAME || 'dg41yztls'}
         uploadPreset={import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET || 'linkflow_avatars'}
         oldImageUrl={profile.theme.backgroundImageUrl}
+      />
+
+      {/* QR Code Generator Modal */}
+      <QRCodeModal
+        isOpen={showQRModal}
+        onClose={() => setShowQRModal(false)}
+        username={profile.username}
+        profileUrl={`${window.location.origin}/${profile.username}`}
+      />
+
+      {/* AI Bio Generator Modal */}
+      <BioGeneratorModal
+        isOpen={showBioModal}
+        onClose={() => setShowBioModal(false)}
+        displayName={profile.displayName}
+        onApplyBio={(newBio) => {
+          setProfile((prev) => ({ ...prev, bio: newBio }));
+        }}
       />
     </div>
   );

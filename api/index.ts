@@ -34,6 +34,22 @@ async function connectToDatabase() {
   }
 }
 
+// Link Sub-Schema
+const linkSchema = new mongoose.Schema({
+  id: String,
+  title: String,
+  url: String,
+  icon: String,
+  description: String,
+  isActive: { type: Boolean, default: true },
+  thumbnailUrl: String,
+  display: { type: String, default: 'list' },
+  clicks: { type: Number, default: 0 },
+  animation: { type: String, default: 'none' },
+  embed: { type: Boolean, default: false },
+  autoplay: { type: Boolean, default: false },
+}, { _id: false, strict: false });
+
 // Profile Schema
 const profileSchema = new mongoose.Schema({
   username: { type: String, required: true, unique: true },
@@ -55,23 +71,16 @@ const profileSchema = new mongoose.Schema({
     backgroundOverlay: { type: Number, default: 0.35 },
   },
   isActive: { type: Boolean, default: true },
-  links: [
-    {
-      id: String,
-      title: String,
-      url: String,
-      icon: String,
-      description: String,
-      isActive: { type: Boolean, default: true },
-      thumbnailUrl: String,
-      display: { type: String, default: 'list' },
-      clicks: { type: Number, default: 0 },
-    },
-  ],
-});
+  emailCaptureEnabled: { type: Boolean, default: false },
+  subscribers: [{ type: String }],
+  links: [linkSchema],
+}, { strict: false });
 
-// Avoid re-compiling models in serverless environment
-const Profile = (mongoose.models.Profile || mongoose.model("Profile", profileSchema)) as any;
+// Ensure any stale cached model in memory is cleared
+if (mongoose.models && mongoose.models.Profile) {
+  delete (mongoose.models as any).Profile;
+}
+const Profile = mongoose.model("Profile", profileSchema) as any;
 
 // API Routes
 app.get("/api/cron/keep-alive", async (req, res) => {
@@ -340,6 +349,88 @@ app.delete("/api/profiles/uid/:uid", async (req, res) => {
   } catch (err: any) {
     console.error("API DELETE Error:", err);
     res.status(500).json({ error: "Internal Server Error", details: err.message });
+  }
+});
+
+// Email Subscribers Routes
+// 1. Public Subscribe Endpoint
+app.post("/api/profiles/:username/subscribers", async (req, res) => {
+  try {
+    await connectToDatabase();
+    const { email } = req.body;
+    const username = req.params.username;
+
+    if (!email || !/\S+@\S+\.\S+/.test(email)) {
+      return res.status(400).json({ error: "Please provide a valid email address." });
+    }
+
+    const cleanEmail = email.toLowerCase().trim();
+    const profile = await Profile.findOneAndUpdate(
+      { username },
+      { $addToSet: { subscribers: cleanEmail } },
+      { new: true }
+    );
+
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found." });
+    }
+
+    res.json({ success: true, message: "Successfully subscribed!" });
+  } catch (err: any) {
+    console.error("Subscriber API Error:", err);
+    res.status(500).json({ error: "Failed to subscribe", details: err.message });
+  }
+});
+
+// 2. Authenticated List Subscribers Endpoint
+app.get("/api/profiles/:username/subscribers", async (req, res) => {
+  try {
+    await connectToDatabase();
+    const username = req.params.username;
+    const profile = await Profile.findOne({ username }).lean();
+
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found." });
+    }
+
+    const authResult = await verifyFirebaseToken(req, profile.uid);
+    if (!authResult.isValid) {
+      return res.status(401).json({ error: "Unauthorized", reason: authResult.reason });
+    }
+
+    res.json({ success: true, subscribers: profile.subscribers || [] });
+  } catch (err: any) {
+    console.error("Get subscribers error:", err);
+    res.status(500).json({ error: "Failed to retrieve subscribers", details: err.message });
+  }
+});
+
+// 3. Authenticated Delete Subscriber Endpoint
+app.delete("/api/profiles/:username/subscribers/:email", async (req, res) => {
+  try {
+    await connectToDatabase();
+    const username = req.params.username;
+    const emailToDelete = decodeURIComponent(req.params.email).toLowerCase().trim();
+    const profile = await Profile.findOne({ username });
+
+    if (!profile) {
+      return res.status(404).json({ error: "Profile not found." });
+    }
+
+    const authResult = await verifyFirebaseToken(req, profile.uid);
+    if (!authResult.isValid) {
+      return res.status(401).json({ error: "Unauthorized", reason: authResult.reason });
+    }
+
+    await Profile.updateOne(
+      { username },
+      { $pull: { subscribers: emailToDelete } }
+    );
+
+    res.json({ success: true, message: "Subscriber removed" });
+  } catch (err: any) {
+    console.error("Delete subscriber error:", err);
+    res.status(500).json({ error: "Failed to delete subscriber", details: err.message });
   }
 });
 
