@@ -62,8 +62,9 @@ import BioGeneratorModal from './components/BioGeneratorModal';
 import MediaEmbed, { isEmbeddableUrl, isYouTubeUrl } from './components/MediaEmbed';
 import { EmailCaptureWidget, EmailEditorPanel } from './components/EmailCapture';
 import PublicProfileSkeleton from './components/PublicProfileSkeleton';
+import ReorderableLinkCard from './components/ReorderableLinkCard';
 
-interface Link {
+export interface Link {
   id?: string; // Stable ID for Reorder tracking key
   title: string;
   url: string;
@@ -160,7 +161,7 @@ const GoogleDriveIcon = ({ size = 20, className = '' }: { size?: number, classNa
   </svg>
 );
 
-const ICON_MAP: Record<string, any> = {
+export const ICON_MAP: Record<string, any> = {
   github: Github,
   twitter: Twitter,
   instagram: Instagram,
@@ -181,7 +182,7 @@ const ICON_MAP: Record<string, any> = {
   music: Music,
 };
 
-const detectIcon = (url: string): string => {
+export const detectIcon = (url: string): string => {
   const lowercaseUrl = url.toLowerCase();
   if (lowercaseUrl.includes('github.com')) return 'github';
   if (lowercaseUrl.includes('twitter.com') || lowercaseUrl.includes('x.com')) return 'twitter';
@@ -2178,469 +2179,71 @@ export default function App() {
                             </div>
                           )}
 
-                          <AnimatePresence initial={false}>
-                            {profile.links.map((link, idx) => {
-                              const isExpanded = expandedLinkId === (link.id || String(idx));
-                              return (
-                                <motion.div
+                          {profile.links.length > 1 && (
+                            <div className="flex items-center justify-between px-3.5 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-[11px] text-indigo-300 mb-2 shadow-sm">
+                              <span className="flex items-center gap-1.5 font-bold">
+                                <GripVertical size={14} className="text-indigo-400 shrink-0" />
+                                Press & hold or drag handle to reorder
+                              </span>
+                              <span className="text-[10px] text-slate-400 hidden sm:inline font-medium">
+                                Screen auto-scrolls when dragged near edges
+                              </span>
+                            </div>
+                          )}
+
+                          <Reorder.Group
+                            axis="y"
+                            values={profile.links}
+                            onReorder={(newLinks) => {
+                              setProfile((prev) => ({ ...prev, links: newLinks }));
+                            }}
+                            className="space-y-3.5"
+                          >
+                            <AnimatePresence initial={false}>
+                              {profile.links.map((link, idx) => (
+                                <ReorderableLinkCard
                                   key={link.id || `link-${idx}`}
-                                  initial={{ opacity: 0, y: 20 }}
-                                  animate={{ opacity: 1, y: 0 }}
-                                  exit={{ opacity: 0, y: -20 }}
-                                  transition={{ duration: 0.2 }}
-                                  className="p-4 bg-slate-950/30 rounded-2xl border border-white/5 hover:border-white/10 transition-all duration-200 group relative"
-                                >
-                                  <div 
-                                    className="flex items-center justify-between gap-4 cursor-pointer select-none"
-                                    onClick={() => setExpandedLinkId(isExpanded ? null : (link.id || String(idx)))}
-                                  >
-                                    <div className="flex items-center gap-3 min-w-0">
-                                      {/* Up & Down Reorder Buttons */}
-                                      <div className="flex items-center gap-0.5 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.preventDefault();
-                                            if (idx > 0) {
-                                              const newLinks = [...profile.links];
-                                              const temp = newLinks[idx];
-                                              newLinks[idx] = newLinks[idx - 1];
-                                              newLinks[idx - 1] = temp;
-                                              setProfile({ ...profile, links: newLinks });
-                                            }
-                                          }}
-                                          disabled={idx === 0}
-                                          className={`p-1.5 rounded-lg transition-colors ${idx === 0
-                                              ? 'text-slate-800 cursor-not-allowed opacity-20'
-                                              : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
-                                            }`}
-                                          title="Move Up"
-                                        >
-                                          <ChevronUp size={15} />
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={(e) => {
-                                            e.preventDefault();
-                                            if (idx < profile.links.length - 1) {
-                                              const newLinks = [...profile.links];
-                                              const temp = newLinks[idx];
-                                              newLinks[idx] = newLinks[idx + 1];
-                                              newLinks[idx + 1] = temp;
-                                              setProfile({ ...profile, links: newLinks });
-                                            }
-                                          }}
-                                          disabled={idx === profile.links.length - 1}
-                                          className={`p-1.5 rounded-lg transition-colors ${idx === profile.links.length - 1
-                                              ? 'text-slate-800 cursor-not-allowed opacity-20'
-                                              : 'text-slate-400 hover:text-indigo-400 hover:bg-white/5 active:scale-90'
-                                            }`}
-                                          title="Move Down"
-                                        >
-                                          <ChevronDown size={15} />
-                                        </button>
-                                      </div>
-
-                                      {/* Icon Selector Button */}
-                                      <div className="relative shrink-0" onClick={(e) => e.stopPropagation()}>
-                                        <button
-                                          onClick={() => {
-                                            const currentOpen = activeIconPickerIdx === idx ? null : idx;
-                                            setActiveIconPickerIdx(currentOpen);
-                                          }}
-                                          className="w-9 h-9 rounded-lg bg-slate-950/60 border border-white/10 hover:border-indigo-500/50 flex items-center justify-center text-slate-300 hover:text-white transition-all shadow-md active:scale-95"
-                                          title="Choose Icon"
-                                        >
-                                          {(() => {
-                                            const IconComp = ICON_MAP[link.icon] || Globe;
-                                            return <IconComp size={16} />;
-                                          })()}
-                                        </button>
-
-                                        {/* Floating icon selector picker */}
-                                        {activeIconPickerIdx === idx && (
-                                          <>
-                                            <div
-                                              className="fixed inset-0 z-10"
-                                              onClick={() => setActiveIconPickerIdx(null)}
-                                            />
-                                            <div className="absolute left-0 mt-2 p-2 bg-slate-950 border border-white/10 backdrop-blur-xl rounded-2xl shadow-2xl z-20 w-72 grid grid-cols-6 gap-1.5">
-                                              {Object.keys(ICON_MAP).map((iconName) => {
-                                                const PickerIcon = ICON_MAP[iconName];
-                                                return (
-                                                  <button
-                                                    key={iconName}
-                                                    onClick={() => {
-                                                      const newLinks = [...profile.links];
-                                                      newLinks[idx].icon = iconName;
-                                                      setProfile({ ...profile, links: newLinks });
-                                                      setActiveIconPickerIdx(null);
-                                                    }}
-                                                    className={`w-9 h-9 rounded-lg flex items-center justify-center transition-all ${link.icon === iconName
-                                                        ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-md'
-                                                        : 'text-slate-400 hover:text-white hover:bg-white/5'
-                                                      }`}
-                                                    title={iconName}
-                                                  >
-                                                    <PickerIcon size={16} />
-                                                  </button>
-                                                );
-                                              })}
-                                            </div>
-                                          </>
-                                        )}
-                                      </div>
-
-                                      {/* Title */}
-                                      <span className="font-extrabold text-sm text-slate-200 truncate">
-                                        {link.title || 'Untitled Link'}
-                                      </span>
-                                    </div>
-
-                                    {/* Action items on header */}
-                                    <div className="flex items-center gap-3 shrink-0" onClick={(e) => e.stopPropagation()}>
-                                      {/* Show/Hide Switch */}
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.preventDefault();
-                                          const newLinks = [...profile.links];
-                                          newLinks[idx] = { 
-                                            ...newLinks[idx], 
-                                            isActive: newLinks[idx].isActive !== false ? false : true 
-                                          };
-                                          setProfile({ ...profile, links: newLinks });
-                                        }}
-                                        className={`relative w-8 h-4 rounded-full transition-colors duration-150 focus:outline-none ${link.isActive !== false ? 'bg-green-500' : 'bg-slate-800'
-                                          }`}
-                                      >
-                                        <span
-                                          className={`absolute top-0.5 left-0.5 bg-white w-3 h-3 rounded-full transition-transform duration-150 ${link.isActive !== false ? 'translate-x-4' : 'translate-x-0'
-                                            }`}
-                                        />
-                                      </button>
-
-                                      {/* Expand indicator */}
-                                      <div
-                                        onClick={() => setExpandedLinkId(isExpanded ? null : (link.id || String(idx)))}
-                                        className="p-1 text-slate-400 hover:text-white transition-colors cursor-pointer"
-                                      >
-                                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                                      </div>
-                                    </div>
-                                  </div>
-
-                                  {/* Expanded Content Details */}
-                                  <AnimatePresence initial={false}>
-                                    {isExpanded && (
-                                      <motion.div
-                                        initial={{ height: 0, opacity: 0 }}
-                                        animate={{ height: 'auto', opacity: 1 }}
-                                        exit={{ height: 0, opacity: 0 }}
-                                        transition={{ duration: 0.2 }}
-                                        className="overflow-hidden mt-4 pt-4 border-t border-white/5 space-y-4"
-                                      >
-                                        <div>
-                                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                                            {link.embed ? (link.embedType === 'music' ? 'Music / Song Title' : 'Video Title') : 'Link Title'}
-                                          </label>
-                                          <input
-                                            type="text"
-                                            value={link.title}
-                                            placeholder={link.embed ? (link.embedType === 'music' ? "e.g. Song Name (defaults to 'YouTube Audio Track')" : "e.g. Video Title") : "e.g. My Website"}
-                                            onChange={(e) => {
-                                              const newLinks = [...profile.links];
-                                              newLinks[idx].title = e.target.value;
-                                              setProfile({ ...profile, links: newLinks });
-                                            }}
-                                            className="w-full px-4 py-2.5 bg-slate-950/60 border border-white/10 text-white rounded-xl focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none text-sm font-semibold"
-                                          />
-                                        </div>
-
-                                        <div>
-                                          <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Link URL</label>
-                                          <div className="relative">
-                                            <input
-                                              type="text"
-                                              value={link.url}
-                                              placeholder="https://..."
-                                              onChange={(e) => {
-                                                const newUrl = e.target.value;
-                                                const newLinks = [...profile.links];
-                                                newLinks[idx].url = newUrl;
-                                                newLinks[idx].icon = detectIcon(newUrl);
-                                                setProfile({ ...profile, links: newLinks });
-                                              }}
-                                              onBlur={(e) => {
-                                                const val = e.target.value.trim();
-                                                if (val && !/^(https?:\/\/|mailto:|tel:)/.test(val) && !val.startsWith('/')) {
-                                                  const formatted = `https://${val}`;
-                                                  const newLinks = [...profile.links];
-                                                  newLinks[idx].url = formatted;
-                                                  newLinks[idx].icon = detectIcon(formatted);
-                                                  setProfile({ ...profile, links: newLinks });
-                                                }
-                                              }}
-                                              className={`w-full px-4 py-2.5 bg-slate-950/60 border border-white/10 text-white rounded-xl focus:border-indigo-500/50 focus:ring-1 focus:ring-indigo-500/20 outline-none text-sm font-semibold ${link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url)
-                                                ? 'text-red-400 border-red-500/30'
-                                                : 'text-indigo-400'
-                                                }`}
-                                            />
-                                            {link.url && !/^(https?:\/\/|mailto:|tel:)/.test(link.url) && (
-                                              <p className="text-[10px] text-red-400 mt-1.5 font-medium animate-pulse">
-                                                URL must start with http://, https://, or mailto:
-                                              </p>
-                                            )}
-                                          </div>
-                                        </div>
-
-                                        {/* Description (Hidden when interactive embed player is active) */}
-                                        {!link.embed && (
-                                          <div>
-                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">Description (Optional)</label>
-                                            <textarea
-                                              value={link.description || ''}
-                                              placeholder="Short description..."
-                                              onChange={(e) => {
-                                                const newLinks = [...profile.links];
-                                                newLinks[idx].description = e.target.value;
-                                                setProfile({ ...profile, links: newLinks });
-                                              }}
-                                              rows={2}
-                                              className="w-full bg-slate-950/60 text-xs text-white font-bold placeholder:text-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/20 border border-white/5 focus:border-indigo-500/40 px-3.5 py-2.5 rounded-xl transition-all resize-none min-h-[3rem]"
-                                            />
-                                          </div>
-                                        )}
-
-                                        {/* Media Embed Toggle for YouTube & Spotify */}
-                                        {isEmbeddableUrl(link.url) && (
-                                          <div className="space-y-2">
-                                            <div className="flex items-center justify-between p-3.5 rounded-2xl bg-indigo-500/10 border border-indigo-500/20">
-                                              <div>
-                                                <p className="text-xs font-bold text-indigo-300">Embed Interactive Player</p>
-                                                <p className="text-[10px] text-slate-400">
-                                                  {link.embed
-                                                    ? 'Player mode active — Card, icon & animations are hidden'
-                                                    : 'Play video/audio directly on your profile'}
-                                                </p>
-                                              </div>
-                                              <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                  e.preventDefault();
-                                                  const newLinks = [...profile.links];
-                                                  newLinks[idx] = { ...newLinks[idx], embed: !newLinks[idx].embed };
-                                                  setProfile({ ...profile, links: newLinks });
-                                                }}
-                                                className={`relative w-9 h-5 rounded-full transition-colors duration-200 focus:outline-none ${
-                                                  link.embed ? 'bg-indigo-600' : 'bg-slate-800'
-                                                }`}
-                                              >
-                                                <span
-                                                  className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform duration-200 ${
-                                                    link.embed ? 'translate-x-4' : 'translate-x-0'
-                                                  }`}
-                                                />
-                                              </button>
-                                            </div>
-
-                                            {/* Sub-toggle: Autoplay on page load (visible when embed is toggled ON) */}
-                                            {link.embed && (
-                                              <div className="flex items-center justify-between p-3 rounded-2xl bg-purple-500/10 border border-purple-500/20">
-                                                <div>
-                                                  <p className="text-xs font-bold text-purple-300 flex items-center gap-1.5">
-                                                    <span>⚡</span> Autoplay on Open
-                                                  </p>
-                                                  <p className="text-[10px] text-slate-400">
-                                                    Automatically start playing when visitor opens your profile
-                                                  </p>
-                                                </div>
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLinks = [...profile.links];
-                                                    newLinks[idx] = { ...newLinks[idx], autoplay: !newLinks[idx].autoplay };
-                                                    setProfile({ ...profile, links: newLinks });
-                                                  }}
-                                                  className={`relative w-9 h-5 rounded-full transition-colors duration-200 focus:outline-none shrink-0 ${
-                                                    link.autoplay ? 'bg-purple-600' : 'bg-slate-800'
-                                                  }`}
-                                                >
-                                                  <span
-                                                    className={`absolute top-0.5 left-0.5 bg-white w-4 h-4 rounded-full transition-transform duration-200 ${
-                                                      link.autoplay ? 'translate-x-4' : 'translate-x-0'
-                                                    }`}
-                                                  />
-                                                </button>
-                                              </div>
-                                            )}
-
-                                            {/* Style Selector for YouTube & Spotify: Full Player vs Minimal Card */}
-                                            {link.embed && (
-                                              <div className="p-3.5 rounded-2xl bg-slate-900/90 border border-white/10 space-y-2.5">
-                                                <div className="flex items-center justify-between">
-                                                  <div>
-                                                    <p className="text-xs font-bold text-white flex items-center gap-1.5">
-                                                      <span>🎧</span> {isYouTubeUrl(link.url) ? 'YouTube Player Style' : 'Spotify Player Style'}
-                                                    </p>
-                                                    <p className="text-[10px] text-slate-400">
-                                                      {isYouTubeUrl(link.url)
-                                                        ? ((link.embedType || 'video') === 'music'
-                                                            ? 'Minimal music card with soundwave & thumbnail (no large video box)'
-                                                            : 'Full 16:9 interactive YouTube video player')
-                                                        : (link.embedType === 'music'
-                                                            ? 'Compact 80px minimal audio bar'
-                                                            : 'Standard Spotify interactive music player')}
-                                                    </p>
-                                                  </div>
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-2 pt-1">
-                                                  <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                      e.preventDefault();
-                                                      const newLinks = [...profile.links];
-                                                      newLinks[idx] = { ...newLinks[idx], embedType: 'video' };
-                                                      setProfile({ ...profile, links: newLinks });
-                                                    }}
-                                                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${
-                                                      (link.embedType || 'video') === 'video'
-                                                        ? 'bg-rose-600/20 text-rose-300 border-rose-500/50 shadow-sm shadow-rose-950/40 ring-1 ring-rose-500/30'
-                                                        : 'bg-slate-950/50 text-slate-400 border-white/5 hover:border-white/10 hover:text-white'
-                                                    }`}
-                                                  >
-                                                    {isYouTubeUrl(link.url) ? (
-                                                      <Youtube size={15} className={(link.embedType || 'video') === 'video' ? 'text-rose-400' : ''} />
-                                                    ) : (
-                                                      <Sliders size={15} className={(link.embedType || 'video') === 'video' ? 'text-rose-400' : ''} />
-                                                    )}
-                                                    {isYouTubeUrl(link.url) ? 'Video Player' : 'Standard Player'}
-                                                  </button>
-
-                                                  <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                      e.preventDefault();
-                                                      const newLinks = [...profile.links];
-                                                      newLinks[idx] = { ...newLinks[idx], embedType: 'music' };
-                                                      setProfile({ ...profile, links: newLinks });
-                                                    }}
-                                                    className={`flex items-center justify-center gap-2 py-2.5 px-3 rounded-xl text-xs font-bold transition-all border ${
-                                                      link.embedType === 'music'
-                                                        ? 'bg-emerald-600/20 text-emerald-300 border-emerald-500/50 shadow-sm shadow-emerald-950/40 ring-1 ring-emerald-500/30'
-                                                        : 'bg-slate-950/50 text-slate-400 border-white/5 hover:border-white/10 hover:text-white'
-                                                    }`}
-                                                  >
-                                                    <Music size={15} className={link.embedType === 'music' ? 'text-emerald-400' : ''} />
-                                                    {isYouTubeUrl(link.url) ? 'Minimal Music Card' : 'Compact Mini Bar'}
-                                                  </button>
-                                                </div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        )}
-
-                                        {/* Highlight Animation (Hidden when embed is active) */}
-                                        {!link.embed && (
-                                          <div>
-                                            <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1.5">
-                                              Highlight Animation
-                                            </label>
-                                            <div className="grid grid-cols-4 gap-1.5">
-                                              {(['none', 'pulse', 'wobble', 'glow'] as const).map((anim) => {
-                                                const isSelected = (link.animation || 'none') === anim;
-                                                return (
-                                                  <button
-                                                    key={anim}
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                      e.preventDefault();
-                                                      const newLinks = [...profile.links];
-                                                      newLinks[idx] = { ...newLinks[idx], animation: anim };
-                                                      setProfile({ ...profile, links: newLinks });
-                                                    }}
-                                                    className={`py-1.5 px-2 rounded-xl text-xs font-bold capitalize transition-all border ${
-                                                      isSelected
-                                                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-md shadow-indigo-600/30'
-                                                        : 'bg-slate-950/60 border-white/5 text-slate-400 hover:text-white hover:bg-white/5'
-                                                    }`}
-                                                  >
-                                                    {anim}
-                                                  </button>
-                                                );
-                                              })}
-                                            </div>
-                                          </div>
-                                        )}
-
-                                        <div className="flex items-center justify-between pt-2 border-t border-white/5">
-                                          {!link.embed ? (
-                                            <div className="flex items-center gap-2">
-                                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Display Mode:</span>
-                                              <div className="flex bg-slate-900 rounded-lg p-0.5 border border-white/5 text-[10px]">
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLinks = [...profile.links];
-                                                    newLinks[idx] = { ...newLinks[idx], display: 'card' };
-                                                    setProfile({ ...profile, links: newLinks });
-                                                  }}
-                                                  className={`px-2 py-0.5 rounded-md font-bold transition-all ${
-                                                    link.display !== 'icon'
-                                                      ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
-                                                      : 'text-slate-400 hover:text-white'
-                                                  }`}
-                                                >
-                                                  Card
-                                                </button>
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.preventDefault();
-                                                    const newLinks = [...profile.links];
-                                                    newLinks[idx] = { ...newLinks[idx], display: 'icon' };
-                                                    setProfile({ ...profile, links: newLinks });
-                                                  }}
-                                                  className={`px-2 py-0.5 rounded-md font-bold transition-all ${
-                                                    link.display === 'icon'
-                                                      ? 'bg-gradient-to-tr from-indigo-500 to-purple-500 text-white shadow-sm'
-                                                      : 'text-slate-400 hover:text-white'
-                                                  }`}
-                                                >
-                                                  Icon
-                                                </button>
-                                              </div>
-                                            </div>
-                                          ) : (
-                                            <span className="text-[11px] font-semibold text-emerald-400 flex items-center gap-1.5">
-                                              <span className="w-2 h-2 rounded-full bg-emerald-400 inline-block animate-pulse" />
-                                              Player Mode (Card & Icon Hidden)
-                                            </span>
-                                          )}
-
-                                          <button
-                                            type="button"
-                                            onClick={(e) => {
-                                              e.preventDefault();
-                                              const newLinks = profile.links.filter((_, i) => i !== idx);
-                                              setProfile({ ...profile, links: newLinks });
-                                            }}
-                                            className="text-red-400 hover:text-red-300 hover:bg-red-500/10 px-3 py-1.5 rounded-lg border border-red-500/10 transition-all text-[11px] font-bold flex items-center gap-1.5"
-                                          >
-                                            <Trash2 size={13} />
-                                            Delete Link
-                                          </button>
-                                        </div>
-                                      </motion.div>
-                                    )}
-                                  </AnimatePresence>
-                                </motion.div>
-                              );
-                            })}
-                          </AnimatePresence>
+                                  link={link}
+                                  idx={idx}
+                                  totalLinks={profile.links.length}
+                                  isExpanded={expandedLinkId === (link.id || String(idx))}
+                                  onToggleExpand={() =>
+                                    setExpandedLinkId(
+                                      expandedLinkId === (link.id || String(idx))
+                                        ? null
+                                        : link.id || String(idx)
+                                    )
+                                  }
+                                  onUpdate={(updatedLink) => {
+                                    const newLinks = [...profile.links];
+                                    newLinks[idx] = updatedLink;
+                                    setProfile({ ...profile, links: newLinks });
+                                  }}
+                                  onDelete={() => {
+                                    const newLinks = profile.links.filter((_, i) => i !== idx);
+                                    setProfile({ ...profile, links: newLinks });
+                                  }}
+                                  onMove={(fromIndex, toIndex) => {
+                                    if (
+                                      fromIndex === toIndex ||
+                                      toIndex < 0 ||
+                                      toIndex >= profile.links.length
+                                    )
+                                      return;
+                                    const newLinks = [...profile.links];
+                                    const [moved] = newLinks.splice(fromIndex, 1);
+                                    newLinks.splice(toIndex, 0, moved);
+                                    setProfile({ ...profile, links: newLinks });
+                                    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+                                      navigator.vibrate(30);
+                                    }
+                                  }}
+                                  activeIconPickerIdx={activeIconPickerIdx}
+                                  setActiveIconPickerIdx={setActiveIconPickerIdx}
+                                />
+                              ))}
+                            </AnimatePresence>
+                          </Reorder.Group>
                         </div>
                       </section>
                     )}
