@@ -63,6 +63,8 @@ import MediaEmbed, { isEmbeddableUrl, isYouTubeUrl } from './components/MediaEmb
 import { EmailCaptureWidget, EmailEditorPanel } from './components/EmailCapture';
 import PublicProfileSkeleton from './components/PublicProfileSkeleton';
 import ReorderableLinkCard from './components/ReorderableLinkCard';
+import ThemeToggleButton from './components/ThemeToggleButton';
+import { useThemeMode } from './context/ThemeContext';
 
 export interface Link {
   id?: string; // Stable ID for Reorder tracking key
@@ -590,6 +592,7 @@ const checkIsPublicPath = () => {
 };
 
 export default function App() {
+  const { isDark } = useThemeMode();
   const isInitialPublic = checkIsPublicPath();
   const [view, setView] = useState<'preview' | 'edit' | 'public'>(isInitialPublic ? 'public' : 'edit');
   const [isPublicLoading, setIsPublicLoading] = useState(isInitialPublic);
@@ -1921,23 +1924,31 @@ export default function App() {
   }
 
   return (
-    <div className="relative min-h-screen bg-[#070a13] text-slate-100 font-sans selection:bg-indigo-500 selection:text-white pb-20">
+    <div className={`relative min-h-screen font-sans selection:bg-indigo-500 selection:text-white pb-20 transition-colors duration-200 ${
+      isDark ? 'bg-[#070a13] text-slate-100' : 'bg-[#f8fafc] text-slate-900'
+    }`}>
       {/* Dynamic Background Radial Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[50%] aspect-square rounded-full bg-indigo-900/10 blur-[150px] pointer-events-none" />
-      <div className="absolute bottom-[20%] right-[-10%] w-[45%] aspect-square rounded-full bg-purple-900/8 blur-[120px] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#1f293703_1px,transparent_1px),linear-gradient(to_bottom,#1f293703_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none opacity-40" />
+      <div className={`absolute top-[-10%] left-[-10%] w-[50%] aspect-square rounded-full blur-[150px] pointer-events-none transition-colors duration-500 ${isDark ? 'bg-indigo-900/10' : 'bg-indigo-200/40'}`} />
+      <div className={`absolute bottom-[20%] right-[-10%] w-[45%] aspect-square rounded-full blur-[120px] pointer-events-none transition-colors duration-500 ${isDark ? 'bg-purple-900/8' : 'bg-purple-200/30'}`} />
+      <div className={`absolute inset-0 bg-[linear-gradient(to_right,#1f293703_1px,transparent_1px),linear-gradient(to_bottom,#1f293703_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none ${isDark ? 'opacity-40' : 'opacity-25 invert'}`} />
 
-      <nav className="fixed top-0 left-0 right-0 h-16 bg-slate-950/60 border-b border-white/5 backdrop-blur-xl z-50 px-6 flex items-center justify-between shadow-lg">
+      <nav className={`fixed top-0 left-0 right-0 h-16 backdrop-blur-xl z-50 px-6 flex items-center justify-between shadow-lg transition-colors duration-200 ${
+        isDark ? 'bg-slate-950/60 border-b border-white/5' : 'bg-white/85 border-b border-slate-200/80 shadow-slate-200/50'
+      }`}>
         <div className="flex items-center gap-2.5 shrink-0">
           <img
             src="/favicon.png"
             alt="LinkFlow Logo"
             className="w-9 h-9 rounded-xl shadow-lg border border-white/10 object-cover"
           />
-          <span className="font-extrabold text-xl tracking-tight hidden sm:block bg-gradient-to-r from-white to-slate-400 bg-clip-text text-transparent">LinkFlow</span>
+          <span className={`font-extrabold text-xl tracking-tight hidden sm:block bg-gradient-to-r bg-clip-text text-transparent ${
+            isDark ? 'from-white to-slate-400' : 'from-slate-950 to-slate-700'
+          }`}>LinkFlow</span>
         </div>
 
-        <div className="flex items-center gap-1 sm:gap-2 bg-slate-950/50 border border-white/5 p-1 rounded-full lg:hidden">
+        <div className={`flex items-center gap-1 sm:gap-2 p-1 rounded-full lg:hidden border ${
+          isDark ? 'bg-slate-950/50 border-white/5' : 'bg-slate-100 border-slate-200'
+        }`}>
           <button
             onClick={() => handleSetView('edit')}
             className={`px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-all duration-200 flex items-center gap-2 ${view === 'edit'
@@ -1965,7 +1976,11 @@ export default function App() {
               href={`/${profile.username}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs font-bold text-indigo-400 hover:text-indigo-300 flex items-center gap-1.5 group bg-indigo-500/5 px-3 py-1.5 rounded-full border border-indigo-500/10 transition-all hover:bg-indigo-500/10"
+              className={`text-xs font-bold flex items-center gap-1.5 group px-3 py-1.5 rounded-full border transition-all ${
+                isDark
+                  ? 'text-indigo-400 hover:text-indigo-300 bg-indigo-500/5 border-indigo-500/10 hover:bg-indigo-500/10'
+                  : 'text-indigo-600 hover:text-indigo-700 bg-indigo-50 border-indigo-200 hover:bg-indigo-100 shadow-sm'
+              }`}
             >
               link-flow-program.vercel.app/{profile.username || '...'}
               <ExternalLink size={10} className="group-hover:scale-110 transition-transform" />
@@ -1977,7 +1992,11 @@ export default function App() {
               <>
                 <button
                   onClick={() => setShowQRModal(true)}
-                  className="bg-slate-900 border border-white/10 text-slate-200 px-3.5 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
+                  className={`px-3.5 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-2 border ${
+                    isDark
+                      ? 'bg-slate-900 border-white/10 text-slate-200 hover:bg-slate-800'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'
+                  }`}
                   title="Generate QR Code"
                 >
                   <QrCode size={14} className="text-indigo-400" />
@@ -1985,13 +2004,18 @@ export default function App() {
                 </button>
                 <button
                   onClick={handleCopyLink}
-                  className="bg-slate-900 border border-white/10 text-slate-200 px-4 py-2.5 rounded-xl text-xs font-bold hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2"
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all active:scale-95 flex items-center gap-2 border ${
+                    isDark
+                      ? 'bg-slate-900 border-white/10 text-slate-200 hover:bg-slate-800'
+                      : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50 shadow-sm'
+                  }`}
                 >
                   {isCopying ? <Check size={14} className="text-green-400" /> : <Share2 size={14} />}
                   <span>{isCopying ? 'Copied!' : 'Share'}</span>
                 </button>
               </>
             )}
+            <ThemeToggleButton />
             <button
               onClick={handleSave}
               disabled={isSaving || !user}
@@ -2034,6 +2058,7 @@ export default function App() {
 
           {/* Mobile Actions Menu (Visible only on small screens) */}
           <div className="md:hidden flex items-center gap-1">
+            <ThemeToggleButton />
             {user && (
               <>
                 <button
@@ -2095,7 +2120,9 @@ export default function App() {
 
               <div className={`space-y-6 transition-all duration-300 ${isFetching ? 'opacity-20 pointer-events-none scale-[0.98] blur-[2px]' : 'opacity-100'}`}>
                 {/* Editor Tab Navigation */}
-                <div className="flex items-center justify-between overflow-x-auto scrollbar-hide bg-slate-950/40 border border-white/5 p-1.5 rounded-2xl gap-1 mb-6">
+                <div className={`flex items-center justify-between overflow-x-auto scrollbar-hide p-1.5 rounded-2xl gap-1 mb-6 border ${
+                  isDark ? 'bg-slate-950/40 border-white/5' : 'bg-white border-slate-200/90 shadow-sm'
+                }`}>
                   {[
                     { id: 'links', label: 'Links', icon: Link },
                     { id: 'profile', label: 'Profile', icon: User },
@@ -2112,7 +2139,9 @@ export default function App() {
                         className={`flex-1 flex items-center justify-center gap-2 px-3 py-3 rounded-xl text-xs font-bold transition-all duration-200 min-w-[90px] sm:min-w-0 ${
                           isActive
                             ? 'bg-gradient-to-r from-indigo-600 to-purple-600 shadow-md text-white scale-100 border border-indigo-500/25'
-                            : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+                            : isDark
+                            ? 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'
+                            : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70 border border-transparent'
                         }`}
                       >
                         <Icon size={14} className="shrink-0" />
@@ -2132,13 +2161,17 @@ export default function App() {
                     className="space-y-6"
                   >
                     {editorTab === 'links' && (
-                      <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                      <section className={`p-4 sm:p-8 rounded-2xl sm:rounded-3xl border backdrop-blur-xl relative overflow-hidden group transition-all duration-300 ${
+                        isDark 
+                          ? 'bg-slate-900/30 border-white/10 shadow-2xl hover:border-white/15' 
+                          : 'bg-white border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-slate-300'
+                      }`}>
                         <div className="flex items-center justify-between mb-6">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
                               <Link size={20} />
                             </div>
-                            <h2 className="text-lg font-extrabold text-white tracking-tight font-sans">Manage Links</h2>
+                            <h2 className={`text-lg font-extrabold tracking-tight font-sans ${isDark ? 'text-white' : 'text-slate-900'}`}>Manage Links</h2>
                           </div>
                           <button
                             onClick={() => {
@@ -2234,12 +2267,16 @@ export default function App() {
                     )}
 
                     {editorTab === 'profile' && (
-                      <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                      <section className={`p-4 sm:p-8 rounded-2xl sm:rounded-3xl border backdrop-blur-xl relative overflow-hidden group transition-all duration-300 ${
+                        isDark 
+                          ? 'bg-slate-900/30 border-white/10 shadow-2xl hover:border-white/15' 
+                          : 'bg-white border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-slate-300'
+                      }`}>
                         <div className="flex items-center gap-3 mb-6">
                           <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
                             <User size={20} />
                           </div>
-                          <h2 className="text-lg font-extrabold text-white tracking-tight font-sans">Profile Info</h2>
+                          <h2 className={`text-lg font-extrabold tracking-tight font-sans ${isDark ? 'text-white' : 'text-slate-900'}`}>Profile Info</h2>
                         </div>
 
                         <div className="space-y-6">
@@ -2278,7 +2315,11 @@ export default function App() {
                                   type="text"
                                   value={profile.displayName}
                                   onChange={(e) => setProfile({ ...profile, displayName: e.target.value })}
-                                  className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all placeholder:text-slate-700 font-medium"
+                                  className={`w-full px-4 py-3 border rounded-2xl outline-none transition-all font-medium ${
+                                    isDark 
+                                      ? 'bg-slate-950/60 border-white/10 text-white placeholder:text-slate-700 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20' 
+                                      : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-sm'
+                                  }`}
                                   placeholder="Your Name"
                                 />
                               </div>
@@ -2305,7 +2346,11 @@ export default function App() {
                             <textarea
                               value={profile.bio}
                               onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-                              className="w-full px-4 py-3 bg-slate-950/60 border border-white/10 text-white rounded-2xl focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20 outline-none transition-all h-28 resize-none placeholder:text-slate-700 text-sm leading-relaxed"
+                              className={`w-full px-4 py-3 border rounded-2xl outline-none transition-all h-28 resize-none text-sm leading-relaxed ${
+                                isDark 
+                                  ? 'bg-slate-950/60 border-white/10 text-white placeholder:text-slate-700 focus:border-indigo-500/50 focus:ring-2 focus:ring-indigo-500/20' 
+                                  : 'bg-slate-50 border-slate-200 text-slate-900 placeholder:text-slate-400 focus:bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 shadow-sm'
+                              }`}
                               placeholder="Tell the world about yourself..."
                             />
                           </div>
@@ -2316,15 +2361,15 @@ export default function App() {
                     {editorTab === 'appearance' && (
                       <div className="space-y-6">
                         {/* 1. Preset Templates */}
-                        <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                        <section className={`${isDark ? 'bg-slate-900/30 border-white/10 hover:border-white/15' : 'bg-white border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-slate-300'} p-4 sm:p-8 rounded-2xl sm:rounded-3xl border backdrop-blur-xl transition-all duration-300 relative overflow-hidden group`}>
                           <div className="flex items-center justify-between mb-6">
                             <div className="flex items-center gap-3">
                               <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
                                 <Palette size={20} />
                               </div>
                               <div>
-                                <h2 className="text-lg font-extrabold text-white tracking-tight">Templates</h2>
-                                <p className="text-xs text-slate-400">Curated premium profile themes</p>
+                                <h2 className={`text-lg font-extrabold ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>Templates</h2>
+                                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Curated premium profile themes</p>
                               </div>
                             </div>
                             <button
@@ -2338,8 +2383,8 @@ export default function App() {
                           
                           <div>
                             <div className="flex items-center justify-between mb-3.5">
-                              <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">Featured Quick Select</label>
-                              <span className="text-[11px] text-slate-500">Tap to apply instantly</span>
+                              <label className={`text-xs font-bold ${isDark ? 'text-slate-400' : 'text-slate-500'} uppercase tracking-widest`}>Featured Quick Select</label>
+                              <span className={`text-[11px] ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>Tap to apply instantly</span>
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                               {TEMPLATES.slice(0, 4).map((tpl) => {
@@ -2352,7 +2397,7 @@ export default function App() {
                                     className={`group relative flex flex-col items-center gap-2 p-2.5 rounded-2xl border transition-all text-left overflow-hidden ${
                                       active
                                         ? 'border-indigo-500 bg-indigo-500/10 ring-2 ring-indigo-500/40 shadow-lg'
-                                        : 'border-white/10 bg-slate-950/40 hover:border-indigo-500/40 hover:bg-white/5'
+                                        : isDark ? 'border-white/10 bg-slate-950/40 hover:border-indigo-500/40 hover:bg-white/5' : 'border-slate-200 bg-slate-50 hover:border-indigo-500/40 hover:bg-slate-100'
                                     }`}
                                   >
                                     <div
@@ -2384,7 +2429,7 @@ export default function App() {
                                       />
                                     </div>
                                     <div className="w-full px-1 pt-0.5 text-center sm:text-left">
-                                      <span className="text-xs font-bold text-white block truncate leading-tight" title={tpl.name}>
+                                      <span className={`text-xs font-bold ${isDark ? 'text-white' : 'text-slate-800'} block truncate leading-tight`} title={tpl.name}>
                                         {tpl.name}
                                       </span>
                                     </div>
@@ -2401,14 +2446,14 @@ export default function App() {
                         </section>
 
                         {/* 2. Card & Button Shape */}
-                        <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                        <section className={`${isDark ? 'bg-slate-900/30 border-white/10 hover:border-white/15' : 'bg-white border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-slate-300'} p-4 sm:p-8 rounded-2xl sm:rounded-3xl border backdrop-blur-xl transition-all duration-300 relative overflow-hidden group`}>
                           <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0 shadow-inner">
                               <Sliders size={20} />
                             </div>
                             <div>
-                              <h2 className="text-lg font-extrabold text-white tracking-tight">Card & Button Shape</h2>
-                              <p className="text-xs text-slate-400">Geometry and outline for links & social icons</p>
+                              <h2 className={`text-lg font-extrabold ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>Card & Button Shape</h2>
+                              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Geometry and outline for links & social icons</p>
                             </div>
                           </div>
 
@@ -2429,14 +2474,14 @@ export default function App() {
                                   className={`flex flex-col items-center gap-2 p-3 rounded-2xl border transition-all text-center group ${
                                     isSelected
                                       ? 'border-indigo-500 bg-indigo-500/10 shadow-lg shadow-indigo-500/10 ring-1 ring-indigo-500/40'
-                                      : 'border-white/5 bg-slate-950/40 hover:border-white/20 hover:bg-white/5'
+                                      : isDark ? 'border-white/5 bg-slate-950/40 hover:border-white/20 hover:bg-white/5' : 'border-slate-200 bg-slate-50 hover:border-slate-300 hover:bg-slate-100'
                                   }`}
                                 >
                                   <div className="w-full h-8 flex items-center justify-center">
-                                    <div className={`w-14 h-6 border-2 ${isSelected ? 'border-indigo-400 bg-indigo-500/30' : 'border-slate-500 bg-slate-800/60'} ${shape.preview} transition-all`} />
+                                    <div className={`w-14 h-6 border-2 ${isSelected ? 'border-indigo-400 bg-indigo-500/30' : isDark ? 'border-slate-500 bg-slate-800/60' : 'border-slate-300 bg-slate-200'} ${shape.preview} transition-all`} />
                                   </div>
-                                  <span className={`text-xs font-bold ${isSelected ? 'text-indigo-300' : 'text-slate-200'}`}>{shape.name}</span>
-                                  <span className="text-[10px] text-slate-500 font-medium">{shape.desc}</span>
+                                  <span className={`text-xs font-bold ${isSelected ? (isDark ? 'text-indigo-300' : 'text-indigo-600') : (isDark ? 'text-slate-200' : 'text-slate-700')}`}>{shape.name}</span>
+                                  <span className={`text-[10px] ${isDark ? 'text-slate-500' : 'text-slate-400'} font-medium`}>{shape.desc}</span>
                                 </button>
                               );
                             })}
@@ -2444,14 +2489,14 @@ export default function App() {
                         </section>
 
                         {/* 3. Custom Colors */}
-                        <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                        <section className={`${isDark ? 'bg-slate-900/30 border-white/10 hover:border-white/15' : 'bg-white border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-slate-300'} p-6 sm:p-8 rounded-3xl border backdrop-blur-xl transition-all duration-300 relative overflow-hidden group`}>
                           <div className="flex items-center gap-3 mb-6">
                             <div className="w-10 h-10 rounded-xl bg-pink-500/10 border border-pink-500/20 flex items-center justify-center text-pink-400 shrink-0 shadow-inner">
                               <Palette size={20} />
                             </div>
                             <div>
-                              <h2 className="text-lg font-extrabold text-white tracking-tight">Custom Colors</h2>
-                              <p className="text-xs text-slate-400">Fine-tune individual colors for your profile</p>
+                              <h2 className={`text-lg font-extrabold ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>Custom Colors</h2>
+                              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Fine-tune individual colors for your profile</p>
                             </div>
                           </div>
                           
@@ -2519,7 +2564,7 @@ export default function App() {
                         </section>
 
                         {/* 4. Custom Background Image & Backdrop Filters */}
-                        <section className="bg-slate-900/30 p-4 sm:p-8 rounded-2xl sm:rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                        <section className={`${isDark ? 'bg-slate-900/30 border-white/10 hover:border-white/15' : 'bg-white border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-slate-300'} p-4 sm:p-8 rounded-2xl sm:rounded-3xl border backdrop-blur-xl transition-all duration-300 relative overflow-hidden group`}>
                           {/* Hidden file input */}
                           <input
                             type="file"
@@ -2535,8 +2580,8 @@ export default function App() {
                                 <ImageIcon size={20} />
                               </div>
                               <div>
-                                <h2 className="text-lg font-extrabold text-white tracking-tight">Background Photo</h2>
-                                <p className="text-xs text-slate-400">Upload, crop, and adjust your custom backdrop</p>
+                                <h2 className={`text-lg font-extrabold ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>Background Photo</h2>
+                                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>Upload, crop, and adjust your custom backdrop</p>
                               </div>
                             </div>
                             {profile.theme.backgroundImageUrl && (
@@ -2550,7 +2595,7 @@ export default function App() {
                           {profile.theme.backgroundImageUrl ? (
                             <div className="space-y-6">
                               {/* Current Image Card */}
-                              <div className="relative rounded-2xl overflow-hidden border border-white/15 bg-slate-950/60 p-4 flex flex-col sm:flex-row items-center gap-4">
+                              <div className={`relative rounded-2xl overflow-hidden border ${isDark ? 'border-white/15 bg-slate-950/60' : 'border-slate-200 bg-slate-50 shadow-sm'} p-4 flex flex-col sm:flex-row items-center gap-4`}>
                                 <div className="relative w-28 h-40 rounded-xl overflow-hidden border border-white/10 shrink-0 shadow-lg bg-slate-900">
                                   <img
                                     src={profile.theme.backgroundImageUrl}
@@ -2575,8 +2620,8 @@ export default function App() {
 
                                 <div className="flex-1 w-full space-y-3">
                                   <div>
-                                    <h4 className="text-sm font-bold text-white">Custom Backdrop Active</h4>
-                                    <p className="text-xs text-slate-400 mt-0.5 leading-relaxed">
+                                    <h4 className={`text-sm font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>Custom Backdrop Active</h4>
+                                    <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-0.5 leading-relaxed`}>
                                       High-res mobile crop saved. Visible on live preview and shared public link.
                                     </p>
                                   </div>
@@ -2614,9 +2659,9 @@ export default function App() {
                               {/* Sliders for Backdrop Blur and Dimmer */}
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
                                 {/* Dimmer Overlay Slider */}
-                                <div className="p-4 rounded-2xl bg-slate-950/40 border border-white/5 space-y-2.5">
+                                <div className={`p-4 rounded-2xl ${isDark ? 'bg-slate-950/40 border-white/5' : 'bg-slate-50 border-slate-200 shadow-sm'} border space-y-2.5`}>
                                   <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                                    <label className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'} uppercase tracking-wider`}>
                                       Dimmer / Overlay
                                     </label>
                                     <span className="text-xs font-mono font-bold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded-lg border border-indigo-500/20">
@@ -2646,9 +2691,9 @@ export default function App() {
                                 </div>
 
                                 {/* Blur Slider */}
-                                <div className="p-4 rounded-2xl bg-slate-950/40 border border-white/5 space-y-2.5">
+                                <div className={`p-4 rounded-2xl ${isDark ? 'bg-slate-950/40 border-white/5' : 'bg-slate-50 border-slate-200 shadow-sm'} border space-y-2.5`}>
                                   <div className="flex items-center justify-between">
-                                    <label className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                                    <label className={`text-xs font-bold ${isDark ? 'text-slate-300' : 'text-slate-700'} uppercase tracking-wider`}>
                                       Backdrop Blur
                                     </label>
                                     <span className="text-xs font-mono font-bold text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-lg border border-cyan-500/20">
@@ -2682,16 +2727,16 @@ export default function App() {
                             /* Empty Upload Dropzone */
                             <div
                               onClick={() => backgroundFileInputRef.current?.click()}
-                              className="group cursor-pointer rounded-2xl border-2 border-dashed border-white/15 hover:border-indigo-500/50 bg-slate-950/30 hover:bg-indigo-500/5 p-8 transition-all flex flex-col items-center justify-center text-center gap-3"
+                              className={`group cursor-pointer rounded-2xl border-2 border-dashed ${isDark ? 'border-white/15 hover:border-indigo-500/50 bg-slate-950/30 hover:bg-indigo-500/5' : 'border-slate-300 hover:border-indigo-500/50 bg-slate-50/80 hover:bg-indigo-50/40 shadow-sm'} p-8 transition-all flex flex-col items-center justify-center text-center gap-3`}
                             >
                               <div className="w-14 h-14 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 group-hover:scale-110 group-hover:bg-indigo-500/20 transition-all shadow-inner">
                                 <Crop size={24} />
                               </div>
                               <div>
-                                <span className="text-sm font-bold text-white group-hover:text-indigo-300 transition-colors block">
+                                <span className={`text-sm font-bold ${isDark ? 'text-white group-hover:text-indigo-300' : 'text-slate-900 group-hover:text-indigo-600'} transition-colors block`}>
                                   Upload & Crop Background Photo
                                 </span>
-                                <span className="text-xs text-slate-400 mt-1 block max-w-sm">
+                                <span className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-1 block max-w-sm`}>
                                   Choose any photo. Our interactive 9:16 mobile cropper lets you pan, zoom, and frame the perfect shot.
                                 </span>
                               </div>
@@ -2710,7 +2755,7 @@ export default function App() {
                     )}
 
                     {editorTab === 'analytics' && (
-                      <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300">
+                      <section className={`${isDark ? 'bg-slate-900/30 border-white/10 hover:border-white/15' : 'bg-white border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-slate-300'} p-6 sm:p-8 rounded-3xl border backdrop-blur-xl transition-all duration-300 relative overflow-hidden group`}>
                         {/* Neon Glow Effects */}
                         <div className="absolute -top-24 -right-24 w-48 h-48 rounded-full bg-indigo-500/10 blur-[80px] group-hover:bg-indigo-500/15 transition-all duration-300 pointer-events-none" />
 
@@ -2720,7 +2765,7 @@ export default function App() {
                               <TrendingUp size={20} />
                             </div>
                             <div>
-                              <h2 className="text-lg font-extrabold text-white tracking-tight">Real-time Analytics</h2>
+                              <h2 className={`text-lg font-extrabold ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>Real-time Analytics</h2>
                               <p className="text-[10px] text-indigo-400 font-bold uppercase tracking-widest mt-0.5 animate-pulse">● Live Tracking Active</p>
                             </div>
                           </div>
@@ -2754,13 +2799,13 @@ export default function App() {
                             <div className="space-y-6">
                               {/* Summary Grid */}
                               <div className="grid grid-cols-2 gap-4">
-                                <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
+                                <div className={`p-4 ${isDark ? 'bg-slate-950/40 border-white/5' : 'bg-slate-50 border-slate-200 shadow-sm'} rounded-2xl border`}>
                                   <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Total Clicks</span>
-                                  <span className="text-3xl font-black text-white tracking-tight">
+                                  <span className={`text-3xl font-black ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>
                                     {totalClicks}
                                   </span>
                                 </div>
-                                <div className="p-4 bg-slate-950/40 rounded-2xl border border-white/5 shadow-inner">
+                                <div className={`p-4 ${isDark ? 'bg-slate-950/40 border-white/5' : 'bg-slate-50 border-slate-200 shadow-sm'} rounded-2xl border`}>
                                   <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Top Performing Link</span>
                                   <span className="text-xs font-bold text-indigo-400 truncate block mt-2">
                                     {topLink && topLink.clicks ? `${topLink.title} (${topLink.clicks} clicks)` : 'No clicks yet'}
@@ -2780,10 +2825,10 @@ export default function App() {
                                       const LinkIcon = ICON_MAP[link.icon] || Globe;
 
                                       return (
-                                        <div key={link.id || i} className="flex items-center justify-between bg-slate-950/20 px-3.5 py-3 rounded-xl border border-white/5 hover:bg-slate-950/40 transition-colors">
+                                        <div key={link.id || i} className={`flex items-center justify-between ${isDark ? 'bg-slate-950/20 border-white/5 hover:bg-slate-950/40 text-slate-300' : 'bg-slate-50/80 border-slate-200 hover:bg-slate-100 text-slate-700 shadow-sm'} px-3.5 py-3 rounded-xl border transition-colors`}>
                                           <div className="flex items-center gap-2 text-slate-300">
                                             <LinkIcon size={14} className="text-indigo-400 shrink-0" />
-                                            <span className="truncate max-w-[150px] sm:max-w-[200px] font-bold text-slate-200">{link.title || 'Untitled Link'}</span>
+                                            <span className={`truncate max-w-[150px] sm:max-w-[200px] font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>{link.title || 'Untitled Link'}</span>
                                           </div>
                                           <div className="flex items-center gap-1.5 shrink-0">
                                             <span className="text-white font-extrabold bg-indigo-500/10 px-2.5 py-0.5 rounded-md border border-indigo-500/25 text-[11px] min-w-[20px] text-center">{clicks} clicks</span>
@@ -2801,20 +2846,20 @@ export default function App() {
                     )}
 
                     {editorTab === 'settings' && (
-                      <section className="bg-slate-900/30 p-6 sm:p-8 rounded-3xl border border-white/10 backdrop-blur-xl shadow-2xl relative overflow-hidden group hover:border-white/15 transition-all duration-300 space-y-6">
+                      <section className={`${isDark ? 'bg-slate-900/30 border-white/10 hover:border-white/15' : 'bg-white border-slate-200/90 shadow-xl shadow-slate-200/50 hover:border-slate-300'} p-6 sm:p-8 rounded-3xl border backdrop-blur-xl transition-all duration-300 relative overflow-hidden group space-y-6`}>
                         <div className="flex items-center gap-3 mb-2">
                           <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0 shadow-inner">
                             <Settings size={20} />
                           </div>
-                          <h2 className="text-lg font-extrabold text-white tracking-tight">Account Settings</h2>
+                          <h2 className={`text-lg font-extrabold ${isDark ? 'text-white' : 'text-slate-900'} tracking-tight`}>Account Settings</h2>
                         </div>
 
-                        <div className="divide-y divide-white/5">
+                        <div className={`divide-y ${isDark ? 'divide-white/5' : 'divide-slate-100'}`}>
                           {/* Public Status Toggle */}
                           <div className="py-4 flex items-center justify-between">
                             <div>
-                              <h3 className="text-sm font-bold text-slate-200">Public Link Status</h3>
-                              <p className="text-xs text-slate-400 mt-0.5">
+                              <h3 className={`text-sm font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Public Link Status</h3>
+                              <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>
                                 {profile.isActive !== false
                                   ? 'Your profile is online and searchable.'
                                   : 'Your profile is offline and hidden.'}
@@ -2825,7 +2870,7 @@ export default function App() {
                                 const updated = { ...profile, isActive: profile.isActive === false ? true : false };
                                   setProfile(updated);
                               }}
-                              className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${profile.isActive !== false ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
+                              className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${profile.isActive !== false ? 'bg-indigo-600' : isDark ? 'bg-slate-950 border border-white/5' : 'bg-slate-200 border border-slate-300'
                                 }`}
                             >
                               <span
@@ -2839,8 +2884,8 @@ export default function App() {
                           <div className="py-4 space-y-4">
                             <div className="flex items-center justify-between">
                               <div>
-                                <h3 className="text-sm font-bold text-slate-200">Email Capture Widget</h3>
-                                <p className="text-xs text-slate-400 mt-0.5">
+                                <h3 className={`text-sm font-bold ${isDark ? 'text-slate-200' : 'text-slate-800'}`}>Email Capture Widget</h3>
+                                <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mt-0.5`}>
                                   Allow visitors on your profile to subscribe with their email address.
                                 </p>
                               </div>
@@ -2853,7 +2898,7 @@ export default function App() {
                                   });
                                 }}
                                 className={`relative w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none ${
-                                  profile.emailCaptureEnabled ? 'bg-indigo-600' : 'bg-slate-950 border border-white/5'
+                                  profile.emailCaptureEnabled ? 'bg-indigo-600' : isDark ? 'bg-slate-950 border border-white/5' : 'bg-slate-200 border border-slate-300'
                                 }`}
                               >
                                 <span
@@ -2865,7 +2910,7 @@ export default function App() {
                             </div>
 
                             {profile.emailCaptureEnabled && (
-                              <div className="pt-2 p-4 rounded-2xl bg-slate-950/40 border border-white/5">
+                              <div className={`pt-2 p-4 rounded-2xl ${isDark ? 'bg-slate-950/40 border-white/5' : 'bg-slate-50 border-slate-200 shadow-sm'} border`}>
                                 <EmailEditorPanel
                                   username={profile.username}
                                   getAuthToken={async () => (await user?.getIdToken()) || ''}
@@ -2877,12 +2922,12 @@ export default function App() {
                           {/* Danger Zone: Delete Account */}
                           <div className="py-4">
                             <h3 className="text-sm font-bold text-red-400 mb-1">Danger Zone</h3>
-                            <p className="text-xs text-slate-400 mb-3">
+                            <p className={`text-xs ${isDark ? 'text-slate-400' : 'text-slate-500'} mb-3`}>
                               Permanently delete your profile and all associated links. This action is irreversible.
                             </p>
                             <button
                               onClick={handleDeleteAccount}
-                              className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 animate-pulse hover:animate-none"
+                              className={`${isDark ? 'bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20' : 'bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 shadow-sm'} px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 flex items-center gap-2 active:scale-95 animate-pulse hover:animate-none`}
                             >
                               <Trash2 size={14} />
                               Delete My Account
@@ -2904,7 +2949,7 @@ export default function App() {
           {(() => {
             const previewProfile = debouncedProfile;
             return (
-              <div className="relative w-full max-w-full lg:max-w-[360px] xl:max-w-[400px] h-[calc(100vh-8rem)] lg:h-auto lg:aspect-[9/19] bg-slate-950/20 lg:bg-slate-950 rounded-[2rem] lg:rounded-[3rem] border-0 lg:border-[12px] border-slate-950 shadow-2xl shadow-indigo-500/5 overflow-hidden ring-0 lg:ring-4 ring-indigo-500/10">
+              <div className={`relative w-full max-w-full lg:max-w-[360px] xl:max-w-[400px] h-[calc(100vh-8rem)] lg:h-auto lg:aspect-[9/19] bg-slate-950/20 lg:bg-slate-950 rounded-[2rem] lg:rounded-[3rem] border-0 lg:border-[12px] border-slate-950 ${isDark ? 'shadow-2xl shadow-indigo-500/5 ring-indigo-500/10' : 'shadow-2xl shadow-slate-400/30 ring-slate-300/80'} overflow-hidden ring-0 lg:ring-4`}>
                 {/* Dynamic Island / Notch Mockup */}
                 <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-7 bg-slate-900 rounded-full z-20 hidden lg:flex items-center justify-between px-2 shadow-inner">
                   <div className="w-2 h-2 rounded-full bg-slate-800/80"></div>
