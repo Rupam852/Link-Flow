@@ -3,19 +3,20 @@ import { motion } from 'motion/react';
 
 export default function PublicProfileSkeleton() {
   return (
-    <div className="min-h-screen w-full overflow-y-auto px-3 sm:px-4 py-8 sm:py-16 flex flex-col items-center justify-start relative overflow-x-hidden bg-[#090d16] text-white selection:bg-indigo-500">
+    <motion.div
+      key="public-profile-skeleton"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, filter: 'blur(10px)', transition: { duration: 0.45, ease: 'easeInOut' } }}
+      transition={{ duration: 0.35, ease: 'easeOut' }}
+      className="min-h-screen w-full overflow-y-auto px-3 sm:px-4 py-8 sm:py-16 flex flex-col items-center justify-start relative overflow-x-hidden bg-[#090d16] text-white selection:bg-indigo-500"
+    >
       {/* Dynamic Background Radial Glows */}
       <div className="absolute top-[-10%] left-[-10%] w-[55%] aspect-square rounded-full bg-indigo-600/10 blur-[140px] pointer-events-none" />
       <div className="absolute bottom-[15%] right-[-10%] w-[50%] aspect-square rounded-full bg-purple-600/8 blur-[130px] pointer-events-none" />
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff03_1px,transparent_1px),linear-gradient(to_bottom,#ffffff03_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none opacity-50" />
 
-      <motion.div
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.98 }}
-        transition={{ duration: 0.35, ease: 'easeOut' }}
-        className="w-full max-w-md text-center relative z-10"
-      >
+      <div className="w-full max-w-md text-center relative z-10">
         {/* Avatar Skeleton */}
         <div className="relative w-24 h-24 mx-auto mb-4">
           <div className="absolute inset-0 bg-gradient-to-tr from-indigo-500/20 via-purple-500/20 to-pink-500/20 rounded-full animate-spin-slow opacity-60 blur-md" />
@@ -100,7 +101,7 @@ export default function PublicProfileSkeleton() {
             <div className="absolute inset-0 -translate-x-full animate-[shimmer_2s_infinite] bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           </div>
         </div>
-      </motion.div>
-    </div>
+      </div>
+    </motion.div>
   );
 }

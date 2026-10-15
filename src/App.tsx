@@ -565,6 +565,23 @@ const isTemplateActive = (tplTheme: any, currentTheme: any) => {
   );
 };
 
+const preloadImage = (url?: string): Promise<void> => {
+  if (!url || typeof url !== 'string' || !url.trim() || !url.startsWith('http')) {
+    return Promise.resolve();
+  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = url;
+    if (img.complete) {
+      resolve();
+      return;
+    }
+    img.onload = () => resolve();
+    img.onerror = () => resolve();
+    setTimeout(resolve, 1000);
+  });
+};
+
 const checkIsPublicPath = () => {
   if (typeof window === 'undefined') return false;
   const parts = window.location.pathname.split('/').filter(Boolean);
@@ -782,9 +799,35 @@ export default function App() {
 
   const fetchProfile = async (id: string, isUid: boolean = false, autoSaveUserData?: any) => {
     setIsFetching(true);
+    const fetchStartTime = Date.now();
     const cacheKey = `linkflow_profile_cache_${isUid ? 'uid_' : ''}${id}`;
 
+    // Helper for public profile: Preloads visual assets & guarantees smooth minimum skeleton display
+    const finishPublicLoading = async (profileData?: any) => {
+      if (!isUid) {
+        if (profileData) {
+          const promises: Promise<void>[] = [];
+          if (profileData.avatarUrl) {
+            promises.push(preloadImage(profileData.avatarUrl));
+          }
+          if (profileData.theme?.backgroundImageUrl) {
+            promises.push(preloadImage(profileData.theme.backgroundImageUrl));
+          }
+          await Promise.all(promises);
+        }
+
+        // Give the public skeleton shimmer a smooth, premium presentation time (minimum 750ms)
+        const elapsed = Date.now() - fetchStartTime;
+        const minLoadingDuration = 750;
+        if (elapsed < minLoadingDuration) {
+          await new Promise((resolve) => setTimeout(resolve, minLoadingDuration - elapsed));
+        }
+        setIsPublicLoading(false);
+      }
+    };
+
     // 1. Try loading instantly from localStorage cache (SWR Strategy)
+    let cachedProfile: any = null;
     const cached = localStorage.getItem(cacheKey);
     if (cached) {
       try {
@@ -795,9 +838,13 @@ export default function App() {
             id: l.id || l._id || `link-${i}-${Math.random().toString(36).substring(2, 5)}`
           }));
         }
+        cachedProfile = parsed;
         setProfile(parsed);
-        setLoading(false);
-        setIsPublicLoading(false);
+        if (isUid) {
+          setLoading(false);
+        }
+        // NOTE: For public view (!isUid), we do NOT immediately set isPublicLoading(false)
+        // to avoid a 0ms flicker and ensure the smooth shimmer plays while fetching freshest data and preloading assets.
       } catch (e) {
         console.error('Failed to parse cached profile', e);
       }
@@ -816,16 +863,21 @@ export default function App() {
         }
         setProfile(data);
         setProfileNotFound(false);
-        setIsPublicLoading(false);
+        if (isUid) {
+          setLoading(false);
+        }
         // 2. Save fresh version to cache
         localStorage.setItem(cacheKey, JSON.stringify(data));
+
+        // Preload avatar/background image and smoothly transition public skeleton
+        await finishPublicLoading(data);
       } else if (res.status === 404) {
         // Clear stale local storage cache
         localStorage.removeItem(cacheKey);
 
         if (!isUid) {
           setProfileNotFound(true);
-          setIsPublicLoading(false);
+          await finishPublicLoading();
         } else if (autoSaveUserData) {
           // AUTOSAVE: The profile wasn't found in DB (new user or DB deleted), auto-create it now
           const claimedName = sessionStorage.getItem('claimedUsername');
@@ -873,11 +925,21 @@ export default function App() {
             setProfile(newProfile);
           }
         }
+      } else {
+        if (!isUid) {
+          await finishPublicLoading(cachedProfile);
+        }
       }
     } catch (err) {
       console.error('Fetch profile failed:', err);
+      if (!isUid) {
+        await finishPublicLoading(cachedProfile);
+      }
     } finally {
       setIsFetching(false);
+      if (isUid) {
+        setLoading(false);
+      }
     }
   };
 
@@ -1523,94 +1585,89 @@ export default function App() {
 
 
   if (view === 'public') {
-    if (isPublicLoading) {
-      return <PublicProfileSkeleton />;
-    }
-
-    if (profileNotFound) {
-      return (
-        <div
-          className="min-h-screen w-full overflow-hidden flex items-center justify-center p-6 bg-[#090d16]"
-        >
-          {/* Radial Mesh Glows */}
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-red-900/10 blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/10 blur-[120px]" />
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md text-center p-8 bg-slate-900/30 border border-white/5 rounded-3xl backdrop-blur-xl shadow-2xl relative z-10"
-          >
-            <div className="w-16 h-16 mx-auto mb-6 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 shadow-md">
-              <EyeOff size={28} />
-            </div>
-
-            <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">404 - Profile Not Found</h2>
-            <p className="text-sm text-slate-400 leading-relaxed mb-6">
-              This link is not active or has been deleted. Make sure you typed the correct address.
-            </p>
-
-            <div className="h-[1px] bg-white/5 w-full mb-6" />
-
-            <a
-              href="/"
-              className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
-            >
-              Create Your Own LinkFlow Page →
-            </a>
-          </motion.div>
-        </div>
-      );
-    }
-
-    if (profile.isActive === false) {
-      return (
-        <div
-          className="min-h-screen w-full overflow-hidden flex items-center justify-center p-6 bg-[#090d16]"
-        >
-          {/* Radial Mesh Glows */}
-          <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/40 blur-[120px]" />
-          <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/40 blur-[120px]" />
-
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="w-full max-w-md text-center p-8 bg-slate-900/30 border border-white/5 rounded-3xl backdrop-blur-xl shadow-2xl relative z-10"
-          >
-            <div className="w-16 h-16 mx-auto mb-6 bg-slate-800/80 rounded-2xl flex items-center justify-center text-slate-500 shadow-md">
-              <EyeOff size={28} />
-            </div>
-
-            <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">Profile Currently Offline</h2>
-            <p className="text-sm text-slate-400 leading-relaxed mb-6">
-              The owner of this link has temporarily disabled public access to their page. Please check back later.
-            </p>
-
-            <div className="h-[1px] bg-white/5 w-full mb-6" />
-
-            <a
-              href="/"
-              className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
-            >
-              Create Your Own LinkFlow Page →
-            </a>
-          </motion.div>
-        </div>
-      );
-    }
-
     return (
-      <motion.div
-        key={profile.username || 'public-profile'}
-        initial={{ opacity: 0, y: 15 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.45, ease: 'easeOut' }}
-        className="min-h-screen w-full overflow-y-auto px-3 sm:px-4 py-8 sm:py-16 flex flex-col items-center justify-start relative overflow-x-hidden"
-        style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
-      >
-        {/* Background Image Layer if present */}
-        {profile.theme.backgroundImageUrl && (
-          <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+      <AnimatePresence mode="wait">
+        {isPublicLoading ? (
+          <PublicProfileSkeleton key="public-skeleton" />
+        ) : profileNotFound ? (
+          <motion.div
+            key="public-404"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.35 }}
+            className="min-h-screen w-full overflow-hidden flex items-center justify-center p-6 bg-[#090d16]"
+          >
+            {/* Radial Mesh Glows */}
+            <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-red-900/10 blur-[120px]" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/10 blur-[120px]" />
+
+            <div className="w-full max-w-md text-center p-8 bg-slate-900/30 border border-white/5 rounded-3xl backdrop-blur-xl shadow-2xl relative z-10">
+              <div className="w-16 h-16 mx-auto mb-6 bg-red-500/10 rounded-2xl flex items-center justify-center text-red-500 shadow-md">
+                <EyeOff size={28} />
+              </div>
+
+              <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">404 - Profile Not Found</h2>
+              <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                This link is not active or has been deleted. Make sure you typed the correct address.
+              </p>
+
+              <div className="h-[1px] bg-white/5 w-full mb-6" />
+
+              <a
+                href="/"
+                className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
+              >
+                Create Your Own LinkFlow Page →
+              </a>
+            </div>
+          </motion.div>
+        ) : profile.isActive === false ? (
+          <motion.div
+            key="public-offline"
+            initial={{ opacity: 0, scale: 0.96 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.96 }}
+            transition={{ duration: 0.35 }}
+            className="min-h-screen w-full overflow-hidden flex items-center justify-center p-6 bg-[#090d16]"
+          >
+            {/* Radial Mesh Glows */}
+            <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/40 blur-[120px]" />
+            <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-slate-900/40 blur-[120px]" />
+
+            <div className="w-full max-w-md text-center p-8 bg-slate-900/30 border border-white/5 rounded-3xl backdrop-blur-xl shadow-2xl relative z-10">
+              <div className="w-16 h-16 mx-auto mb-6 bg-slate-800/80 rounded-2xl flex items-center justify-center text-slate-500 shadow-md">
+                <EyeOff size={28} />
+              </div>
+
+              <h2 className="text-2xl font-extrabold text-white mb-2 tracking-tight">Profile Currently Offline</h2>
+              <p className="text-sm text-slate-400 leading-relaxed mb-6">
+                The owner of this link has temporarily disabled public access to their page. Please check back later.
+              </p>
+
+              <div className="h-[1px] bg-white/5 w-full mb-6" />
+
+              <a
+                href="/"
+                className="inline-flex items-center gap-2 text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-widest"
+              >
+                Create Your Own LinkFlow Page →
+              </a>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            key={profile.username || 'public-profile'}
+            initial={{ opacity: 0, y: 16, filter: 'blur(8px)' }}
+            animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+            exit={{ opacity: 0, filter: 'blur(8px)' }}
+            transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+            className="min-h-screen w-full overflow-y-auto px-3 sm:px-4 py-8 sm:py-16 flex flex-col items-center justify-start relative overflow-x-hidden"
+            style={{ backgroundColor: profile.theme.backgroundColor, color: profile.theme.textColor }}
+          >
+            {/* Background Image Layer if present */}
+            {profile.theme.backgroundImageUrl && (
+              <div className="fixed inset-0 z-0 overflow-hidden pointer-events-none">
             <div
               className="absolute inset-0 bg-cover bg-center transition-all duration-300"
               style={{
@@ -1796,6 +1853,8 @@ export default function App() {
           </div>
         </div>
       </motion.div>
+        )}
+      </AnimatePresence>
     );
   }
 
