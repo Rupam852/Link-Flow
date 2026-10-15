@@ -57,7 +57,7 @@ export function getYouTubeEmbedUrl(url: string, autoplay: boolean = false): stri
   return embedBase;
 }
 
-// Minimal Audio Player Card for YouTube (Instagram in-app browser & iOS WebView optimized)
+// Minimal Audio Player Card for YouTube (Instagram, LinkedIn & mobile WebViews bulletproof)
 function YouTubeMinimalMusicCard({
   videoId,
   title,
@@ -68,14 +68,36 @@ function YouTubeMinimalMusicCard({
   autoplay?: boolean;
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [pendingPlay, setPendingPlay] = useState(false);
   const playerRef = useRef<any>(null);
   const containerId = useRef(`yt-audio-${videoId}-${Math.random().toString(36).substring(2, 7)}`).current;
+
+  // Execute playback with mobile WebView unmute fallback sequence
+  const startPlayback = () => {
+    if (!playerRef.current) return;
+    try {
+      playerRef.current.unMute();
+      playerRef.current.playVideo();
+    } catch (e) {
+      try {
+        playerRef.current.mute();
+        playerRef.current.playVideo();
+        setTimeout(() => {
+          try {
+            playerRef.current.unMute();
+          } catch {}
+        }, 150);
+      } catch {}
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
 
     const initPlayer = () => {
       if (!isMounted || !(window as any).YT || !(window as any).YT.Player) return;
+      if (playerRef.current) return; // already initialized
 
       try {
         playerRef.current = new (window as any).YT.Player(containerId, {
@@ -96,8 +118,9 @@ function YouTubeMinimalMusicCard({
           events: {
             onReady: (event: any) => {
               if (!isMounted) return;
+              setIsReady(true);
 
-              // Crucial for Instagram/Facebook/iOS in-app browser permissions
+              // Crucial permissions for Instagram/LinkedIn WebViews
               try {
                 const iframe = event.target.getIframe?.();
                 if (iframe) {
@@ -107,11 +130,9 @@ function YouTubeMinimalMusicCard({
                 }
               } catch {}
 
-              if (autoplay) {
-                try {
-                  event.target.unMute();
-                  event.target.playVideo();
-                } catch {}
+              // If user tapped before player was ready OR autoplay is on
+              if (autoplay || pendingPlay) {
+                startPlayback();
               }
             },
             onStateChange: (event: any) => {
@@ -122,6 +143,9 @@ function YouTubeMinimalMusicCard({
                 setIsPlaying(false);
               }
             },
+            onError: (err: any) => {
+              console.warn('YouTube audio player error:', err);
+            },
           },
         });
       } catch (err) {
@@ -129,13 +153,16 @@ function YouTubeMinimalMusicCard({
       }
     };
 
+    // 1. Direct initialization if YT is already available
     if ((window as any).YT && (window as any).YT.Player) {
       initPlayer();
     } else {
+      // 2. Inject script if not present
       if (!document.getElementById('yt-iframe-api-script')) {
         const tag = document.createElement('script');
         tag.id = 'yt-iframe-api-script';
         tag.src = 'https://www.youtube.com/iframe_api';
+        tag.async = true;
         document.body.appendChild(tag);
       }
 
@@ -146,8 +173,19 @@ function YouTubeMinimalMusicCard({
       };
     }
 
+    // 3. Fallback poller for Instagram/LinkedIn WebViews (in case onYouTubeIframeAPIReady missed)
+    const poller = setInterval(() => {
+      if ((window as any).YT && (window as any).YT.Player && !playerRef.current) {
+        initPlayer();
+        clearInterval(poller);
+      }
+    }, 100);
+    const stopPollerTimeout = setTimeout(() => clearInterval(poller), 6000);
+
     return () => {
       isMounted = false;
+      clearInterval(poller);
+      clearTimeout(stopPollerTimeout);
       if (playerRef.current) {
         try {
           playerRef.current.destroy();
@@ -155,94 +193,101 @@ function YouTubeMinimalMusicCard({
         playerRef.current = null;
       }
     };
-  }, [videoId, autoplay]);
+  }, [videoId, autoplay, pendingPlay]);
 
   const togglePlay = (e: React.MouseEvent | React.TouchEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!playerRef.current) return;
 
-    try {
-      if (isPlaying) {
+    // If player not initialized yet, queue play request
+    if (!playerRef.current || !isReady) {
+      setPendingPlay(true);
+      return;
+    }
+
+    if (isPlaying) {
+      try {
         playerRef.current.pauseVideo();
-      } else {
-        // Direct user touch/click gesture: unmute and play for Instagram WebView
-        try {
-          playerRef.current.unMute();
-        } catch {}
-        playerRef.current.playVideo();
-      }
-    } catch (err) {
-      console.warn('Failed to toggle play:', err);
+      } catch {}
+    } else {
+      startPlayback();
     }
   };
+
+  const displayTitle = (title && title.trim() && title.trim().toLowerCase() !== 'new link') 
+    ? title.trim() 
+    : 'YouTube Audio Track';
 
   return (
     <div
       onClick={togglePlay}
       onTouchEnd={togglePlay}
-      className={`w-full rounded-2xl p-3 my-2 transition-all duration-300 cursor-pointer border shadow-lg backdrop-blur-xl flex items-center justify-between gap-3 group relative overflow-hidden select-none ${
+      className={`w-full rounded-2xl p-3 my-2 transition-all duration-300 cursor-pointer border shadow-lg backdrop-blur-xl group relative overflow-hidden select-none ${
         isPlaying
           ? 'bg-rose-950/40 border-rose-500/40 shadow-rose-950/30 ring-1 ring-rose-500/20'
           : 'bg-slate-900/60 border-white/10 hover:border-white/20 hover:bg-slate-900/80'
       }`}
     >
-      {/* Thumbnail with Vinyl/Track Badge */}
-      <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-white/10 shadow-md bg-black/40">
-        <img
-          src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
-          alt={title || 'Track'}
-          className={`w-full h-full object-cover transition-transform duration-700 ${isPlaying ? 'scale-110' : ''}`}
-        />
-        {isPlaying && (
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-            <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
-          </div>
-        )}
-      </div>
-
-      {/* Title & Animated Equalizer Waves */}
-      <div className="flex-1 min-w-0 text-left">
-        <p className="text-sm font-extrabold text-white truncate group-hover:text-rose-300 transition-colors">
-          {(title && title.trim() && title.trim().toLowerCase() !== 'new link') ? title.trim() : 'YouTube Audio Track'}
-        </p>
-        <div className="flex items-center gap-2 mt-0.5">
-          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-            <span className={`w-1.5 h-1.5 rounded-full inline-block ${isPlaying ? 'bg-rose-500 animate-pulse' : 'bg-slate-500'}`} />
-            {isPlaying ? 'Playing Music' : 'Minimal Player'}
-          </span>
-
+      {/* Content Layer (Above hidden iframe) */}
+      <div className="relative z-10 w-full flex items-center justify-between gap-3">
+        {/* Thumbnail with Vinyl/Track Badge */}
+        <div className="relative w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-white/10 shadow-md bg-black/40">
+          <img
+            src={`https://img.youtube.com/vi/${videoId}/hqdefault.jpg`}
+            alt={displayTitle}
+            className={`w-full h-full object-cover transition-transform duration-700 ${isPlaying ? 'scale-110' : ''}`}
+          />
           {isPlaying && (
-            <div className="flex items-end gap-0.5 h-3">
-              <span className="w-0.5 bg-rose-500 rounded-full animate-[bounce_0.6s_ease-in-out_infinite] h-3" />
-              <span className="w-0.5 bg-rose-500 rounded-full animate-[bounce_0.8s_ease-in-out_infinite_0.15s] h-2" />
-              <span className="w-0.5 bg-rose-500 rounded-full animate-[bounce_0.5s_ease-in-out_infinite_0.3s] h-3" />
-              <span className="w-0.5 bg-rose-500 rounded-full animate-[bounce_0.7s_ease-in-out_infinite_0.1s] h-1.5" />
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+              <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-ping" />
             </div>
           )}
         </div>
+
+        {/* Title & Animated Equalizer Waves */}
+        <div className="flex-1 min-w-0 text-left">
+          <p className="text-sm font-extrabold text-white truncate group-hover:text-rose-300 transition-colors">
+            {displayTitle}
+          </p>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
+              <span className={`w-1.5 h-1.5 rounded-full inline-block ${isPlaying ? 'bg-rose-500 animate-pulse' : (pendingPlay ? 'bg-amber-400 animate-ping' : 'bg-slate-500')}`} />
+              {isPlaying ? 'Playing Music' : (pendingPlay ? 'Starting Audio...' : 'Tap to Play')}
+            </span>
+
+            {isPlaying && (
+              <div className="flex items-end gap-0.5 h-3">
+                <span className="w-0.5 bg-rose-500 rounded-full animate-[bounce_0.6s_ease-in-out_infinite] h-3" />
+                <span className="w-0.5 bg-rose-500 rounded-full animate-[bounce_0.8s_ease-in-out_infinite_0.15s] h-2" />
+                <span className="w-0.5 bg-rose-500 rounded-full animate-[bounce_0.5s_ease-in-out_infinite_0.3s] h-3" />
+                <span className="w-0.5 bg-rose-500 rounded-full animate-[bounce_0.7s_ease-in-out_infinite_0.1s] h-1.5" />
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Minimal Play / Pause Round Button */}
+        <button
+          type="button"
+          onClick={togglePlay}
+          onTouchEnd={togglePlay}
+          className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-md transition-all active:scale-95 ${
+            isPlaying
+              ? 'bg-rose-600 text-white shadow-rose-600/40'
+              : 'bg-white/10 group-hover:bg-rose-600 text-white group-hover:shadow-rose-600/30'
+          }`}
+          title={isPlaying ? 'Pause' : 'Play'}
+        >
+          {isPlaying ? <Pause size={17} /> : <Play size={17} className="translate-x-0.5" />}
+        </button>
       </div>
 
-      {/* Minimal Play / Pause Round Button */}
-      <button
-        type="button"
-        onClick={togglePlay}
-        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-md transition-all active:scale-95 ${
-          isPlaying
-            ? 'bg-rose-600 text-white shadow-rose-600/40'
-            : 'bg-white/10 group-hover:bg-rose-600 text-white group-hover:shadow-rose-600/30'
-        }`}
-        title={isPlaying ? 'Pause' : 'Play'}
-      >
-        {isPlaying ? <Pause size={17} /> : <Play size={17} className="translate-x-0.5" />}
-      </button>
-
-      {/* Active Non-Zero Iframe Container for Instagram/Mobile Browser compatibility */}
+      {/* Background Active Non-Zero Iframe Container for Instagram/LinkedIn WebViews */}
       <div
         className="absolute inset-0 pointer-events-none overflow-hidden rounded-2xl"
         style={{
-          opacity: 0.001,
-          zIndex: -1,
+          opacity: 0.005,
+          zIndex: 0,
           width: '100%',
           height: '100%',
         }}
@@ -340,113 +385,22 @@ export default function MediaEmbed({ url, title, autoplay = false, embedType = '
     const height = embedType === 'music'
       ? (isFullPlayer ? 152 : 80)
       : (isFullPlayer ? 352 : 152);
-    const elementRef = useRef<HTMLDivElement>(null);
-    const controllerRef = useRef<any>(null);
 
-    useEffect(() => {
-      if (!autoplay) return;
-
-      let isMounted = true;
-
-      const initSpotifyApi = (IFrameAPI: any) => {
-        if (!elementRef.current || !isMounted) return;
-        elementRef.current.innerHTML = '';
-
-        const options = {
-          width: '100%',
-          height: `${height}`,
-          uri: `spotify:${spotifyInfo.type}:${spotifyInfo.id}`,
-        };
-
-        try {
-          IFrameAPI.createController(elementRef.current, options, (EmbedController: any) => {
-            if (!isMounted) {
-              try { EmbedController.destroy(); } catch {}
-              return;
-            }
-            controllerRef.current = EmbedController;
-
-            EmbedController.addListener('ready', () => {
-              try { EmbedController.play(); } catch {}
-            });
-
-            // Browser policy fallback: play on first user tap/click/scroll
-            const playOnInteraction = () => {
-              try { EmbedController.play(); } catch {}
-              window.removeEventListener('click', playOnInteraction);
-              window.removeEventListener('touchstart', playOnInteraction);
-              window.removeEventListener('scroll', playOnInteraction);
-            };
-            window.addEventListener('click', playOnInteraction, { once: true, passive: true });
-            window.addEventListener('touchstart', playOnInteraction, { once: true, passive: true });
-            window.addEventListener('scroll', playOnInteraction, { once: true, passive: true });
-          });
-        } catch (e) {
-          console.warn('Spotify iFrame API createController error:', e);
-        }
-      };
-
-      if ((window as any).IFrameAPI) {
-        initSpotifyApi((window as any).IFrameAPI);
-      } else {
-        if (!document.getElementById('spotify-iframe-api-script')) {
-          const script = document.createElement('script');
-          script.id = 'spotify-iframe-api-script';
-          script.src = 'https://open.spotify.com/embed/iframe-api/v1';
-          script.async = true;
-          document.body.appendChild(script);
-        }
-
-        const prevReady = (window as any).onSpotifyIframeApiReady;
-        (window as any).onSpotifyIframeApiReady = (IFrameAPI: any) => {
-          (window as any).IFrameAPI = IFrameAPI;
-          if (prevReady) prevReady(IFrameAPI);
-          if (isMounted) initSpotifyApi(IFrameAPI);
-        };
-      }
-
-      return () => {
-        isMounted = false;
-        if (controllerRef.current) {
-          try { controllerRef.current.destroy(); } catch {}
-          controllerRef.current = null;
-        }
-      };
-    }, [url, autoplay, height, spotifyInfo.type, spotifyInfo.id]);
-
-    // If autoplay is requested, use controller container ref, otherwise standard iframe
-    if (autoplay) {
-      return (
-        <div className="w-full rounded-2xl overflow-hidden border border-white/10 shadow-lg my-2 bg-slate-950/80">
-          <div ref={elementRef} style={{ minHeight: `${height}px` }}>
-            <iframe
-              src={spotifyInfo.embedUrl}
-              title={title || `Spotify ${spotifyInfo.type}`}
-              width="100%"
-              height={height}
-              frameBorder="0"
-              allowFullScreen
-              allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-              loading="lazy"
-              className="w-full border-0 block"
-              style={{ borderRadius: '12px', minHeight: `${height}px` }}
-            />
-          </div>
-        </div>
-      );
-    }
+    const embedUrl = autoplay
+      ? `${spotifyInfo.embedUrl}&autoplay=1`
+      : spotifyInfo.embedUrl;
 
     return (
       <div className="w-full rounded-2xl overflow-hidden border border-white/10 shadow-lg my-2 bg-slate-950/80">
         <iframe
-          src={spotifyInfo.embedUrl}
+          src={embedUrl}
           title={title || `Spotify ${spotifyInfo.type}`}
           width="100%"
           height={height}
           frameBorder="0"
           allowFullScreen
           allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-          loading="lazy"
+          loading="eager"
           className="w-full border-0 block"
           style={{ borderRadius: '12px', minHeight: `${height}px` }}
         />
